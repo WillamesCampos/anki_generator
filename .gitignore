@@ -1,0 +1,10 @@
+.vscode
+.tool-versions
+.env
+
+poetry.lock
+
+anki_cards
+anki_audio
+
+tasks.txt

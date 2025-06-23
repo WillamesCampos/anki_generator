@@ -1,0 +1,15 @@
+cached-property==2.0.1
+certifi==2025.4.26
+charset-normalizer==3.4.2
+chevron==0.14.0
+click==8.1.8
+frozendict==2.4.6
+genanki==0.13.1
+greenlet==3.2.3
+gTTS==2.5.4
+idna==3.10
+PyYAML==6.0.2
+requests==2.32.3
+SQLAlchemy==2.0.41
+typing_extensions==4.14.0
+urllib3==2.4.0
