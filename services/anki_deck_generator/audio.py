@@ -2,6 +2,8 @@ import os
 import gtts
 from datetime import datetime
 
+from domain.models import Deck
+
 AUDIO_DIR = 'anki_audio'
 AUDIO_FILENAME = "{}_{}"
 
@@ -27,5 +29,5 @@ class AudioGenerator:
 
         tts.save(self.path)
 
-
-
+    def batch_audio_generator(self, deck: Deck):
+        pass

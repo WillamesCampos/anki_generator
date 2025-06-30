@@ -73,13 +73,13 @@ media_files = []
 for term, translation, example, example_translation, notes in cards:
     audio_filename = f'{term.replace(" ", "_")}.mp3'
     audio_path = os.path.join(audio_dir, audio_filename)
-    
+
     tts = gTTS(term, lang='en', tld='com')  # inglês americano
     tts.save(audio_path)
     media_files.append(audio_path)
-    
+
     audio_tag = f'[sound:{audio_filename}]'
-    
+
     note = Note(
         model=model,
         fields=[term, translation, example, example_translation, notes, audio_tag]
