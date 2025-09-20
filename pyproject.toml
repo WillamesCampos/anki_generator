@@ -10,6 +10,9 @@ python = "^3.11"
 genanki = "^0.13.1"
 gtts = "^2.5.4"
 sqlalchemy = "^2.0.41"
+motor = "^3.7.1"
+pymongo = "^4.15.1"
+python-dotenv = "^1.1.1"
 
 
 [build-system]

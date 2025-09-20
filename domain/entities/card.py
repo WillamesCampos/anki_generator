@@ -28,10 +28,10 @@ class Card:
     Entidade Card representa um card individual do Anki.
     
     Atributos:
-    - id: Identificador único (UUID)
     - word: Objeto de valor Word (palavra em inglês)
     - translation: Objeto de valor Translation (tradução em português)
     - example: Objeto de valor Example (frase de exemplo)
+    - id: Identificador único (UUID)
     - audio_path: Caminho para arquivo de áudio (opcional)
     - context: Contexto que gerou este card
     - deck_id: ID do deck ao qual pertence
@@ -39,13 +39,15 @@ class Card:
     - updated_at: Data da última atualização
     """
     
-    # Identidade única da entidade
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    
-    # Objetos de valor que compõem o card
+    # Objetos de valor que compõem o card (obrigatórios)
     word: Word
     translation: Translation
     example: Example
+    
+    # Identidade única da entidade
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    
+    # Campos opcionais
     audio_path: Optional[AudioPath] = None
     
     # Metadados

@@ -24,8 +24,8 @@ class Deck:
     Entidade Deck representa uma coleção de cards do Anki.
     
     Atributos:
-    - id: Identificador único (UUID)
     - title: Título do deck
+    - id: Identificador único (UUID)
     - description: Descrição opcional do deck
     - cards: Lista de cards no deck
     - max_cards_per_generation: Máximo de cards por geração (padrão 10)
@@ -33,11 +33,13 @@ class Deck:
     - updated_at: Data da última atualização
     """
     
+    # Propriedades básicas (obrigatórias)
+    title: str
+    
     # Identidade única da entidade
     id: uuid.UUID = field(default_factory=uuid.uuid4)
     
-    # Propriedades básicas
-    title: str
+    # Campos opcionais
     description: str = ""
     
     # Cards do deck

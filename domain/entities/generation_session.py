@@ -35,9 +35,9 @@ class GenerationSession:
     Entidade GenerationSession controla uma sessão de geração de cards.
     
     Atributos:
-    - id: Identificador único da sessão
     - context: Contexto fornecido pelo usuário
     - deck_id: ID do deck associado
+    - id: Identificador único da sessão
     - status: Status atual da sessão
     - generated_cards: Cards gerados na sessão
     - max_cards: Máximo de cards a serem gerados
@@ -47,12 +47,12 @@ class GenerationSession:
     - error_message: Mensagem de erro (se aplicável)
     """
     
-    # Identidade única da entidade
-    id: uuid.UUID = field(default_factory=uuid.uuid4)
-    
-    # Propriedades da sessão
+    # Propriedades da sessão (obrigatórias)
     context: str
     deck_id: uuid.UUID
+    
+    # Identidade única da entidade
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
     
     # Status e controle
     status: GenerationStatus = GenerationStatus.PENDING
