@@ -2,6 +2,9 @@
 .tool-versions
 .env
 
+ai_persona
+ai_context
+
 poetry.lock
 
 anki_cards
