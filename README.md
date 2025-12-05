@@ -1,5 +1,5 @@
 <div align="center">
-    <img width="800" height="450" alt="Anki Generator Logo" src="https://github.com/user-attachments/assets/560c81d7-849d-41b8-a348-4dc08706628e" />
+    <img width="680" height="350" alt="Anki Generator Logo" src="https://github.com/user-attachments/assets/560c81d7-849d-41b8-a348-4dc08706628e" />
 </div>
 
 # 🎴 Anki Generator
