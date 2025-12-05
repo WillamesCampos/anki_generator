@@ -1,3 +1,7 @@
+<div align="center">
+    <img width="800" height="450" alt="Anki Generator Logo" src="https://github.com/user-attachments/assets/560c81d7-849d-41b8-a348-4dc08706628e" />
+</div>
+
 # 🎴 Anki Generator
 
 Sistema de geração automática de baralhos Anki utilizando Inteligência Artificial. O projeto recebe um contexto (texto) e gera automaticamente cards de vocabulário em inglês com traduções, exemplos e áudio de pronúncia, prontos para importação no Anki.
