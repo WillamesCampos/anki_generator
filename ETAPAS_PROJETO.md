@@ -62,10 +62,10 @@ Este documento descreve todas as etapas necessárias para implementar o sistema 
   - **Domain**: Entidades, Value Objects, Interfaces de Repositórios, Domain Services
   - **Application**: Use Cases, DTOs, Application Services
   - **Infrastructure**: Implementações de Repositórios, MongoDB, Serviços Externos (IA, Áudio)
-  - **Presentation**: Flask API, Controllers, Serializers
+  - **Presentation**: FastAPI, API, Controllers, Serializers
 
 ### RNF02 - Tecnologias
-- **Backend**: Python 3.11+, Flask
+- **Backend**: Python 3.11+, FastAPI
 - **Banco de Dados**: MongoDB (Motor para async)
 - **IA**: OpenAI API (ou alternativa)
 - **Áudio**: gTTS
