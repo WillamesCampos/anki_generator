@@ -5,3 +5,6 @@ db:
 	-e POSTGRES_DB=ankigen_db \
 	-e POSTGRES_USER=anki \
 	-d postgres:latest
+
+run:
+	poetry run python main.py

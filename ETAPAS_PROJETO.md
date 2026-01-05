@@ -132,7 +132,7 @@ anki_generator/
 **Objetivo**: Garantir que todas as dependências necessárias estão configuradas.
 
 **Tarefas**:
-- [ ] Adicionar Flask ao `pyproject.toml`
+- [ ] Adicionar FAST API ao `pyproject.toml`
 - [ ] Adicionar biblioteca de IA (openai ou alternativa)
 - [ ] Configurar variáveis de ambiente (`.env`)
 - [ ] Validar conexão MongoDB

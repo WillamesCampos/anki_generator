@@ -1,8 +1,18 @@
-from domain.models import AudioRef
-from domain.models import Card
-from domain.models import Deck
+import uvicorn
+from presentation.api.main import create_app
+from shared.config.settings import get_settings
 
-from services.anki_deck_generator.audio import AudioGenerator
-from services.anki_deck_generator.card_model import CardModel
-from services.anki_deck_generator.deck import Deck
-from services.anki_deck_generator.note import Note
+
+app = create_app()
+
+
+if __name__ == "__main__":
+    settings = get_settings()
+
+    uvicorn.run(
+        "main:app",
+        host=settings.app_host,
+        port=settings.app_port,
+        reload=settings.app_debug,
+        log_level="debug" if settings.app_debug else "info",
+    )
