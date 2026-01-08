@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from presentation.api.routes.health import router as health_router
 from presentation.api import exceptions as exc_handlers
-from shared.exceptions.exceptions import BaseAPIException, ValidationError, NotFoundError
+from shared.exceptions.exceptions import BaseAPIException, InternalServerError, ValidationError, NotFoundError
 
 
 def create_app() -> FastAPI:
@@ -26,7 +26,8 @@ def create_app() -> FastAPI:
     # Exception Handlers
     app.add_exception_handler(BaseAPIException, exc_handlers.base_exception_handler)
     app.add_exception_handler(ValidationError, exc_handlers.validation_exception_handler)
-    app.add_exception_handler(NotFoundError, exc_handlers.validation_exception_handler)
+    app.add_exception_handler(NotFoundError, exc_handlers.not_found_exception_handler)
+    app.add_exception_handler(InternalServerError, exc_handlers.internal_server_error_exception_handler)
 
     # Router Registration
     app.include_router(health_router)

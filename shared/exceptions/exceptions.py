@@ -6,15 +6,6 @@ class BaseAPIException(Exception):
         self.status_code = status_code
         super().__init__(self.message)
 
-    @property
-    def message(self) -> str:
-        return self._message
-
-    @property
-    def status_code(self) -> int:
-        return self._status_code
-
-
 class NotFoundError(BaseAPIException):
     """Exception when a resource is not found."""
     def __init__(self, message: str = "Resource not found."):
@@ -28,6 +19,6 @@ class ValidationError(BaseAPIException):
 
 
 class InternalServerError(BaseAPIException):
-    """Exception para quando ocorre um erro interno."""
-    def __init__(self, message: str = "Erro interno do servidor."):
+    """Exception when an internal server error occurs."""
+    def __init__(self, message: str = "Internal server error."):
         super().__init__(message, 500)
