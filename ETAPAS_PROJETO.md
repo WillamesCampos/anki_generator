@@ -1,5 +1,11 @@
 # Etapas do Projeto - Anki Generator
 
+> ⚠️ **OBSOLETO (desde a Sprint 0)**: este documento descreve um plano anterior (API Flask single-service, geração de vocabulário via OpenAI) que não reflete mais a arquitetura do projeto. A especificação técnica e o roadmap atuais vivem em:
+> - **[PROMPT_REFINADO.md](./PROMPT_REFINADO.md)** — regras de arquitetura mandatórias e decisões tomadas.
+> - **[PRD.md](./PRD.md)** — roadmap em sprints, da fundação até a última feature.
+>
+> Mantido apenas como referência histórica; não usar como guia de implementação.
+
 ## 📋 Visão Geral
 
 Este documento descreve todas as etapas necessárias para implementar o sistema de geração de baralhos Anki usando IA, seguindo os princípios de **Clean Architecture**.

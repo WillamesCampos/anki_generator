@@ -1,0 +1,112 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-anki_generator}
+      POSTGRES_USER: ${POSTGRES_USER:-anki_generator}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anki_generator}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-anki_generator}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ./django
+      dockerfile: Dockerfile
+    command: web
+    env_file: ./django/.env
+    environment:
+      POSTGRES_HOST: postgres
+      MONGODB_HOST: mongo
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/1
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./django:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  celery-worker:
+    build:
+      context: ./django
+      dockerfile: Dockerfile
+    command: celery-worker
+    env_file: ./django/.env
+    environment:
+      POSTGRES_HOST: postgres
+      MONGODB_HOST: mongo
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/1
+    volumes:
+      - ./django:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  document-generator:
+    build:
+      context: ./microservices/document-generator
+      dockerfile: Dockerfile
+    env_file: ./microservices/document-generator/.env
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./microservices/document-generator:/app
+      - document_generator_audio:/data/anki_audio
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
+  rabbitmq_data:
+  document_generator_audio:
