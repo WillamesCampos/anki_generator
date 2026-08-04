@@ -4,218 +4,128 @@
 
 # 🎴 Anki Generator
 
-Sistema de geração automática de baralhos Anki utilizando Inteligência Artificial. O projeto recebe um contexto (texto) e gera automaticamente cards de vocabulário em inglês com traduções, exemplos e áudio de pronúncia, prontos para importação no Anki.
+Plataforma de flashcards inspirada no Anki, com um agente de IA que dá feedback de estudo, sugere novos cards/decks, envia lembretes via WhatsApp e gera relatórios periódicos de desempenho em PDF.
 
-## 📋 Sobre o Projeto
+> A partir da **Sprint 0**, a arquitetura mudou drasticamente em relação às versões anteriores deste README: o projeto passou de um monólito FastAPI/Flask incompleto para Django como backend principal + microsserviços FastAPI satélites. Veja o porquê e o histórico completo das decisões em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
-O **Anki Generator** é uma API REST desenvolvida em Python que automatiza a criação de baralhos de estudo para o Anki. Utilizando IA para gerar palavras relevantes baseadas em um contexto fornecido, o sistema cria cards completos com:
+## 📖 Documentação de referência
 
-- **Palavra em inglês** (termo principal)
-- **Tradução em português**
-- **Exemplo de uso** (frase contextualizada)
-- **Tradução do exemplo**
-- **Áudio de pronúncia** (gerado automaticamente)
+Este README é só uma porta de entrada. As fontes de verdade do projeto são:
 
-Tudo isso é armazenado em MongoDB e pode ser exportado como arquivo `.apkg` para importação direta no Anki.
-
-## ✨ Funcionalidades
-
-- 🤖 **Geração via IA**: Gera palavras relevantes baseadas em contexto usando OpenAI
-- 🔊 **Áudio Automático**: Gera pronúncia de cada palavra usando gTTS
-- 🗄️ **Persistência**: Armazena decks, cards e sessões de geração no MongoDB
-- 🔍 **Detecção de Duplicatas**: Evita criar cards repetidos
-- ✅ **Validação de Qualidade**: Garante qualidade mínima dos cards gerados
-- 📦 **Exportação Anki**: Gera arquivo `.apkg` pronto para importação
-- 🎯 **Sessões de Geração**: Rastreia o processo de geração com status e histórico
+- **[PROMPT_REFINADO.md](./PROMPT_REFINADO.md)** — especificação técnica mandatória: regras de arquitetura, decisões já tomadas (`<decisoes_resolvidas>`) e ainda pendentes (`<decisoes_pendentes>`). Qualquer dúvida de "como isso deve ser implementado" começa aqui.
+- **[PRD.md](./PRD.md)** — roadmap do produto em sprints (checklist), da fundação até a última feature.
+- **[design_system/design-system.html](./design_system/design-system.html)** — fonte única de verdade visual (cores, tipografia, componentes) para todo o frontend.
+- **`openspec/changes/`** — propostas de arquitetura em formato spec-driven (proposal/design/specs/tasks), usadas para planejar e executar mudanças estruturais como a da Sprint 0.
 
 ## 🏗️ Arquitetura
 
-O projeto segue os princípios de **Clean Architecture**, organizando o código em camadas bem definidas:
-
 ```
-anki_generator/
-├── domain/              # Camada de Domínio
-│   ├── entities/        # Entidades de negócio (Card, Deck, GenerationSession)
-│   ├── value_objects/   # Objetos de valor (Word, Translation, Example, AudioPath)
-│   ├── repositories/    # Interfaces de repositórios
-│   └── services/        # Serviços de domínio (qualidade, duplicatas)
-│
-├── application/         # Camada de Aplicação
-│   ├── use_cases/      # Casos de uso (orquestração de lógica)
-│   ├── dto/            # Data Transfer Objects
-│   └── services/       # Serviços de aplicação
-│
-├── infrastructure/      # Camada de Infraestrutura
-│   ├── database/       # MongoDB connection e schemas
-│   ├── repositories/   # Implementações concretas dos repositórios
-│   └── external_services/  # Integrações (OpenAI, gTTS)
-│
-└── presentation/       # Camada de Apresentação
-    └── api/            # Flask API (routes, controllers, serializers)
+Cliente (SPA React, hospedada em S3)
+        │  REST /api/v1/...
+        ▼
+Django + DRF (django/core/ + django/apps/)  ──▶  PostgreSQL (auth/Permission/Group)
+        │                                   ──▶  MongoDB (decks/cards/estatísticas)
+        │  Celery (RabbitMQ broker, Redis result backend)
+        ▼
+Microsserviços FastAPI (microservices/)
+  ├─ document-generator  (relatórios PDF, exportação .apkg — já implementado)
+  ├─ ai-agent            (LangChain/LangGraph — Sprint 5)
+  └─ whatsapp-evolution   (Evolution API — Sprint 6)
 ```
 
-### Princípios Aplicados
+Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz — `django/` (o backend principal), `microservices/<nome>/` (cada microsserviço FastAPI, um por pasta) e `frontend/` (SPA React, Sprint 3). `docker-compose.yml` e `Makefile` ficam na raiz e orquestram todas elas.
 
-- **Dependency Rule**: Camadas externas dependem de camadas internas
-- **Separation of Concerns**: Cada camada tem responsabilidade específica
-- **Dependency Inversion**: Dependências apontam para abstrações (interfaces)
-- **Single Responsibility**: Cada classe tem uma única responsabilidade
+- **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
+- **Domínio de deck/card**: `django/apps/decks/` — entities, value objects e repositórios Mongo (via Motor), consolidados a partir do protótipo anterior.
+- **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
+- **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
+- **Deploy real**: VPS (Docker Compose) — não AWS. O único uso de AWS é o bucket S3 do frontend estático.
+- **Observabilidade**: logs estruturados → Prometheus/Grafana → node_exporter → exporter RabbitMQ/Celery (ordem de instrumentação já decidida, ver PROMPT_REFINADO.md).
 
-## 🛠️ Tecnologias
+## 🛠️ Stack
 
-### Backend
-- **Python 3.11+**: Linguagem principal
-- **Flask**: Framework web para API REST
-- **Motor**: Driver assíncrono para MongoDB
-- **genanki**: Biblioteca para criação de arquivos Anki (.apkg)
+| Camada | Tecnologia |
+|---|---|
+| Backend principal | Django 6 + Django REST Framework, Python 3.13, Poetry |
+| Microsserviços | FastAPI, `venv`/`requirements.txt` por serviço |
+| Banco relacional | PostgreSQL (auth/permissions do Django) |
+| Banco de domínio | MongoDB (decks/cards/estatísticas), via Motor |
+| Fila/assíncrono | Celery + RabbitMQ + Redis |
+| Frontend | React (SPA estática, hospedada em S3) |
+| Deploy | Docker Compose numa VPS |
 
-### Banco de Dados
-- **MongoDB**: Banco NoSQL para persistência
-
-### Serviços Externos
-- **OpenAI API**: Geração de palavras e conteúdo via IA
-- **gTTS (Google Text-to-Speech)**: Geração de áudio de pronúncia
-
-### Gerenciamento
-- **Poetry**: Gerenciamento de dependências
-
-## 🚀 Como Começar
+## 🚀 Como rodar localmente
 
 ### Pré-requisitos
+- Python 3.13 (via `pyenv`, já pinado em `.python-version`)
+- Poetry
+- Docker + Docker Compose
 
-- Python 3.11 ou superior
-- MongoDB (local ou remoto)
-- Conta OpenAI com API key
-- Poetry instalado
+### Passo a passo
 
-### Instalação
-
-1. **Clone o repositório**
+1. **Instale as dependências do Django**
    ```bash
-   git clone <repository-url>
-   cd anki_generator
+   poetry -C django install
    ```
 
-2. **Instale as dependências**
+2. **Configure as variáveis de ambiente**
    ```bash
-   poetry install
+   cp django/config.example.env django/.env
+   cp microservices/document-generator/config.example.env microservices/document-generator/.env
+   ```
+   Gere uma `DJANGO_SECRET_KEY` real e coloque no `django/.env`:
+   ```bash
+   poetry -C django run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
    ```
 
-3. **Configure as variáveis de ambiente**
+3. **Suba a stack completa** (Django, Postgres, MongoDB, Redis, RabbitMQ, Celery worker, document-generator)
    ```bash
-   cp config.example.env .env
+   make up
    ```
-   
-   Edite o arquivo `.env` com suas configurações:
-   - MongoDB connection string
-   - OpenAI API key
-   - Configurações da aplicação
+   Django fica em `http://localhost:8000`, o document-generator em `http://localhost:8001`.
 
-4. **Inicie o MongoDB** (se local)
+4. **Rode as migrations** (o container `web` já roda `migrate` automaticamente no entrypoint; para rodar manualmente fora do container)
    ```bash
-   docker-compose up -d
+   make migrate
    ```
 
-5. **Execute a aplicação**
+5. **Health checks**
    ```bash
-   poetry run python main.py
+   curl http://localhost:8000/api/v1/health/
+   curl http://localhost:8001/document-generator/v1/health/
    ```
 
-A API estará disponível em `http://localhost:8000`
+### Comandos úteis (`Makefile`)
 
-## 📚 Estrutura do Projeto
+| Comando | O que faz |
+|---|---|
+| `make up` / `make down` | Sobe/derruba a stack via Docker Compose |
+| `make logs` | Segue os logs de todos os serviços |
+| `make migrate` / `make makemigrations` | Migrations do Django |
+| `make run` | Roda o Django fora de container (`runserver`) |
 
-### Domain Layer
-Contém as regras de negócio puras, independentes de frameworks e bibliotecas:
+## 🧪 Testes
 
-- **Entities**: `Card`, `Deck`, `GenerationSession` - Entidades com identidade e regras de negócio
-- **Value Objects**: `Word`, `Translation`, `Example`, `AudioPath` - Objetos imutáveis que representam conceitos
-- **Repositories Interfaces**: Contratos para persistência (implementados na infrastructure)
-- **Domain Services**: Lógica de negócio que não pertence a uma entidade específica
-
-### Application Layer
-Orquestra os casos de uso e coordena as camadas:
-
-- **Use Cases**: Lógica de alto nível para cada funcionalidade (ex: `GenerateCardsUseCase`)
-- **DTOs**: Estruturas de dados para comunicação entre camadas
-- **Application Services**: Serviços que coordenam múltiplos use cases
-
-### Infrastructure Layer
-Implementa detalhes técnicos:
-
-- **Database**: Conexão MongoDB, schemas, índices
-- **Repositories**: Implementações concretas das interfaces do domain
-- **External Services**: Integrações com OpenAI, gTTS, etc.
-
-### Presentation Layer
-Interface com o mundo externo:
-
-- **API**: Endpoints Flask
-- **Controllers**: Lógica de controle HTTP
-- **Serializers**: Conversão entre DTOs e JSON
-
-## 🔌 Endpoints da API
-
-### Decks
-- `POST /decks` - Criar novo deck
-- `GET /decks/{id}` - Buscar deck por ID
-- `GET /decks/{id}/cards` - Listar cards de um deck
-- `POST /decks/{id}/generate` - Gerar cards para um deck
-- `POST /decks/{id}/export` - Exportar deck como .apkg
-
-### Sessões
-- `GET /sessions/{id}` - Consultar status de sessão de geração
-
-## 📖 Documentação Adicional
-
-Para entender em detalhes as etapas de implementação e decisões arquiteturais, consulte:
-
-- **[ETAPAS_PROJETO.md](./ETAPAS_PROJETO.md)**: Documento completo com todas as etapas de desenvolvimento, requisitos e guia de implementação
-
-## 🧪 Desenvolvimento
-
-### Estrutura de Testes
-```
-tests/
-├── unit/           # Testes unitários por camada
-├── integration/   # Testes de integração
-└── e2e/           # Testes end-to-end
-```
-
-### Executar Testes
 ```bash
-poetry run pytest
+# Teste de integração MongoDB (requer `make up` rodando, ao menos o serviço mongo)
+poetry -C django run python -m apps.decks.tests.test_mongodb_integration
 ```
-
-## 🔄 Fluxo de Geração de Cards
-
-1. **Cliente** faz `POST /decks/{id}/generate` com contexto
-2. **Controller** valida entrada e cria DTO
-3. **Use Case** orquestra:
-   - Busca deck no repositório
-   - Cria sessão de geração
-   - Chama serviço de IA para gerar palavras
-   - Para cada palavra:
-     - Cria card com value objects
-     - Verifica duplicatas
-     - Gera áudio
-     - Valida qualidade
-   - Salva cards no repositório
-   - Atualiza deck e sessão
-4. **Controller** retorna resposta serializada
 
 ## 🎯 Roadmap
 
-- [x] Estrutura base de Clean Architecture
-- [x] Entidades e Value Objects do domínio
-- [x] Repositórios MongoDB
-- [ ] Integração com OpenAI
-- [ ] Serviço de geração de áudio
-- [ ] Use Cases completos
-- [ ] API Flask
-- [ ] Exportação para Anki
-- [ ] Testes automatizados
-- [ ] Documentação da API (Swagger/OpenAPI)
+Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
+
+- [x] Sprint 0 — Fundação de arquitetura (Django + domínio consolidado + Docker Compose + microsserviço de documentos)
+- [ ] Sprint 1 — Autenticação & multi-tenant
+- [ ] Sprint 2 — Decks & Cards (domínio core)
+- [ ] Sprint 3 — Frontend base & home dashboard
+- [ ] Sprint 4 — Exportação Anki & microsserviço de documentos (integração completa)
+- [ ] Sprint 5 — Agente de IA (LangChain/LangGraph)
+- [ ] Sprint 6 — Notificações WhatsApp (Evolution API)
+- [ ] Sprint 7 — Relatório semanal por e-mail
+- [ ] Sprint 8 — Deploy real (VPS + S3 + domínio)
+- [ ] Sprint 9 — Observabilidade
+- [ ] Sprint 10 — Hardening & revisão final
 
 ## 🤝 Contribuindo
 
@@ -232,5 +142,4 @@ Este projeto é de uso pessoal/educacional.
 
 ---
 
-**Desenvolvido com foco em Clean Architecture e boas práticas de engenharia de software.**
-
+**Desenvolvido com foco em arquitetura orientada a eventos, multi-tenant e aprendizado guiado de cloud/DevOps.**

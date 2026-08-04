@@ -1,0 +1,6 @@
+fastapi[standard]==0.127.0
+uvicorn[standard]==0.40.0
+pydantic-settings==2.12.0
+genanki==0.13.1
+gTTS==2.5.4
+python-dotenv==1.1.1

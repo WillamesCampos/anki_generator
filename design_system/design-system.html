@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<!--
+    Ashley Design System — biblioteca viva de padrões
+    Gerado a partir de: refs/Ashley.html (tema "Ashley" / Ruizarch, by Nazar Miller — MillerDigitalDesign)
+    Todas as classes, animações, timings e tokens visuais abaixo são reutilizados
+    EXATAMENTE como definidos em refs/Ashley_files/style.css e refs/Ashley_files/main.js.
+    Nenhum estilo novo foi inventado; a única camada de CSS própria deste arquivo
+    é a "documentation shell" (marcada explicitamente mais abaixo), usada apenas
+    para estruturar a página de documentação (nav fixa, swatches, grade de specs).
+-->
+<html lang="pt-br" class="swup-enabled">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <!-- bootstrap grid css (mesmo arquivo do original) -->
+    <link rel="stylesheet" href="../refs/Ashley_files/bootstrap-grid.css">
+    <!-- font awesome css (mesmo arquivo do original) -->
+    <link rel="stylesheet" href="../refs/Ashley_files/font-awesome.min.css">
+    <!-- swiper css (mesmo arquivo do original) -->
+    <link rel="stylesheet" href="../refs/Ashley_files/swiper.min.css">
+    <!-- fancybox css (mesmo arquivo do original) -->
+    <link rel="stylesheet" href="../refs/Ashley_files/fancybox.min.css">
+    <!-- ashley scss (mesmo arquivo do original — fonte única de verdade dos tokens visuais) -->
+    <link rel="stylesheet" href="../refs/Ashley_files/style.css">
+
+    <title>Ashley — Design System</title>
+
+    <style>
+        /* =====================================================================
+           DOCUMENTATION SHELL — não faz parte do design system em si.
+           Contém apenas estrutura/posicionamento da própria página de docs
+           (nav fixa, grade de specs, swatches). Nenhuma cor, fonte ou espaçamento
+           aqui é inventada: toda vez que um valor visual é necessário (cor de
+           swatch, hover de link de navegação), o valor é copiado literalmente
+           de style.css (referência de linha indicada em comentário).
+           ===================================================================== */
+
+        /* nav fixa horizontal exigida pela documentação (não existe no site original) */
+        .ds-topnav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            white-space: nowrap;
+            background-color: rgba(0, 0, 0, 0.95); /* mesmo valor de .mil-frame-top em mobile, style.css:1234 */
+            -webkit-backdrop-filter: blur(8px);     /* mesmo valor de .mil-frame-top em mobile, style.css:1237 */
+            backdrop-filter: blur(8px);
+            border-bottom: solid 1px rgba(255, 255, 255, 0.1); /* style.css:1236 */
+        }
+        .ds-topnav .container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 30px;
+            overflow-x: auto;
+        }
+        .ds-topnav a {
+            padding: 20px 0;
+            flex-shrink: 0;
+        }
+        .ds-topnav a:hover,
+        .ds-topnav a.mil-active {
+            color: rgb(255, 152, 0); /* mesmo accent de .mil-breadcrumbs li a:hover, style.css:333 */
+        }
+        .ds-topnav-spacer {
+            height: 70px;
+        }
+
+        /* linha de especificação de tipografia (usa apenas flex + classes já existentes no restante da página) */
+        .ds-spec-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 30px;
+            padding: 30px 0;
+            border-bottom: solid 1px rgba(0, 0, 0, 0.1); /* mesmo valor de divisores claros, style.css:326 */
+        }
+        .ds-spec-row .ds-spec-preview {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+        .ds-spec-row .ds-spec-meta {
+            flex: 0 0 auto;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* swatches de cor — cada classe abaixo só copia o valor exato já documentado ao lado */
+        .ds-swatch {
+            width: 100%;
+            height: 90px;
+            border-radius: 4px;
+            position: relative;
+        }
+        .ds-swatch-black       { background-color: rgb(0, 0, 0); }              /* style.css:164 */
+        .ds-swatch-white       { background-color: rgb(255, 255, 255); border: solid 1px rgba(0,0,0,0.1); } /* style.css:444 */
+        .ds-swatch-accent      { background-color: rgb(255, 152, 0); }          /* style.css:593 */
+        .ds-swatch-dark-soft   { background-color: rgb(0,0,0); opacity: .5; }   /* rgba(0,0,0,0.5) — style.css:75 */
+        .ds-swatch-input-border{ background-color: rgb(0,0,0); opacity: .2; }  /* rgba(0,0,0,0.2) — style.css:688 */
+        .ds-swatch-divider     { background-color: rgb(0,0,0); opacity: .1; }  /* rgba(0,0,0,0.1) — style.css:326 */
+        .ds-swatch-blockquote  { background-color: rgb(0,0,0); opacity: .05; } /* rgba(0,0,0,0.05) — style.css:326 */
+        .ds-swatch-soft        { background-color: rgb(242, 242, 242); }       /* .mil-soft-bg — style.css:835 */
+        .ds-swatch-soft-2      { background-color: rgb(229, 229, 229); }       /* .mil-slider-nav.mil-soft — style.css:2814 */
+        .ds-swatch-muted       { background-color: rgb(255,255,255); opacity: .9; border: solid 1px rgba(0,0,0,.1); } /* .mil-muted — style.css:394 */
+        .ds-swatch-light-soft  { background-color: rgb(255,255,255); opacity: .4; border: solid 1px rgba(0,0,0,.1); } /* .mil-light-soft — style.css:402 */
+        .ds-swatch-dark-divider{ background-color: rgb(255,255,255); opacity: .1; border: solid 1px rgba(0,0,0,.1); } /* .mil-divider — style.css:474 */
+        .ds-swatch-placeholder { background-color: rgb(128, 128, 128); }        /* placeholder subscribe form — style.css:3073 */
+        .ds-swatch-glass {
+            background-color: rgba(0, 0, 0, 0.95);   /* style.css:1234 */
+            -webkit-backdrop-filter: blur(8px);        /* style.css:1237 */
+            backdrop-filter: blur(8px);
+            border: solid 1px rgba(255,255,255,.1);
+        }
+        .ds-label {
+            display: block;
+        }
+
+        /* grade de estados lado a lado (Componentes de UI) */
+        .ds-state-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        .ds-state-cell {
+            flex: 1 1 200px;
+        }
+        .ds-state-cell .ds-state-tag {
+            display: block;
+        }
+
+        /* moldura para demonstrar os paddings de seção sem alterar os valores reais */
+        .ds-frame-outline {
+            outline: dashed 1px rgba(0,0,0,0.2);
+            outline-offset: -1px;
+            padding: 30px;
+        }
+        .ds-frame-outline.mil-dark-bg {
+            outline-color: rgba(255,255,255,0.3);
+        }
+        .ds-frame-outline-inner {
+            padding: 30px;
+        }
+        /* bloco placeholder usado apenas nos diagramas de grid da seção 4 (Layout e Espaçamento) */
+        .ds-tile {
+            padding: 15px;
+        }
+
+        /* miniatura para a galeria de motion (não altera timings, apenas restringe a área visível) */
+        .ds-motion-card {
+            position: relative;
+            height: 220px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- wrapper -->
+    <div class="mil-wrapper" id="top">
+
+        <!-- cursor ball (mesmo comportamento do original: acompanha o mouse via main.js) -->
+        <div class="mil-ball">
+            <span class="mil-icon-1">
+                <svg viewBox="0 0 128 128">
+                    <path d="M106.1,41.9c-1.2-1.2-3.1-1.2-4.2,0c-1.2,1.2-1.2,3.1,0,4.2L116.8,61H11.2l14.9-14.9c1.2-1.2,1.2-3.1,0-4.2	c-1.2-1.2-3.1-1.2-4.2,0l-20,20c-1.2,1.2-1.2,3.1,0,4.2l20,20c0.6,0.6,1.4,0.9,2.1,0.9s1.5-0.3,2.1-0.9c1.2-1.2,1.2-3.1,0-4.2	L11.2,67h105.5l-14.9,14.9c-1.2,1.2-1.2,3.1,0,4.2c0.6,0.6,1.4,0.9,2.1,0.9s1.5-0.3,2.1-0.9l20-20c1.2-1.2,1.2-3.1,0-4.2L106.1,41.9	z"></path>
+                </svg>
+            </span>
+            <div class="mil-more-text">More</div>
+            <div class="mil-choose-text">Сhoose</div>
+        </div>
+
+        <!-- preloader (mesma animação e textos do original) -->
+        <div class="mil-preloader">
+            <div class="mil-preloader-animation">
+                <div class="mil-pos-abs mil-animation-1">
+                    <p class="mil-h3 mil-muted mil-thin">Pioneering</p>
+                    <p class="mil-h3 mil-muted">Creative</p>
+                    <p class="mil-h3 mil-muted mil-thin">Excellence</p>
+                </div>
+                <div class="mil-pos-abs mil-animation-2">
+                    <div class="mil-reveal-frame">
+                        <p class="mil-reveal-box"></p>
+                        <p class="mil-h3 mil-muted mil-thin">design-system</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- preloader end -->
+
+        <!-- scrollbar progress -->
+        <div class="mil-progress-track">
+            <div class="mil-progress" style="height: 0%;"></div>
+        </div>
+        <!-- scrollbar progress end -->
+
+        <!-- menu (mesma estrutura/classes do original; conteúdo do mega-menu adaptado para as seções deste documento) -->
+        <div class="mil-menu-frame">
+            <div class="mil-frame-top">
+                <a href="#top" class="mil-logo">A.</a>
+                <div class="mil-menu-btn">
+                    <span></span>
+                </div>
+            </div>
+            <div class="container">
+                <div class="mil-menu-content">
+                    <div class="row">
+                        <div class="col-xl-5">
+                            <nav class="mil-main-menu" id="swupMenu" data-swup="1">
+                                <ul>
+                                    <li class="mil-active"><a href="#hero">Hero</a></li>
+                                    <li><a href="#tipografia">Tipografia</a></li>
+                                    <li><a href="#cores-e-superficies">Cores e Superfícies</a></li>
+                                    <li><a href="#componentes">Componentes de UI</a></li>
+                                    <li><a href="#layout-e-espacamento">Layout e Espaçamento</a></li>
+                                    <li><a href="#motion-e-interacao">Motion e Interação</a></li>
+                                    <li><a href="#icones">Ícones</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+                        <div class="col-xl-7">
+                            <div class="mil-menu-right-frame">
+                                <div class="mil-animation-in">
+                                    <div class="mil-animation-frame">
+                                        <div class="mil-animation mil-position-1 mil-scale" data-value-1="2" data-value-2="2">
+                                            <div class="mil-dodecahedron">
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mil-menu-right">
+                                    <div class="row">
+                                        <div class="col-lg-8 mil-mb-60">
+                                            <h6 class="mil-muted mil-mb-30">Fonte</h6>
+                                            <ul class="mil-menu-list">
+                                                <li><a href="https://themeforest.net/user/millerdigitaldesign/portfolio?ref=MillerDigitalDesign" target="_blank" class="mil-light-soft">Tema Ashley — Nazar Miller (MillerDigitalDesign)</a></li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-lg-4 mil-mb-60">
+                                            <h6 class="mil-muted mil-mb-30">Assets</h6>
+                                            <ul class="mil-menu-list">
+                                                <li><a href="../refs/Ashley_files/style.css" class="mil-light-soft">style.css</a></li>
+                                                <li><a href="../refs/Ashley_files/main.js" class="mil-light-soft">main.js</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="mil-divider mil-mb-60"></div>
+                                    <div class="row justify-content-between">
+                                        <div class="col-lg-6 mil-mb-60">
+                                            <h6 class="mil-muted mil-mb-30">Tipografia</h6>
+                                            <p class="mil-light-soft">Outfit (Google Fonts) <span class="mil-no-wrap">100–900</span></p>
+                                        </div>
+                                        <div class="col-lg-6 mil-mb-60">
+                                            <h6 class="mil-muted mil-mb-30">Accent</h6>
+                                            <p class="mil-light-soft">rgb(255, 152, 0)</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- menu end -->
+
+        <!-- curtain -->
+        <div class="mil-curtain"></div>
+        <!-- curtain end -->
+
+        <!-- frame -->
+        <div class="mil-frame">
+            <div class="mil-frame-top">
+                <a href="#top" class="mil-logo">A.</a>
+                <div class="mil-menu-btn">
+                    <span></span>
+                </div>
+            </div>
+            <div class="mil-frame-bottom">
+                <div class="mil-current-page"><a href="#top">Design System</a></div>
+                <div class="mil-back-to-top">
+                    <a href="#top" class="mil-link mil-dark mil-arrow-place">
+                        <span>Back to top</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow">
+                            <path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- frame end -->
+
+        <!-- nav de documentação (novo elemento, exigido pela tarefa; não existe no tema original) -->
+        <nav class="ds-topnav">
+            <div class="container">
+                <a href="#hero" class="mil-upper mil-light">Hero</a>
+                <a href="#tipografia" class="mil-upper mil-light">Tipografia</a>
+                <a href="#cores-e-superficies" class="mil-upper mil-light">Cores</a>
+                <a href="#componentes" class="mil-upper mil-light">Componentes</a>
+                <a href="#layout-e-espacamento" class="mil-upper mil-light">Layout</a>
+                <a href="#motion-e-interacao" class="mil-upper mil-light">Motion</a>
+                <a href="#icones" class="mil-upper mil-light">Ícones</a>
+            </div>
+        </nav>
+        <div class="ds-topnav-spacer"></div>
+
+        <!-- content -->
+        <div class="mil-content">
+            <div id="swupMain" class="mil-main-transition" data-swup="0">
+
+                <!-- ============================================================
+                     SEÇÃO 0 — HERO (CLONE EXATO)
+                     Estrutura, classes, animações (dodecaedros mil-scale, gradiente,
+                     texto circular giratório, botões) idênticas ao banner original.
+                     Única alteração: os textos do H1/parágrafo/CTAs, para apresentar
+                     o Design System em vez do estúdio de design fictício.
+                     ============================================================ -->
+                <section class="mil-banner mil-dark-bg" id="hero">
+                    <div class="mi-invert-fix">
+                        <div class="mil-animation-frame">
+                            <div class="mil-animation mil-position-1 mil-scale" data-value-1="7" data-value-2="1.6">
+                                <div class="mil-dodecahedron">
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                </div>
+                            </div>
+                            <div class="mil-animation mil-position-2 mil-scale" data-value-1="4" data-value-2="1">
+                                <div class="mil-dodecahedron">
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                </div>
+                            </div>
+                            <div class="mil-animation mil-position-3 mil-scale" data-value-1="1.2" data-value-2=".1">
+                                <div class="mil-dodecahedron">
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mil-gradient"></div>
+
+                        <div class="container">
+                            <div class="mil-banner-content mil-up">
+
+                                <h1 class="mil-muted mil-mb-60">Crafting <span class="mil-thin">a Living</span><br> Design <span class="mil-thin">System</span></h1>
+                                <div class="row">
+                                    <div class="col-md-7 col-lg-5">
+                                        <p class="mil-light-soft mil-mb-60">Bem-vindo à linguagem visual do tema Ashley — a fonte única de verdade para cada cor, estilo tipográfico, componente e padrão de movimento usados no produto. Explore, copie e reutilize com confiança.</p>
+                                    </div>
+                                </div>
+
+                                <a href="#componentes" class="mil-button mil-arrow-place mil-btn-space">
+                                    <span>Ver componentes</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow">
+                                        <path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path>
+                                    </svg>
+                                </a>
+
+                                <a href="#tipografia" class="mil-link mil-muted mil-arrow-place">
+                                    <span>Ver tokens</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow">
+                                        <path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path>
+                                    </svg>
+                                </a>
+
+                                <div class="mil-circle-text">
+                                    <svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 300 300" enable-background="new 0 0 300 300" xml:space="preserve" class="mil-ct-svg mil-rotate" data-value="360">
+                                        <defs>
+                                            <path id="circlePath" d="M 150, 150 m -60, 0 a 60,60 0 0,1 120,0 a 60,60 0 0,1 -120,0 "></path>
+                                        </defs>
+                                        <circle cx="150" cy="100" r="75" fill="none"></circle>
+                                        <g>
+                                            <use xlink:href="#circlePath" fill="none"></use>
+                                            <text style="letter-spacing: 6.5px">
+                                                <textpath xlink:href="#circlePath">Scroll down - Scroll down - </textpath>
+                                            </text>
+                                        </g>
+                                    </svg>
+                                    <a href="#tipografia" class="mil-button mil-arrow-place mil-icon-button mil-arrow-down">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow">
+                                            <path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- hero end -->
+
+                <!-- ============================================================
+                     SEÇÃO 1 — TIPOGRAFIA
+                     Apenas estilos presentes no HTML de referência (Ashley.html):
+                     h1–h6 / .mil-h1–.mil-h6, .mil-thin, .mil-upper, parágrafo padrão,
+                     .mil-text-xl, .mil-text-lg, .mil-text-sm.
+                     ============================================================ -->
+                <section id="tipografia">
+                    <div class="container mil-p-120-30">
+
+                        <span class="mil-suptitle mil-suptitle-right mil-up">Escala tipográfica extraída de style.css — família única "Outfit", pesos 100 a 900.</span>
+
+                        <h2 class="mil-mb-60">Tipografia</h2>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Heading 1 — h1 / .mil-h1</span>
+                                <h1>Aa Bb Cc</h1>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">86px / 120%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Heading 2 — h2 / .mil-h2</span>
+                                <h2>Aa Bb Cc</h2>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">68px / 120%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Heading 3 — h3 / .mil-h3</span>
+                                <h3>Aa Bb Cc</h3>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">42px / 120%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Heading 4 — h4 / .mil-h4</span>
+                                <h4>Aa Bb Cc</h4>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">28px / 120%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Heading 5 — h5 / .mil-h5</span>
+                                <h5>Aa Bb Cc</h5>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">20px / 150%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Heading 6 — h6 / .mil-h6</span>
+                                <h6>Aa Bb Cc</h6>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">18px / 150%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Label / Overline — .mil-upper</span>
+                                <p class="mil-upper">Aa Bb Cc</p>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">12px / uppercase / ls 2px</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Paragraph (padrão do body)</span>
+                                <p>Ao harmonizar diferentes formações e um vasto conjunto de habilidades, unimos forças para criar soluções atraentes para nossos clientes.</p>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">16px / 150%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Regular L — .mil-text-xl</span>
+                                <p class="mil-text-xl">Esta agência criativa se destaca pelo talento excepcional e pela expertise da equipe.</p>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">22px / 180%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Regular M — .mil-text-lg</span>
+                                <p class="mil-text-lg">Texto de apoio um pouco maior que o parágrafo padrão.</p>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">18px / 170%</div>
+                        </div>
+
+                        <div class="ds-spec-row">
+                            <div class="ds-spec-preview">
+                                <span class="mil-upper mil-dark-soft mil-mb-10 ds-label">Regular S — .mil-text-sm</span>
+                                <p class="mil-text-sm">Texto pequeno, usado em legendas e observações.</p>
+                            </div>
+                            <div class="ds-spec-meta mil-upper mil-dark-soft">15px / 150%</div>
+                        </div>
+
+                        <p class="mil-text-sm mil-dark-soft">
+                            <span class="mil-accent">Nota:</span> os modificadores <code>.mil-thin</code> (font-weight 100) e
+                            <code>.mil-h1</code>–<code>.mil-h6</code> podem ser aplicados a qualquer tag de heading para
+                            desacoplar o tamanho visual do nível semântico — visto no Hero acima, onde trechos de texto
+                            alternam peso 500/100 dentro do mesmo <code>&lt;h1&gt;</code> para dar ritmo (ex.: "Crafting
+                            <span class="mil-thin">a Living</span>").
+                        </p>
+
+                    </div>
+                </section>
+                <!-- tipografia end -->
+
+                <!-- ============================================================
+                     SEÇÃO 2 — CORES E SUPERFÍCIES
+                     ============================================================ -->
+                <section class="mil-soft-bg" id="cores-e-superficies">
+                    <div class="container mil-p-120-120">
+
+                        <span class="mil-suptitle mil-suptitle-right mil-suptitle-dark mil-up">Paleta extraída literalmente de style.css — nenhum valor foi arredondado ou reinventado.</span>
+
+                        <h2 class="mil-mb-60">Cores <span class="mil-thin">e Superfícies</span></h2>
+
+                        <div class="row mil-mb-60">
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-black mil-mb-10"></div>
+                                <p class="mil-upper">Preto</p>
+                                <p class="mil-text-sm">rgb(0, 0, 0)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-white mil-mb-10"></div>
+                                <p class="mil-upper">Branco</p>
+                                <p class="mil-text-sm">rgb(255, 255, 255)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-accent mil-mb-10"></div>
+                                <p class="mil-upper">Accent (.mil-accent)</p>
+                                <p class="mil-text-sm">rgb(255, 152, 0)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-soft mil-mb-10"></div>
+                                <p class="mil-upper">Soft BG (.mil-soft-bg)</p>
+                                <p class="mil-text-sm">rgb(242, 242, 242)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-soft-2 mil-mb-10"></div>
+                                <p class="mil-upper">Soft Gray 2</p>
+                                <p class="mil-text-sm">rgb(229, 229, 229)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-dark-soft mil-mb-10"></div>
+                                <p class="mil-upper">Texto padrão (.mil-dark-soft)</p>
+                                <p class="mil-text-sm">rgba(0, 0, 0, 0.5)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-input-border mil-mb-10"></div>
+                                <p class="mil-upper">Borda de input</p>
+                                <p class="mil-text-sm">rgba(0, 0, 0, 0.2)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-divider mil-mb-10"></div>
+                                <p class="mil-upper">Divisor claro</p>
+                                <p class="mil-text-sm">rgba(0, 0, 0, 0.1)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-blockquote mil-mb-10"></div>
+                                <p class="mil-upper">Fundo blockquote</p>
+                                <p class="mil-text-sm">rgba(0, 0, 0, 0.05)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-3 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-placeholder mil-mb-10"></div>
+                                <p class="mil-upper">Placeholder (footer form)</p>
+                                <p class="mil-text-sm">rgb(128, 128, 128)</p>
+                            </div>
+                        </div>
+
+                        <h3 class="mil-mb-30">Superfícies escuras (.mil-dark-bg)</h3>
+                        <p class="mil-mb-30">
+                            As seções escuras (banner, serviços, footer) não usam uma cor de fundo fixa: a classe
+                            <code>.mil-dark-bg</code> aplica <code>backdrop-filter: invert(100%)</code> em um
+                            pseudo-elemento <code>::before</code>, invertendo o que está atrás dele — enquanto o
+                            conteúdo real fica em <code>.mi-invert-fix</code> (z-index acima do invert), preservando
+                            legibilidade. Dentro dessas seções, os textos usam <code>.mil-muted</code>
+                            (rgba(255,255,255,0.9), heading) e <code>.mil-light-soft</code>
+                            (rgba(255,255,255,0.4), parágrafo), e divisores usam rgba(255,255,255,0.1).
+                        </p>
+                        <div class="row mil-mb-60">
+                            <div class="col-md-4 col-lg-4 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-muted mil-mb-10"></div>
+                                <p class="mil-upper">.mil-muted (heading em fundo escuro)</p>
+                                <p class="mil-text-sm">rgba(255, 255, 255, 0.9)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-4 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-light-soft mil-mb-10"></div>
+                                <p class="mil-upper">.mil-light-soft (texto em fundo escuro)</p>
+                                <p class="mil-text-sm">rgba(255, 255, 255, 0.4)</p>
+                            </div>
+                            <div class="col-md-4 col-lg-4 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-dark-divider mil-mb-10"></div>
+                                <p class="mil-upper">.mil-divider (fundo escuro)</p>
+                                <p class="mil-text-sm">rgba(255, 255, 255, 0.1)</p>
+                            </div>
+                        </div>
+
+                        <h3 class="mil-mb-30">Glass / Blur</h3>
+                        <p class="mil-mb-30">
+                            A barra fixa <code>.mil-frame-top</code> (versão mobile, abaixo de 1200px) usa uma
+                            superfície de vidro: fundo semitransparente com desfoque.
+                        </p>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mil-mb-30">
+                                <div class="ds-swatch ds-swatch-glass mil-mb-10"></div>
+                                <p class="mil-upper">.mil-frame-top (mobile)</p>
+                                <p class="mil-text-sm">rgba(0,0,0,0.95) + blur(8px)</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+                <!-- cores e superficies end -->
+
+                <!-- ============================================================
+                     SEÇÃO 3 — COMPONENTES DE UI
+                     Apenas componentes presentes no HTML de referência.
+                     ============================================================ -->
+                <section id="componentes">
+                    <div class="container mil-p-120-60">
+
+                        <span class="mil-suptitle mil-suptitle-right mil-up">Estados reais dos componentes — hover, active/disabled e focus reproduzidos com as classes originais.</span>
+
+                        <h2 class="mil-mb-60">Componentes <span class="mil-thin">de UI</span></h2>
+
+                        <h4 class="mil-mb-30">Botão primário — .mil-button</h4>
+                        <div class="ds-state-grid mil-mb-60">
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">Default</span>
+                                <a href="#componentes" class="mil-button mil-arrow-place"><span>What we do</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </a>
+                            </div>
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">Hover (passe o mouse)</span>
+                                <a href="#componentes" class="mil-button mil-arrow-place"><span>What we do</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </a>
+                                <p class="mil-text-sm">transform: scale(1.015); filter: brightness(110%); ícone: scale(1.15) — 0.4s cubic-bezier(0,0,0.3642,1)</p>
+                            </div>
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">Ícone — .mil-icon-button-sm</span>
+                                <button type="button" class="mil-button mil-icon-button-sm mil-arrow-place">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Link com seta — .mil-link</h4>
+                        <div class="ds-state-grid mil-mb-60">
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">.mil-dark (sobre fundo claro)</span>
+                                <a href="#componentes" class="mil-link mil-dark mil-arrow-place"><span>View works</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </a>
+                            </div>
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">.mil-accent</span>
+                                <a href="#componentes" class="mil-link mil-accent mil-arrow-place"><span>Read more</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </a>
+                            </div>
+                            <div class="ds-state-cell mil-dark-bg">
+                                <div class="mi-invert-fix">
+                                    <span class="mil-upper mil-light ds-state-tag mil-mb-10">.mil-muted (sobre fundo escuro)</span>
+                                    <a href="#componentes" class="mil-link mil-muted mil-arrow-place"><span>What we do</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Slider nav — active / disabled (.swiper-button-disabled)</h4>
+                        <div class="ds-state-grid mil-mb-60">
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">Default / Hover</span>
+                                <div class="mil-slider-nav mil-soft">
+                                    <div class="mil-slider-arrow mil-prev mil-arrow-place" tabindex="0" role="button" aria-label="Previous slide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></div>
+                                    <div class="mil-slider-arrow mil-arrow-place" tabindex="0" role="button" aria-label="Next slide"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></div>
+                                </div>
+                            </div>
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">Disabled (swiper-button-disabled)</span>
+                                <div class="mil-slider-nav mil-soft">
+                                    <div class="mil-slider-arrow mil-prev mil-arrow-place swiper-button-disabled" tabindex="-1" role="button" aria-disabled="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Formulário — input</h4>
+                        <div class="ds-state-grid mil-mb-60">
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">Default / Focus (clique no campo)</span>
+                                <input type="text" placeholder="Enter your email">
+                            </div>
+                            <div class="ds-state-cell mil-dark-bg">
+                                <div class="mi-invert-fix">
+                                    <span class="mil-upper mil-light ds-state-tag mil-mb-10">.mil-subscribe-form (footer)</span>
+                                    <form class="mil-subscribe-form" onsubmit="return false;">
+                                        <input type="text" placeholder="Enter our email">
+                                        <button type="submit" class="mil-button mil-icon-button-sm mil-arrow-place"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mil-text-sm mil-dark-soft mil-mb-60">Não há estado de erro definido em style.css para inputs no HTML de referência — por isso não foi incluído (regra 4).</p>
+
+                        <h4 class="mil-mb-30">Card — service card (.mil-service-card-sm)</h4>
+                        <div class="row mil-services-grid m-0 mil-mb-60">
+                            <div class="col-md-6 col-lg-4 mil-services-grid-item p-0">
+                                <a href="#componentes" class="mil-service-card-sm">
+                                    <h5 class="mil-muted mil-mb-30">Branding and <br>Identity Design</h5>
+                                    <p class="mil-light-soft mil-mb-30">Nosso design studio é um time de profissionais focado em ajudar sua marca a crescer.</p>
+                                    <div class="mil-button mil-icon-button-sm mil-arrow-place"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mil-services-grid-item p-0">
+                                <a href="#componentes" class="mil-service-card-sm">
+                                    <h5 class="mil-muted mil-mb-30">Website Design <br>and Development</h5>
+                                    <p class="mil-light-soft mil-mb-30">Passe o mouse: o parágrafo revela e o botão ganha cor (hover, veja style.css:2349-2367).</p>
+                                    <div class="mil-button mil-icon-button-sm mil-arrow-place"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mil-services-grid-item p-0">
+                                <a href="#componentes" class="mil-service-card-sm">
+                                    <h5 class="mil-muted mil-mb-30">Creative Consulting <br>and Development</h5>
+                                    <p class="mil-light-soft mil-mb-30">Barra superior de destaque (::before) anima de 0% a 100% de largura no hover.</p>
+                                    <div class="mil-button mil-icon-button-sm mil-arrow-place"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Card — team card (.mil-team-card)</h4>
+                        <div class="row mil-mb-60">
+                            <div class="col-sm-6 col-lg-3 mil-mb-30">
+                                <div class="mil-team-card">
+                                    <img src="../refs/Ashley_files/1(1).jpg" alt="Team member">
+                                    <div class="mil-description">
+                                        <div class="mil-secrc-text">
+                                            <h5 class="mil-muted mil-mb-5"><a href="#componentes">Anna Oldman</a></h5>
+                                            <p class="mil-link mil-light-soft mil-mb-10">Art Director</p>
+                                            <ul class="mil-social-icons mil-center">
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-behance"></i></a></li>
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-dribbble"></i></a></li>
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-twitter"></i></a></li>
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-github"></i></a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6 col-lg-3 mil-mb-30">
+                                <div class="mil-team-card">
+                                    <img src="../refs/Ashley_files/3.jpg" alt="Team member">
+                                    <div class="mil-description">
+                                        <div class="mil-secrc-text">
+                                            <h5 class="mil-muted mil-mb-5"><a href="#componentes">Oscar Freeman</a></h5>
+                                            <p class="mil-link mil-light-soft mil-mb-10">Frontend Dev</p>
+                                            <ul class="mil-social-icons mil-center">
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-behance"></i></a></li>
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-dribbble"></i></a></li>
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-twitter"></i></a></li>
+                                                <li><a href="#componentes" class="social-icon"><i class="fab fa-github"></i></a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Card — blog card (.mil-blog-card)</h4>
+                        <div class="row mil-mb-30">
+                            <div class="col-lg-6">
+                                <a href="#componentes" class="mil-blog-card mil-mb-60">
+                                    <div class="mil-cover-frame">
+                                        <img src="../refs/Ashley_files/1(2).jpg" alt="cover">
+                                    </div>
+                                    <div class="mil-post-descr">
+                                        <div class="mil-labels mil-mb-30">
+                                            <div class="mil-label mil-upper mil-accent">TECHNOLOGY</div>
+                                            <div class="mil-label mil-upper">may 24 2023</div>
+                                        </div>
+                                        <h4 class="mil-mb-30">How to Become a Graphic Designer in 10 Simple Steps</h4>
+                                        <p class="mil-post-text mil-mb-30">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eius sequi commodi dignissimos optio, beatae, eos necessitatibus nisi.</p>
+                                        <div class="mil-link mil-dark mil-arrow-place">
+                                            <span>Read more</span>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+                <!-- componentes end -->
+
+                <!-- ============================================================
+                     SEÇÃO 4 — LAYOUT E ESPAÇAMENTO
+                     ============================================================ -->
+                <section class="mil-soft-bg" id="layout-e-espacamento">
+                    <div class="container mil-p-120-120">
+
+                        <span class="mil-suptitle mil-suptitle-right mil-suptitle-dark mil-up">Grid Bootstrap (container/row/col) + escala de espaçamento .mil-p-*/.mil-mb-* do tema.</span>
+
+                        <h2 class="mil-mb-60">Layout <span class="mil-thin">e Espaçamento</span></h2>
+
+                        <h4 class="mil-mb-30">Escala de espaçamento (padding de seção)</h4>
+                        <div class="row mil-mb-60">
+                            <div class="col-lg-3 mil-mb-30"><p class="mil-upper">.mil-p-120-120</p><p class="mil-text-sm">120px topo/base · 120px laterais</p></div>
+                            <div class="col-lg-3 mil-mb-30"><p class="mil-upper">.mil-p-120-60</p><p class="mil-text-sm">120px topo/base · 60px laterais</p></div>
+                            <div class="col-lg-3 mil-mb-30"><p class="mil-upper">.mil-p-120-30</p><p class="mil-text-sm">120px topo/base · 30px laterais</p></div>
+                            <div class="col-lg-3 mil-mb-30"><p class="mil-upper">.mil-p-120-0</p><p class="mil-text-sm">120px topo/base · sem laterais</p></div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Padrão 1 — Hero (container > banner-content > row/col)</h4>
+                        <div class="ds-frame-outline mil-mb-60">
+                            <div class="row">
+                                <div class="col-12 col-md-7 col-lg-5 mil-mb-15"><div class="mil-soft-bg ds-tile mil-text-sm mil-center">h1 + parágrafo (col-md-7 col-lg-5)</div></div>
+                            </div>
+                            <p class="mil-text-sm">1 coluna estreita para o texto de apoio; CTAs fora do row, alinhados ao container cheio.</p>
+                        </div>
+
+                        <h4 class="mil-mb-30">Padrão 2 — Grade de cards de serviço (4 colunas com bordas compartilhadas)</h4>
+                        <div class="ds-frame-outline mil-dark-bg mil-mb-60">
+                            <div class="mi-invert-fix ds-frame-outline-inner">
+                                <div class="row mil-services-grid m-0">
+                                    <div class="col-md-6 col-lg-3 mil-services-grid-item p-0"><p class="mil-light-soft ds-tile mil-text-sm mil-center">col-lg-3</p></div>
+                                    <div class="col-md-6 col-lg-3 mil-services-grid-item p-0"><p class="mil-light-soft ds-tile mil-text-sm mil-center">col-lg-3</p></div>
+                                    <div class="col-md-6 col-lg-3 mil-services-grid-item p-0"><p class="mil-light-soft ds-tile mil-text-sm mil-center">col-lg-3</p></div>
+                                    <div class="col-md-6 col-lg-3 mil-services-grid-item p-0"><p class="mil-light-soft ds-tile mil-text-sm mil-center">col-lg-3</p></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mil-text-sm mil-dark-soft mil-mb-60">
+                            <code>.mil-services-grid</code> desenha uma borda superior (rgba(255,255,255,0.1)) e cada
+                            <code>.mil-services-grid-item</code> ganha borda direita — em ≤992px vira 2 colunas com
+                            borda inferior; em ≤768px vira 1 coluna.
+                        </p>
+
+                        <h4 class="mil-mb-30">Padrão 3 — Layout dividido (conteúdo + imagem, About)</h4>
+                        <div class="ds-frame-outline">
+                            <div class="row justify-content-between align-items-center">
+                                <div class="col-lg-6 col-xl-5 mil-mb-15"><div class="mil-soft-bg ds-tile mil-text-sm mil-center">Texto (col-lg-6 col-xl-5)</div></div>
+                                <div class="col-lg-5 mil-mb-15"><div class="mil-soft-bg ds-tile mil-text-sm mil-center">Imagem com padding-bottom 160% (col-lg-5)</div></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+                <!-- layout e espacamento end -->
+
+                <!-- ============================================================
+                     SEÇÃO 5 — MOTION E INTERAÇÃO
+                     ============================================================ -->
+                <section id="motion-e-interacao">
+                    <div class="container mil-p-120-60">
+
+                        <span class="mil-suptitle mil-suptitle-right mil-up">Toda animação abaixo usa exatamente os mesmos seletores, durações e easings de main.js / style.css.</span>
+
+                        <h2 class="mil-mb-60">Motion <span class="mil-thin">e Interação</span></h2>
+
+                        <h4 class="mil-mb-15">Scroll reveal — .mil-up</h4>
+                        <p class="mil-mb-30">
+                            <code>main.js</code> aplica <code>gsap.fromTo(".mil-up", {opacity:0, y:40, scale:.98}, {opacity:1, y:0, scale:1, duration:.4, ease:'sine'})</code>
+                            disparado por <code>ScrollTrigger</code> (<code>toggleActions: 'play none none reverse'</code>).
+                            Role a página para ver cada bloco desta própria página revelar-se com este exato comportamento —
+                            todos os títulos e parágrafos aqui usam a classe <code>.mil-up</code>.
+                        </p>
+
+                        <h4 class="mil-mb-15">Scale on scroll — .mil-scale</h4>
+                        <p class="mil-mb-30">
+                            <code>data-value-1</code>/<code>data-value-2</code> definem a escala inicial/final, interpolada
+                            (<code>scrub: true</code>) conforme o scroll. Usado nos poliedros decorativos do Hero acima.
+                        </p>
+
+                        <h4 class="mil-mb-15">Rotate on scroll — .mil-rotate</h4>
+                        <p class="mil-mb-30">
+                            <code>data-value</code> define a rotação final em graus, também com <code>scrub: true</code>.
+                            Usado no texto circular "Scroll down" do Hero.
+                        </p>
+
+                        <h4 class="mil-mb-30">Galeria de Motion (hover para interagir)</h4>
+                        <div class="row mil-mb-60">
+                            <div class="col-md-4 mil-mb-30">
+                                <div class="ds-motion-card mil-soft-bg">
+                                    <a href="#motion-e-interacao" class="mil-button mil-arrow-place"><span>Hover</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                    </a>
+                                </div>
+                                <p class="mil-text-sm mil-center">Botão: scale(1.015) + brightness(110%)</p>
+                            </div>
+                            <div class="col-md-4 mil-mb-30">
+                                <div class="ds-motion-card mil-dark-bg">
+                                    <div class="mi-invert-fix">
+                                        <div class="mil-animation-frame">
+                                            <div class="mil-animation mil-position-1 mil-scale" data-value-1="1" data-value-2="1.6">
+                                                <div class="mil-dodecahedron">
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                    <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mil-text-sm mil-center">Dodecaedro: rotate 100s infinite linear (CSS) + scale no scroll (JS)</p>
+                            </div>
+                            <div class="col-md-4 mil-mb-30">
+                                <div class="ds-motion-card mil-soft-bg">
+                                    <div class="mil-slider-nav">
+                                        <a href="#motion-e-interacao" class="mil-slider-arrow mil-arrow-place">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                        </a>
+                                    </div>
+                                </div>
+                                <p class="mil-text-sm mil-center">Slider arrow: hover scale(1.15)</p>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-15">Menu (abra pelo ícone hamburger no canto superior)</h4>
+                        <p>
+                            O botão <code>.mil-menu-btn</code> transforma as 3 barras em "X" e o overlay
+                            <code>.mil-menu-frame</code> desliza para dentro da tela — mesma transição do tema original,
+                            controlada por <code>main.js</code>.
+                        </p>
+
+                    </div>
+                </section>
+                <!-- motion e interacao end -->
+
+                <!-- ============================================================
+                     SEÇÃO 6 — ÍCONES
+                     Sistema de ícones do HTML de referência: Font Awesome (redes sociais)
+                     + SVG inline customizado (seta .mil-arrow, usado em botões/links).
+                     ============================================================ -->
+                <section class="mil-soft-bg" id="icones">
+                    <div class="container mil-p-120-120">
+
+                        <span class="mil-suptitle mil-suptitle-right mil-suptitle-dark mil-up">Dois sistemas de ícone coexistem: Font Awesome (redes sociais) e SVG customizado (seta de interação).</span>
+
+                        <h2 class="mil-mb-60">Ícones</h2>
+
+                        <h4 class="mil-mb-30">SVG customizado — .mil-arrow</h4>
+                        <p class="mil-mb-30">Usado dentro de <code>.mil-button</code>/<code>.mil-link</code>. A cor do <code>path</code> herda do contexto (accent em fundo escuro/claro, preto em <code>.mil-icon-button-sm</code>).</p>
+                        <div class="ds-state-grid mil-mb-60">
+                            <div class="ds-state-cell">
+                                <a href="#icones" class="mil-button mil-arrow-place mil-icon-button">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </a>
+                                <p class="mil-text-sm">40px — .mil-button svg (accent sobre preto)</p>
+                            </div>
+                            <div class="ds-state-cell mil-dark-bg">
+                                <div class="mi-invert-fix">
+                                    <a href="#icones" class="mil-link mil-muted mil-arrow-place"><span>&nbsp;</span>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                    </a>
+                                    <p class="mil-text-sm mil-light-soft">40px — .mil-link svg (branco sobre fundo escuro)</p>
+                                </div>
+                            </div>
+                            <div class="ds-state-cell">
+                                <button type="button" class="mil-button mil-icon-button-sm mil-arrow-place">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg>
+                                </button>
+                                <p class="mil-text-sm">40px — .mil-icon-button-sm svg (preto sobre accent)</p>
+                            </div>
+                        </div>
+
+                        <h4 class="mil-mb-30">Font Awesome — .social-icon / .mil-social-icons</h4>
+                        <p class="mil-mb-30">Herda <code>color: currentColor</code> do contexto; hover sempre vai para o accent (rgb(255,152,0)).</p>
+                        <div class="ds-state-grid">
+                            <div class="ds-state-cell">
+                                <span class="mil-upper mil-dark-soft ds-state-tag mil-mb-10">.mil-social-icons.mil-dark (18px)</span>
+                                <ul class="mil-social-icons mil-dark">
+                                    <li><a href="#icones" class="social-icon"><i class="fab fa-behance"></i></a></li>
+                                    <li><a href="#icones" class="social-icon"><i class="fab fa-dribbble"></i></a></li>
+                                    <li><a href="#icones" class="social-icon"><i class="fab fa-twitter"></i></a></li>
+                                    <li><a href="#icones" class="social-icon"><i class="fab fa-github"></i></a></li>
+                                </ul>
+                            </div>
+                            <div class="ds-state-cell mil-dark-bg">
+                                <div class="mi-invert-fix">
+                                    <span class="mil-upper mil-light ds-state-tag mil-mb-10">.mil-social-icons (sobre fundo escuro)</span>
+                                    <ul class="mil-social-icons">
+                                        <li><a href="#icones" class="social-icon"><i class="fab fa-behance"></i></a></li>
+                                        <li><a href="#icones" class="social-icon"><i class="fab fa-dribbble"></i></a></li>
+                                        <li><a href="#icones" class="social-icon"><i class="fab fa-twitter"></i></a></li>
+                                        <li><a href="#icones" class="social-icon"><i class="fab fa-github"></i></a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+                <!-- icones end -->
+
+                <!-- footer (mesma estrutura/classes do original, demonstrando subscribe form + footer nav + social icons) -->
+                <footer class="mil-dark-bg">
+                    <div class="mi-invert-fix">
+                        <div class="container mil-p-120-60">
+                            <div class="row justify-content-between">
+                                <div class="col-md-4 col-lg-4 mil-mb-60">
+                                    <div class="mil-muted mil-logo mil-mb-30">Ashley.</div>
+                                    <p class="mil-light-soft mil-mb-30">Design System — construído com o mesmo CSS/JS do tema original.</p>
+                                    <form class="mil-subscribe-form" onsubmit="return false;">
+                                        <input type="text" placeholder="Enter our email">
+                                        <button type="submit" class="mil-button mil-icon-button-sm mil-arrow-place"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow"><path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path></svg></button>
+                                    </form>
+                                </div>
+                                <div class="col-md-7 col-lg-6">
+                                    <div class="row justify-content-end">
+                                        <div class="col-md-6 col-lg-7">
+                                            <nav class="mil-footer-menu mil-mb-60">
+                                                <ul>
+                                                    <li class="mil-active"><a href="#hero">Hero</a></li>
+                                                    <li><a href="#tipografia">Tipografia</a></li>
+                                                    <li><a href="#cores-e-superficies">Cores</a></li>
+                                                    <li><a href="#componentes">Componentes</a></li>
+                                                    <li><a href="#motion-e-interacao">Motion</a></li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                        <div class="col-md-6 col-lg-5">
+                                            <ul class="mil-menu-list mil-mb-60">
+                                                <li><a href="../refs/Ashley_files/style.css" class="mil-light-soft">style.css</a></li>
+                                                <li><a href="../refs/Ashley_files/main.js" class="mil-light-soft">main.js</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row justify-content-between flex-sm-row-reverse">
+                                <div class="col-md-4 col-lg-6 mil-mb-60">
+                                    <div class="mil-vert-between">
+                                        <div class="mil-mb-30">
+                                            <ul class="mil-social-icons">
+                                                <li><a href="#icones" target="_blank" class="social-icon"><i class="fab fa-behance"></i></a></li>
+                                                <li><a href="#icones" target="_blank" class="social-icon"><i class="fab fa-dribbble"></i></a></li>
+                                                <li><a href="#icones" target="_blank" class="social-icon"><i class="fab fa-twitter"></i></a></li>
+                                                <li><a href="#icones" target="_blank" class="social-icon"><i class="fab fa-github"></i></a></li>
+                                            </ul>
+                                        </div>
+                                        <p class="mil-light-soft">Tema "Ashley" © Nazar Miller (MillerDigitalDesign). Documentação gerada para uso interno do projeto.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+                <!-- footer end -->
+
+            </div>
+        </div>
+        <!-- content end -->
+
+        <!-- hidden elements (usados por main.js como referência de template) -->
+        <div class="mil-hidden-elements">
+            <div class="mil-dodecahedron">
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+                <div class="mil-pentagon"><div></div><div></div><div></div><div></div><div></div></div>
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="mil-arrow">
+                <path d="M 14 5.3417969 C 13.744125 5.3417969 13.487969 5.4412187 13.292969 5.6367188 L 13.207031 5.7226562 C 12.816031 6.1136563 12.816031 6.7467188 13.207031 7.1367188 L 17.070312 11 L 4 11 C 3.448 11 3 11.448 3 12 C 3 12.552 3.448 13 4 13 L 17.070312 13 L 13.207031 16.863281 C 12.816031 17.254281 12.816031 17.887344 13.207031 18.277344 L 13.292969 18.363281 C 13.683969 18.754281 14.317031 18.754281 14.707031 18.363281 L 20.363281 12.707031 C 20.754281 12.316031 20.754281 11.682969 20.363281 11.292969 L 14.707031 5.6367188 C 14.511531 5.4412187 14.255875 5.3417969 14 5.3417969 z"></path>
+            </svg>
+        </div>
+        <!-- hidden elements end -->
+
+    </div>
+    <!-- wrapper end -->
+
+    <!-- jQuery js -->
+    <script src="../refs/Ashley_files/jquery.min.js"></script>
+    <!-- swup js -->
+    <script src="../refs/Ashley_files/swup.min.js"></script>
+    <!-- swiper js -->
+    <script src="../refs/Ashley_files/swiper.min.js"></script>
+    <!-- fancybox js -->
+    <script src="../refs/Ashley_files/fancybox.min.js"></script>
+    <!-- gsap js -->
+    <script src="../refs/Ashley_files/gsap.min.js"></script>
+    <!-- scroll smoother -->
+    <script src="../refs/Ashley_files/smooth-scroll.js"></script>
+    <!-- scroll trigger js -->
+    <script src="../refs/Ashley_files/ScrollTrigger.min.js"></script>
+    <!-- scroll to js -->
+    <script src="../refs/Ashley_files/ScrollTo.min.js"></script>
+    <!-- ashley js -->
+    <script src="../refs/Ashley_files/main.js"></script>
+
+</body>
+</html>

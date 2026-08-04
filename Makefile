@@ -1,10 +1,17 @@
-db:
-	docker run --name ankigen_db \
-	-p 5432:5432 \
-	-e POSTGRES_PASSWORD=ankigenerator \
-	-e POSTGRES_DB=ankigen_db \
-	-e POSTGRES_USER=anki \
-	-d postgres:latest
+up:
+	docker compose up -d
+
+down:
+	docker compose down
+
+logs:
+	docker compose logs -f
+
+migrate:
+	poetry -C django run python manage.py migrate
+
+makemigrations:
+	poetry -C django run python manage.py makemigrations
 
 run:
-	poetry run python main.py
+	poetry -C django run python manage.py runserver

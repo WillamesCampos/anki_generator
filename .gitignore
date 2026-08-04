@@ -1,6 +1,11 @@
 .vscode
 .tool-versions
+.python-version
 .env
+
+__pycache__/
+*.pyc
+.pytest_cache/
 
 ai_persona
 ai_context
@@ -11,3 +16,6 @@ anki_cards
 anki_audio
 
 tasks.txt
+
+.claude
+openspec
