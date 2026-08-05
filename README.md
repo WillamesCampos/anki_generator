@@ -36,6 +36,7 @@ Microsserviços FastAPI (microservices/)
 Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz — `django/` (o backend principal), `microservices/<nome>/` (cada microsserviço FastAPI, um por pasta) e `frontend/` (SPA React, Sprint 3). `docker-compose.yml` e `Makefile` ficam na raiz e orquestram todas elas.
 
 - **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
+- **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
 - **Domínio de deck/card**: `django/apps/decks/` — entities, value objects e repositórios Mongo (via Motor), consolidados a partir do protótipo anterior.
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
 - **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
@@ -47,6 +48,8 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | Camada | Tecnologia |
 |---|---|
 | Backend principal | Django 6 + Django REST Framework, Python 3.13, Poetry |
+| Autenticação | JWT (`djangorestframework-simplejwt`) + Google OAuth (`django-allauth` + `dj-rest-auth`) |
+| Testes | pytest + pytest-django |
 | Microsserviços | FastAPI, `venv`/`requirements.txt` por serviço |
 | Banco relacional | PostgreSQL (auth/permissions do Django) |
 | Banco de domínio | MongoDB (decks/cards/estatísticas), via Motor |
@@ -77,6 +80,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
    ```bash
    poetry -C django run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
    ```
+   Pra login com Google funcionar de ponta a ponta, preencha também `GOOGLE_OAUTH_CLIENT_ID`/`GOOGLE_OAUTH_CLIENT_SECRET` no `django/.env` com credenciais reais de um projeto OAuth no [Google Cloud Console](https://console.cloud.google.com/) — sem isso, o restante do backend funciona normalmente, só o endpoint `/api/v1/auth/google/` não completa o handshake.
 
 3. **Suba a stack completa** (Django, Postgres, MongoDB, Redis, RabbitMQ, Celery worker, document-generator)
    ```bash
@@ -107,7 +111,10 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 ## 🧪 Testes
 
 ```bash
-# Teste de integração MongoDB (requer `make up` rodando, ao menos o serviço mongo)
+# Suíte pytest (auth, multi-tenant, auditoria, rate limiting — 12 testes, requer Postgres + Redis rodando)
+poetry -C django run pytest apps/accounts
+
+# Teste de integração MongoDB (script standalone, requer `make up` rodando, ao menos o serviço mongo)
 poetry -C django run python -m apps.decks.tests.test_mongodb_integration
 ```
 
@@ -116,7 +123,7 @@ poetry -C django run python -m apps.decks.tests.test_mongodb_integration
 Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 
 - [x] Sprint 0 — Fundação de arquitetura (Django + domínio consolidado + Docker Compose + microsserviço de documentos)
-- [ ] Sprint 1 — Autenticação & multi-tenant
+- [x] Sprint 1 — Autenticação & multi-tenant
 - [ ] Sprint 2 — Decks & Cards (domínio core)
 - [ ] Sprint 3 — Frontend base & home dashboard
 - [ ] Sprint 4 — Exportação Anki & microsserviço de documentos (integração completa)
