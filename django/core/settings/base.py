@@ -8,6 +8,7 @@ inicialização do Django.
 """
 
 import os
+from datetime import timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -30,8 +31,24 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",  # exigido pelo allauth
     "rest_framework",
+    "rest_framework_simplejwt",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "dj_rest_auth",
+    "dj_rest_auth.registration",
+    "apps.accounts",
     "apps.decks",
+]
+
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 MIDDLEWARE = [
@@ -40,6 +57,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -80,6 +98,10 @@ DATABASES = {
     }
 }
 
+# `<regra_obrigatoria id="model-usuario">`: reaproveita o model nativo do
+# Django, com email como chave única — ver apps/accounts/models.py.
+AUTH_USER_MODEL = "accounts.User"
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -100,11 +122,60 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
-    # `<regra_obrigatoria id="rate-limiting-circuit-breaker">`: taxa decidida é
-    # 3 req/s por usuário/cliente (ver <decisoes_resolvidas> em
-    # PROMPT_REFINADO.md). Implementação real (throttle classes + testes) fica
-    # para a Sprint 1 (autenticação/multi-tenant) — só registrando aqui a
-    # decisão, conforme tasks.md tarefa 2.6.
+    # `<decisao_resolvida id="...">` (Sprint 1, D1 em design.md): autenticação
+    # via JWT, não sessão — a SPA (S3) fica em origem separada da API.
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    # `<regra_obrigatoria id="rate-limiting-circuit-breaker">`: 3 req/s por
+    # usuário/cliente, usando o backend de cache Redis já configurado
+    # (CACHES, mais abaixo neste arquivo).
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.UserRateThrottle",
+        "rest_framework.throttling.AnonRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": "3/second",
+        "anon": "3/second",
+    },
+}
+
+# Access token curto + refresh token mais longo, com rotação a cada uso —
+# ver D1 em design.md desta sprint. A revogação (blocklist no Redis) é feita
+# em apps/accounts/tokens.py, chamada explicitamente no logout.
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
+
+# `USE_JWT=True` faz o dj-rest-auth delegar a emissão de token pro simplejwt
+# em vez do TokenAuthentication padrão do DRF (um único token sem expiração).
+# `JWT_AUTH_HTTPONLY=False` devolve o refresh token no corpo da resposta em
+# vez de um cookie httponly — a SPA (origem separada, sem cookies) gerencia
+# os tokens ela mesma.
+REST_AUTH = {
+    "USE_JWT": True,
+    "JWT_AUTH_HTTPONLY": False,
+    # Sem `rest_framework.authtoken`: autenticação é só JWT, sem o token
+    # legado de sessão única do DRF.
+    "TOKEN_MODEL": None,
+}
+
+# allauth: login apenas via Google por enquanto (sem cadastro local por
+# email/senha — fora do escopo desta sprint).
+ACCOUNT_EMAIL_VERIFICATION = "none"
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APP": {
+            "client_id": os.environ.get("GOOGLE_OAUTH_CLIENT_ID", ""),
+            "secret": os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", ""),
+            "key": "",
+        },
+        "SCOPE": ["profile", "email"],
+    }
 }
 
 # `<ponto_critico id="idempotencia-revisao">`: retry exponencial, DLQ e rate

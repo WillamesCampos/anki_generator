@@ -97,6 +97,7 @@ criaremos fluxo de deploy baseado em tags via github actions.
   nome agora.
 - Também temos que colocar um swagger no Django, igual o document-generator
   (FastAPI) já tem em /docs.
+- Adicionar .dockerignore (Django e cada microsserviço).
 
 # TAREFA
 

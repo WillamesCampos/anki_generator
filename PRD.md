@@ -94,17 +94,17 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 1 — Autenticação & Multi-tenant
 
-**Objetivo**: base de segurança sobre a qual todo o resto é construído — nada de feature de produto avança sem isso.
+**Objetivo**: base de segurança sobre a qual todo o resto é construído — nada de feature de produto avança sem isso. **Concluída** — ver `openspec/changes/sprint-1-autenticacao-multi-tenant/` e `CHANGELOG.md`.
 
-- [ ] 1.1 Model de usuário reaproveitando o nativo do Django + `email` como campo único
-- [ ] 1.2 Autenticação via Google (OAuth)
-- [ ] 1.3 Lógica de permissões sobre `Permission`/`Group` nativos do Django (sem sistema paralelo)
-- [ ] 1.4 Mixin/base de queryset que filtra por tenant em toda query — ponto de auditoria obrigatório antes de considerar pronto
-- [ ] 1.5 Model/mixin de auditoria (`created_at/by`, `updated_at/by`), preenchido automaticamente pelos serializers a partir da request
-- [ ] 1.6 Implementar rate limiting (3 req/s por usuário/cliente — decisão já tomada)
-- [ ] 1.7 Cache do token de autenticação (evitar reautenticação enquanto válido)
-- [ ] 1.8 Configurar pytest + pytest-django (primeira infraestrutura de testes automatizados do projeto)
-- [ ] 1.9 Testes automatizados cobrindo as tarefas 1.1–1.7, escritos ao final — em especial isolamento multi-tenant (tentativa de acesso cross-tenant deve falhar sempre) e rate limiting
+- [x] 1.1 Model de usuário reaproveitando o nativo do Django + `email` como campo único (`django/apps/accounts/models.py`)
+- [x] 1.2 Autenticação via Google (OAuth) — `django-allauth` + `dj-rest-auth` + `simplejwt`; ⚠️ requer `GOOGLE_OAUTH_CLIENT_ID`/`SECRET` reais (Google Cloud Console) para o fluxo completo funcionar de ponta a ponta — ainda não configurado
+- [x] 1.3 Lógica de permissões sobre `Permission`/`Group` nativos do Django (sem sistema paralelo) — validado com o `User` customizado
+- [x] 1.4 Mixin/base de queryset que filtra por tenant em toda query (`TenantOwnedModel`/`TenantOwnedQuerySet`) — testado explicitamente contra acesso cross-tenant
+- [x] 1.5 Model/mixin de auditoria (`created_at/by`, `updated_at/by`), preenchido automaticamente pelos serializers a partir da request (`AuditMixin`/`AuditSerializerMixin`)
+- [x] 1.6 Implementar rate limiting (3 req/s por usuário/cliente) — throttle classes do DRF, validado com burst real (3 OK, 4ª+ recebem 429)
+- [x] 1.7 Cache do token de autenticação (evitar reautenticação enquanto válido) — refresh token com blocklist no Redis, revogação testada de ponta a ponta
+- [x] 1.8 Configurar pytest + pytest-django (primeira infraestrutura de testes automatizados do projeto)
+- [x] 1.9 Testes automatizados cobrindo as tarefas 1.1–1.7 (12 testes, todos passando)
 
 *Critérios de aceite relevantes: 1.*
 
