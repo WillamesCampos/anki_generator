@@ -220,6 +220,9 @@ Atue como um(a) Arquiteto(a) de Software Sênior, especialista em Django/DRF, Fa
     <regra_obrigatoria id="monorepo">
     Todas as aplicações (Django + microsserviços FastAPI + frontend) DEVEM residir em um único repositório (monorepo), para preservar contexto unificado — inclusive para uso por agentes de IA que venham a atuar sobre o código.
     </regra_obrigatoria>
+    <regra_obrigatoria id="dockerignore-por-servico">
+    Cada serviço (Django e cada microsserviço FastAPI) DEVE ter seu próprio `.dockerignore`, excluindo no mínimo: `.env`/segredos, `__pycache__`/bytecode, `.git`, e artefatos de dados gerados localmente (ex.: áudio do document-generator). Isso é obrigatório, não opcional: sem `.dockerignore`, o `COPY . .` do Dockerfile bake segredos reais dentro da imagem — violação direta de `<ponto_critico id="gestao-de-segredos">`.
+    </regra_obrigatoria>
   </docker>
 
   <observabilidade>

@@ -1,0 +1,19 @@
+# Segredos - nunca devem ir para dentro da imagem (ver <ponto_critico id="gestao-de-segredos">)
+.env
+*.env
+!config.example.env
+
+# Bytecode / caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Ambiente local / ferramentas de dev
+.git/
+.gitignore
+
+# Saída de geração local (não deve compor a imagem, é dado, não código)
+anki_audio/
+
+# Não usado pelo runtime da imagem
+README.md
