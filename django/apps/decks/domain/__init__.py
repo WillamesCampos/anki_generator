@@ -18,9 +18,9 @@ __all__ = [
     # Entidades
     'Card',
     'Deck',
-    'GenerationSession', 
+    'GenerationSession',
     'GenerationStatus',
-    
+
     # Value Objects
     'Word',
     'Translation',

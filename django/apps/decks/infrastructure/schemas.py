@@ -12,8 +12,27 @@ Collections definidas:
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from bson import ObjectId
+
+
+def datetime_from_mongo(value: datetime) -> str:
+    """
+    Converte um datetime lido do MongoDB para string ISO, sempre com o
+    offset UTC explícito.
+
+    Pymongo/Motor devolvem datetimes *naive* na leitura (mesmo quando o
+    valor foi inserido como aware) — sem esse `replace`, o `.isoformat()`
+    resultante não carrega offset, e `datetime.fromisoformat()` do lado do
+    domínio reconstrói um datetime naive de novo. Isso já causou um bug
+    real: revisar o mesmo card uma segunda vez (com `last_reviewed_at`
+    vindo do Mongo) quebrava com "can't subtract offset-naive and
+    offset-aware datetimes" dentro do `fsrs.Scheduler`. Toda leitura de
+    datetime do Mongo passa por aqui.
+    """
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.isoformat()
 
 
 def uuid_to_object_id(value) -> ObjectId:
@@ -37,26 +56,26 @@ def uuid_to_object_id(value) -> ObjectId:
 class MongoDBSchema:
     """
     Classe base para schemas MongoDB.
-    
+
     Fornece métodos utilitários para conversão entre
     entidades de domínio e documentos MongoDB.
     """
-    
+
     @staticmethod
     def to_object_id(id_value: str) -> ObjectId:
         """
         Converte string ID para ObjectId MongoDB.
-        
+
         Args:
             id_value: ID como string
-            
+
         Returns:
             ObjectId MongoDB
         """
         if isinstance(id_value, ObjectId):
             return id_value
         return ObjectId(id_value)
-    
+
     @staticmethod
     def to_string_id(object_id: ObjectId) -> str:
         """
@@ -79,7 +98,7 @@ class MongoDBSchema:
 class CardSchema(MongoDBSchema):
     """
     Schema para collection 'cards'.
-    
+
     Estrutura do documento:
     {
         "_id": ObjectId,
@@ -109,15 +128,15 @@ class CardSchema(MongoDBSchema):
         "updated_at": datetime
     }
     """
-    
+
     @staticmethod
     def to_document(card_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Converte dados de card para documento MongoDB.
-        
+
         Args:
             card_data: Dados do card (vindos de card.to_dict())
-            
+
         Returns:
             Documento MongoDB
         """
@@ -138,12 +157,23 @@ class CardSchema(MongoDBSchema):
                 "original_normalized": card_data["example"]["original_normalized"],
                 "translated_normalized": card_data["example"]["translated_normalized"]
             },
+            "owner_id": card_data["owner_id"],
             "context": card_data["context"],
             "deck_id": uuid_to_object_id(card_data["deck_id"]) if card_data["deck_id"] else None,
+            "tags": list(card_data.get("tags", [])),
+            "fsrs_state": card_data.get("fsrs_state", 1),
+            "fsrs_step": card_data.get("fsrs_step"),
+            "stability": card_data.get("stability"),
+            "difficulty": card_data.get("difficulty"),
+            "due_at": datetime.fromisoformat(card_data["due_at"]),
+            "last_reviewed_at": (
+                datetime.fromisoformat(card_data["last_reviewed_at"])
+                if card_data.get("last_reviewed_at") else None
+            ),
             "created_at": datetime.fromisoformat(card_data["created_at"]),
             "updated_at": datetime.fromisoformat(card_data["updated_at"])
         }
-        
+
         # Adiciona audio_path se existir
         if card_data.get("audio_path"):
             document["audio_path"] = {
@@ -151,17 +181,17 @@ class CardSchema(MongoDBSchema):
                 "filename": card_data["audio_path"]["filename"],
                 "exists": card_data["audio_path"]["exists"]
             }
-        
+
         return document
-    
+
     @staticmethod
     def from_document(document: Dict[str, Any]) -> Dict[str, Any]:
         """
         Converte documento MongoDB para dados de card.
-        
+
         Args:
             document: Documento MongoDB
-            
+
         Returns:
             Dados do card (para card.from_dict())
         """
@@ -191,12 +221,20 @@ class CardSchema(MongoDBSchema):
                 "length_original": len(document["example"]["original"]),
                 "length_translated": len(document["example"]["translated"])
             },
+            "owner_id": document["owner_id"],
             "context": document["context"],
             "deck_id": CardSchema.to_string_id(document["deck_id"]) if document["deck_id"] else None,
-            "created_at": document["created_at"].isoformat(),
-            "updated_at": document["updated_at"].isoformat()
+            "tags": list(document.get("tags", [])),
+            "fsrs_state": document.get("fsrs_state", 1),
+            "fsrs_step": document.get("fsrs_step"),
+            "stability": document.get("stability"),
+            "difficulty": document.get("difficulty"),
+            "due_at": datetime_from_mongo(document["due_at"]),
+            "last_reviewed_at": datetime_from_mongo(document["last_reviewed_at"]) if document.get("last_reviewed_at") else None,
+            "created_at": datetime_from_mongo(document["created_at"]),
+            "updated_at": datetime_from_mongo(document["updated_at"])
         }
-        
+
         # Adiciona audio_path se existir
         if document.get("audio_path"):
             card_data["audio_path"] = {
@@ -208,14 +246,14 @@ class CardSchema(MongoDBSchema):
                 "exists": document["audio_path"]["exists"],
                 "size_bytes": None  # Seria necessário verificar o arquivo
             }
-        
+
         return card_data
 
 
 class DeckSchema(MongoDBSchema):
     """
     Schema para collection 'decks'.
-    
+
     Estrutura do documento:
     {
         "_id": ObjectId,
@@ -228,57 +266,143 @@ class DeckSchema(MongoDBSchema):
         "is_empty": boolean
     }
     """
-    
+
     @staticmethod
     def to_document(deck_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Converte dados de deck para documento MongoDB.
-        
+
         Args:
             deck_data: Dados do deck (vindos de deck.to_dict())
-            
+
         Returns:
             Documento MongoDB
         """
         return {
             "_id": ObjectId(),  # Gera um novo ObjectId
             "title": deck_data["title"],
+            "owner_id": deck_data["owner_id"],
             "description": deck_data["description"],
+            "category_id": uuid_to_object_id(deck_data["category_id"]) if deck_data.get("category_id") else None,
             "max_cards_per_generation": deck_data["max_cards_per_generation"],
             "created_at": datetime.fromisoformat(deck_data["created_at"]),
             "updated_at": datetime.fromisoformat(deck_data["updated_at"]),
             "card_count": deck_data["card_count"],
             "is_empty": deck_data["is_empty"]
         }
-    
+
     @staticmethod
     def from_document(document: Dict[str, Any]) -> Dict[str, Any]:
         """
         Converte documento MongoDB para dados de deck.
-        
+
         Args:
             document: Documento MongoDB
-            
+
         Returns:
             Dados do deck (para deck.from_dict())
         """
         return {
             "id": DeckSchema.to_string_id(document["_id"]),
             "title": document["title"],
+            "owner_id": document["owner_id"],
             "description": document["description"],
+            "category_id": DeckSchema.to_string_id(document["category_id"]) if document.get("category_id") else None,
             "cards": [],  # Cards são carregados separadamente
             "max_cards_per_generation": document["max_cards_per_generation"],
-            "created_at": document["created_at"].isoformat(),
-            "updated_at": document["updated_at"].isoformat(),
+            "created_at": datetime_from_mongo(document["created_at"]),
+            "updated_at": datetime_from_mongo(document["updated_at"]),
             "card_count": document["card_count"],
             "is_empty": document["is_empty"]
+        }
+
+
+class CategorySchema(MongoDBSchema):
+    """
+    Schema para collection 'categories'.
+
+    {
+        "_id": ObjectId,
+        "name": string,
+        "owner_id": string,
+        "created_at": datetime,
+        "updated_at": datetime
+    }
+    """
+
+    @staticmethod
+    def to_document(category_data: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "_id": ObjectId(),
+            "name": category_data["name"],
+            "owner_id": category_data["owner_id"],
+            "created_at": datetime.fromisoformat(category_data["created_at"]),
+            "updated_at": datetime.fromisoformat(category_data["updated_at"]),
+        }
+
+    @staticmethod
+    def from_document(document: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "id": CategorySchema.to_string_id(document["_id"]),
+            "name": document["name"],
+            "owner_id": document["owner_id"],
+            "created_at": datetime_from_mongo(document["created_at"]),
+            "updated_at": datetime_from_mongo(document["updated_at"]),
+        }
+
+
+class CardReviewSchema(MongoDBSchema):
+    """
+    Schema para collection 'card_reviews' — um documento por evento de
+    revisão (ver D5 em openspec/changes/sprint-2-decks-cards/design.md).
+
+    {
+        "_id": ObjectId,
+        "card_id": ObjectId,
+        "owner_id": string,
+        "rating": string,
+        "reviewed_at": datetime,
+        "stability_after": float | null,
+        "difficulty_after": float | null,
+        "due_at_after": datetime | null
+    }
+    """
+
+    @staticmethod
+    def to_document(review_data: Dict[str, Any]) -> Dict[str, Any]:
+        document = {
+            "_id": ObjectId(),
+            "card_id": uuid_to_object_id(review_data["card_id"]),
+            "owner_id": review_data["owner_id"],
+            "rating": review_data["rating"],
+            "reviewed_at": datetime.fromisoformat(review_data["reviewed_at"]),
+            "stability_after": review_data.get("stability_after"),
+            "difficulty_after": review_data.get("difficulty_after"),
+        }
+
+        if review_data.get("due_at_after"):
+            document["due_at_after"] = datetime.fromisoformat(review_data["due_at_after"])
+
+        return document
+
+    @staticmethod
+    def from_document(document: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "id": CardReviewSchema.to_string_id(document["_id"]),
+            "card_id": CardReviewSchema.to_string_id(document["card_id"]),
+            "owner_id": document["owner_id"],
+            "rating": document["rating"],
+            "reviewed_at": datetime_from_mongo(document["reviewed_at"]),
+            "stability_after": document.get("stability_after"),
+            "difficulty_after": document.get("difficulty_after"),
+            "due_at_after": datetime_from_mongo(document["due_at_after"]) if document.get("due_at_after") else None,
         }
 
 
 class GenerationSessionSchema(MongoDBSchema):
     """
     Schema para collection 'generation_sessions'.
-    
+
     Estrutura do documento:
     {
         "_id": ObjectId,
@@ -294,15 +418,15 @@ class GenerationSessionSchema(MongoDBSchema):
         "is_finished": boolean
     }
     """
-    
+
     @staticmethod
     def to_document(session_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Converte dados de sessão para documento MongoDB.
-        
+
         Args:
             session_data: Dados da sessão (vindos de session.to_dict())
-            
+
         Returns:
             Documento MongoDB
         """
@@ -317,24 +441,24 @@ class GenerationSessionSchema(MongoDBSchema):
             "cards_generated_count": session_data["cards_generated_count"],
             "is_finished": session_data["is_finished"]
         }
-        
+
         # Adiciona campos opcionais
         if session_data.get("completed_at"):
             document["completed_at"] = datetime.fromisoformat(session_data["completed_at"])
-        
+
         if session_data.get("error_message"):
             document["error_message"] = session_data["error_message"]
-        
+
         return document
-    
+
     @staticmethod
     def from_document(document: Dict[str, Any]) -> Dict[str, Any]:
         """
         Converte documento MongoDB para dados de sessão.
-        
+
         Args:
             document: Documento MongoDB
-            
+
         Returns:
             Dados da sessão (para session.from_dict())
         """
@@ -345,19 +469,19 @@ class GenerationSessionSchema(MongoDBSchema):
             "status": document["status"],
             "generated_cards": [],  # Cards são carregados separadamente
             "max_cards": document["max_cards"],
-            "created_at": document["created_at"].isoformat(),
-            "updated_at": document["updated_at"].isoformat(),
+            "created_at": datetime_from_mongo(document["created_at"]),
+            "updated_at": datetime_from_mongo(document["updated_at"]),
             "cards_generated_count": document["cards_generated_count"],
             "is_finished": document["is_finished"]
         }
-        
+
         # Adiciona campos opcionais
         if document.get("completed_at"):
-            session_data["completed_at"] = document["completed_at"].isoformat()
-        
+            session_data["completed_at"] = datetime_from_mongo(document["completed_at"])
+
         if document.get("error_message"):
             session_data["error_message"] = document["error_message"]
-        
+
         return session_data
 
 
@@ -365,26 +489,47 @@ class IndexDefinitions:
     """
     Definições de índices para otimização das consultas MongoDB.
     """
-    
+
     # Índices para collection cards
     CARDS_INDEXES = [
+        ("owner_id", 1),
         ("deck_id", 1),
         ("word.normalized", 1),
         ("created_at", 1),
         ("updated_at", 1),
         ("context", 1),
+        ("due_at", 1),
+        ("tags", 1),
+        ([("owner_id", 1), ("deck_id", 1)], {}),
+        ([("owner_id", 1), ("due_at", 1)], {}),
         ([("deck_id", 1), ("word.normalized", 1)], {"unique": True}),
         ([("deck_id", 1), ("created_at", 1)], {}),
     ]
-    
+
     # Índices para collection decks
     DECKS_INDEXES = [
+        ("owner_id", 1),
         ("title", 1),
         ("created_at", 1),
         ("updated_at", 1),
         ("card_count", 1),
+        ([("owner_id", 1), ("category_id", 1)], {}),
     ]
-    
+
+    # Índices para collection categories
+    CATEGORIES_INDEXES = [
+        ("owner_id", 1),
+        ("name", 1),
+    ]
+
+    # Índices para collection card_reviews
+    CARD_REVIEWS_INDEXES = [
+        ("owner_id", 1),
+        ("card_id", 1),
+        ("reviewed_at", 1),
+        ([("owner_id", 1), ("card_id", 1)], {}),
+    ]
+
     # Índices para collection generation_sessions
     SESSIONS_INDEXES = [
         ("deck_id", 1),
@@ -395,17 +540,19 @@ class IndexDefinitions:
         ([("deck_id", 1), ("status", 1)], {}),
         ([("deck_id", 1), ("created_at", -1)], {}),
     ]
-    
+
     @staticmethod
     def get_all_indexes() -> Dict[str, List]:
         """
         Retorna todos os índices organizados por collection.
-        
+
         Returns:
             Dicionário com índices por collection
         """
         return {
             "cards": IndexDefinitions.CARDS_INDEXES,
             "decks": IndexDefinitions.DECKS_INDEXES,
+            "categories": IndexDefinitions.CATEGORIES_INDEXES,
+            "card_reviews": IndexDefinitions.CARD_REVIEWS_INDEXES,
             "generation_sessions": IndexDefinitions.SESSIONS_INDEXES
         }

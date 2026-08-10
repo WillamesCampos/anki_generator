@@ -19,25 +19,56 @@ Este README é só uma porta de entrada. As fontes de verdade do projeto são:
 
 ## 🏗️ Arquitetura
 
-```
-Cliente (SPA React, hospedada em S3)
-        │  REST /api/v1/...
-        ▼
-Django + DRF (django/core/ + django/apps/)  ──▶  PostgreSQL (auth/Permission/Group)
-        │                                   ──▶  MongoDB (decks/cards/estatísticas)
-        │  Celery (RabbitMQ broker, Redis result backend)
-        ▼
-Microsserviços FastAPI (microservices/)
-  ├─ document-generator  (relatórios PDF, exportação .apkg — já implementado)
-  ├─ ai-agent            (LangChain/LangGraph — Sprint 5)
-  └─ whatsapp-evolution   (Evolution API — Sprint 6)
+```mermaid
+flowchart TB
+    subgraph Client["Cliente"]
+        SPA["SPA React (S3) — Sprint 3"]
+    end
+
+    subgraph DjangoApp["Django + DRF (django/)"]
+        Auth["apps.accounts\nJWT + Google OAuth\nTenantOwnedModel (ORM)"]
+        Decks["apps.decks\nDeck / Category / Card / CardReview\nGeneric Views + APIView pontual"]
+        Bridge["async_to_sync\n(view sync → repositório Motor)"]
+    end
+
+    subgraph Repos["Repositórios Motor (async)"]
+        DeckRepo["DeckRepository"]
+        CardRepo["CardRepository\n+ owner_id obrigatório"]
+        CategoryRepo["CategoryRepository"]
+        ReviewRepo["CardReviewRepository"]
+        GenRepo["GenerationSessionRepository\n(protótipo antigo — inalterado)"]
+    end
+
+    subgraph Seed["management command seed"]
+        SeedCmd["asyncio.gather\n(concorrência real, sem bridge)"]
+    end
+
+    subgraph Data["Bancos"]
+        PG[("PostgreSQL\nauth / Permission / Group")]
+        Mongo[("MongoDB\ndecks / cards / categories\ncard_reviews / generation_sessions")]
+        Redis[("Redis\ncache / JWT blocklist / throttle")]
+    end
+
+    subgraph Micro["Microsserviços FastAPI (microservices/)"]
+        DocGen["document-generator\n.apkg + PDF — Sprint 4"]
+    end
+
+    SPA -->|"REST /api/v1/..."| Auth
+    SPA -->|"REST /api/v1/..."| Decks
+    Auth --> PG
+    Auth --> Redis
+    Decks --> Bridge
+    Bridge --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
+    DeckRepo & CardRepo & CategoryRepo & ReviewRepo & GenRepo --> Mongo
+    SeedCmd --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
+    DjangoApp -.->|"chamada HTTP versionada — Sprint 4"| DocGen
 ```
 
 Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz — `django/` (o backend principal), `microservices/<nome>/` (cada microsserviço FastAPI, um por pasta) e `frontend/` (SPA React, Sprint 3). `docker-compose.yml` e `Makefile` ficam na raiz e orquestram todas elas.
 
 - **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
 - **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
-- **Domínio de deck/card**: `django/apps/decks/` — entities, value objects e repositórios Mongo (via Motor), consolidados a partir do protótipo anterior.
+- **Domínio de deck/card**: `django/apps/decks/` — entities (`Deck`/`Category`/`Card`/`CardReview`), value objects e repositórios Mongo (via Motor). Isolamento multi-tenant aqui é `owner_id` obrigatório embutido em toda query do repositório (mecanismo próprio, já que não há ORM do Django sobre Mongo). CRUD via Generic Views do DRF com serializers manuais; repetição espaçada via FSRS (pacote `fsrs`); views síncronas fazendo bridge (`async_to_sync`) para os repositórios assíncronos.
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
 - **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
 - **Deploy real**: VPS (Docker Compose) — não AWS. O único uso de AWS é o bucket S3 do frontend estático.
@@ -49,10 +80,11 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 |---|---|
 | Backend principal | Django 6 + Django REST Framework, Python 3.13, Poetry |
 | Autenticação | JWT (`djangorestframework-simplejwt`) + Google OAuth (`django-allauth` + `dj-rest-auth`) |
+| Repetição espaçada | FSRS (pacote `fsrs`) |
 | Testes | pytest + pytest-django |
 | Microsserviços | FastAPI, `venv`/`requirements.txt` por serviço |
 | Banco relacional | PostgreSQL (auth/permissions do Django) |
-| Banco de domínio | MongoDB (decks/cards/estatísticas), via Motor |
+| Banco de domínio | MongoDB (decks/cards/categorias/reviews), via Motor |
 | Fila/assíncrono | Celery + RabbitMQ + Redis |
 | Frontend | React (SPA estática, hospedada em S3) |
 | Deploy | Docker Compose numa VPS |
@@ -111,11 +143,16 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 ## 🧪 Testes
 
 ```bash
-# Suíte pytest (auth, multi-tenant, auditoria, rate limiting — 12 testes, requer Postgres + Redis rodando)
-poetry -C django run pytest apps/accounts
+# Suíte pytest completa — 28 testes: auth/multi-tenant/auditoria/rate limiting (Sprint 1)
+# + isolamento multi-tenant Mongo/CRUD/revisão FSRS/seed (Sprint 2)
+# Requer Postgres + Redis + MongoDB rodando (`make up`)
+poetry -C django run pytest apps/accounts apps/decks
 
-# Teste de integração MongoDB (script standalone, requer `make up` rodando, ao menos o serviço mongo)
+# Teste de integração MongoDB (script standalone, à parte do pytest — requer `make up` rodando, ao menos o serviço mongo)
 poetry -C django run python -m apps.decks.tests.test_mongodb_integration
+
+# Popular o banco com dados de desenvolvimento (múltiplos usuários/decks/categorias/cards/reviews)
+poetry -C django run python manage.py seed_decks        # --reset para recriar do zero
 ```
 
 ## 🎯 Roadmap
@@ -124,7 +161,7 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 
 - [x] Sprint 0 — Fundação de arquitetura (Django + domínio consolidado + Docker Compose + microsserviço de documentos)
 - [x] Sprint 1 — Autenticação & multi-tenant
-- [ ] Sprint 2 — Decks & Cards (domínio core)
+- [x] Sprint 2 — Decks & Cards (domínio core)
 - [ ] Sprint 3 — Frontend base & home dashboard
 - [ ] Sprint 4 — Exportação Anki & microsserviço de documentos (integração completa)
 - [ ] Sprint 5 — Agente de IA (LangChain/LangGraph)

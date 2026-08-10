@@ -138,6 +138,12 @@ REST_FRAMEWORK = {
         "user": "3/second",
         "anon": "3/second",
     },
+    # Generic Views sobre decks/cards (Mongo) devolvem uma lista Python já
+    # resolvida em `get_queryset()`, não um QuerySet — PageNumberPagination
+    # só precisa de algo fatiável/contável, então funciona igual (ver D2 em
+    # openspec/changes/sprint-2-decks-cards/design.md).
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
 # Access token curto + refresh token mais longo, com rotação a cada uso —

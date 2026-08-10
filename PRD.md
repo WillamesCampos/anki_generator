@@ -114,13 +114,15 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 **Objetivo**: a funcionalidade central do produto — sem isso, nada mais tem dado real para trabalhar em cima.
 
-- [ ] 2.1 Endpoints versionados (`/api/v1/`) de CRUD para decks, categorias e cards (Generic Views do DRF)
-- [ ] 2.2 Lógica de repetição espaçada como base do fluxo de estudo
-- [ ] 2.3 Registro de sessões de estudo (acertos/erros, timestamps) para alimentar estatísticas futuras
-- [ ] 2.4 Índices obrigatórios: deck, categoria, tag de relacionamento deck/card
-- [ ] 2.5 Serializers magros, herdáveis, sem boilerplate desnecessário
-- [ ] 2.6 Django management command de seed: múltiplos usuários/tenants, decks/categorias variadas, cards com históricos de acerto/erro, datas passadas/recentes/futuras — protegido contra execução em produção, idempotente ou com `--reset`
-- [ ] 2.7 Testar comando de seed e a proteção contra produção explicitamente
+- [x] 2.1 Endpoints versionados (`/api/v1/`) de CRUD para decks, categorias e cards (Generic Views do DRF) — `apps/decks/views.py`/`urls.py`; `Category` é entidade nova (não existia no domínio migrado)
+- [x] 2.2 Lógica de repetição espaçada como base do fluxo de estudo — FSRS via pacote `fsrs` (`domain/services/scheduling_service.py`), não SM-2 manual
+- [x] 2.3 Registro de sessões de estudo (acertos/erros, timestamps) para alimentar estatísticas futuras — entidade `CardReview` (um evento por revisão, não uma "sessão" agregada — mesma granularidade do `revlog` do Anki; deliberadamente distinta de `GenerationSession`)
+- [x] 2.4 Índices obrigatórios: deck, categoria, tag de relacionamento deck/card — `IndexDefinitions` em `schemas.py`, agora fonte única também para `MongoDBConnectionManager.create_indexes()`
+- [x] 2.5 Serializers magros, herdáveis, sem boilerplate desnecessário — `serializers.Serializer` manuais (não `ModelSerializer`, que exige Model Django real)
+- [x] 2.6 Django management command de seed: múltiplos usuários/tenants, decks/categorias variadas, cards com históricos de acerto/erro, datas passadas/recentes/futuras — protegido contra execução em produção, idempotente ou com `--reset` — `seed_decks` (validado rodando de verdade contra Mongo/Postgres reais)
+- [x] 2.7 Testar comando de seed e a proteção contra produção explicitamente — `test_seed_command.py`; **28/28 testes passando** (Sprint 1 + 2)
+
+**Nota de implementação**: isolamento multi-tenant em MongoDB precisou de mecanismo próprio (não o `TenantOwnedModel` da Sprint 1, que é ORM/Postgres-only) — `owner_id` obrigatório em toda assinatura de método de repositório. Um bug real de produção foi descoberto e corrigido durante a verificação end-to-end via HTTP: `AsyncIOMotorClient` ficava preso ao event loop em que era criado, e `async_to_sync` cria um loop novo a cada chamada — quebrava a partir da segunda/terceira chamada bridged do processo (ver Risks em `openspec/changes/sprint-2-decks-cards/design.md`).
 
 *Critérios de aceite relevantes: 11.*
 

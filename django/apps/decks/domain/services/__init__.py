@@ -14,10 +14,12 @@ Características dos Serviços de Domínio:
 
 from .duplicate_detection_service import DuplicateDetectionService
 from .card_quality_service import CardQualityService, QualityReport, QualityLevel
+from . import scheduling_service
 
 __all__ = [
     'DuplicateDetectionService',
     'CardQualityService',
     'QualityReport',
-    'QualityLevel'
+    'QualityLevel',
+    'scheduling_service',
 ]
