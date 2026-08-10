@@ -11,6 +11,8 @@ import os
 from typing import Optional
 from dataclasses import dataclass
 
+from apps.decks.infrastructure.exceptions import MongoConfigError
+
 
 @dataclass
 class MongoDBConfig:
@@ -96,17 +98,17 @@ class MongoDBConfig:
 
     def validate(self) -> None:
         if not self.host:
-            raise ValueError("MongoDB host cannot be empty")
+            raise MongoConfigError("MongoDB host cannot be empty")
         if not (1 <= self.port <= 65535):
-            raise ValueError("MongoDB port must be between 1 and 65535")
+            raise MongoConfigError("MongoDB port must be between 1 and 65535")
         if not self.database:
-            raise ValueError("MongoDB database name cannot be empty")
+            raise MongoConfigError("MongoDB database name cannot be empty")
         if self.max_pool_size < 1:
-            raise ValueError("Max pool size must be at least 1")
+            raise MongoConfigError("Max pool size must be at least 1")
         if self.min_pool_size < 0:
-            raise ValueError("Min pool size cannot be negative")
+            raise MongoConfigError("Min pool size cannot be negative")
         if self.min_pool_size > self.max_pool_size:
-            raise ValueError("Min pool size cannot be greater than max pool size")
+            raise MongoConfigError("Min pool size cannot be greater than max pool size")
 
     def __str__(self) -> str:
         return f"MongoDBConfig(host={self.host}, port={self.port}, database={self.database}, ssl={self.ssl})"

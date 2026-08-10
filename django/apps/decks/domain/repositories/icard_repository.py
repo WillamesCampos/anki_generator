@@ -1,264 +1,87 @@
 """
 Interface ICardRepository - Define operações de persistência para Cards
 
-Esta interface define todas as operações necessárias para persistir e recuperar
-cards do banco de dados. A implementação concreta ficará na camada de infraestrutura.
-
-Princípios:
-- Interface segregation: Define apenas operações específicas para Cards
-- Dependency inversion: O domínio depende da abstração, não da implementação
-- Single responsibility: Responsável apenas por operações de Card
+Toda operação de leitura/escrita que localiza um card por ID ou por outro
+filtro exige `owner_id` como parâmetro obrigatório, embutido diretamente no
+filtro da consulta — nunca conferido depois em Python (ver D1 em
+openspec/changes/sprint-2-decks-cards/design.md, `<ponto_critico
+id="isolamento-multi-tenant">` em PROMPT_REFINADO.md).
 """
 
 import uuid
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Optional
 from ..entities.card import Card
 
 
 class ICardRepository(ABC):
-    """
-    Interface para repositório de Cards.
-    
-    Define todas as operações de persistência necessárias para a entidade Card.
-    """
-    
+    """Interface para repositório de Cards."""
+
     @abstractmethod
     async def save(self, card: Card) -> Card:
-        """
-        Salva um card no banco de dados.
-        
-        Args:
-            card: Card a ser salvo
-            
-        Returns:
-            Card salvo (com ID gerado se for novo)
-            
-        Raises:
-            RepositoryError: Se houver erro na persistência
-        """
+        """Salva um card (owner_id já vem embutido na entidade)."""
         pass
-    
+
     @abstractmethod
     async def save_many(self, cards: List[Card]) -> List[Card]:
-        """
-        Salva múltiplos cards no banco de dados.
-        
-        Args:
-            cards: Lista de cards a serem salvos
-            
-        Returns:
-            Lista de cards salvos
-            
-        Raises:
-            RepositoryError: Se houver erro na persistência
-        """
+        """Salva múltiplos cards (owner_id já vem embutido em cada entidade)."""
         pass
-    
+
     @abstractmethod
-    async def find_by_id(self, card_id: uuid.UUID) -> Optional[Card]:
-        """
-        Busca um card pelo ID.
-        
-        Args:
-            card_id: ID do card
-            
-        Returns:
-            Card se encontrado, None caso contrário
-            
-        Raises:
-            RepositoryError: Se houver erro na consulta
-        """
+    async def find_by_id(self, card_id: uuid.UUID, owner_id: str) -> Optional[Card]:
         pass
-    
+
     @abstractmethod
-    async def find_by_word(self, word: str) -> List[Card]:
-        """
-        Busca cards por palavra.
-        
-        Args:
-            word: Palavra para buscar (case insensitive)
-            
-        Returns:
-            Lista de cards que contêm a palavra
-            
-        Raises:
-            RepositoryError: Se houver erro na consulta
-        """
+    async def find_by_word(self, word: str, owner_id: str) -> List[Card]:
         pass
-    
+
     @abstractmethod
-    async def find_by_deck_id(self, deck_id: uuid.UUID) -> List[Card]:
-        """
-        Busca todos os cards de um deck.
-        
-        Args:
-            deck_id: ID do deck
-            
-        Returns:
-            Lista de cards do deck
-            
-        Raises:
-            RepositoryError: Se houver erro na consulta
-        """
+    async def find_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> List[Card]:
         pass
-    
+
     @abstractmethod
-    async def find_by_context(self, context: str) -> List[Card]:
-        """
-        Busca cards por contexto.
-        
-        Args:
-            context: Contexto para buscar
-            
-        Returns:
-            Lista de cards que usam o contexto
-            
-        Raises:
-            RepositoryError: Se houver erro na consulta
-        """
+    async def find_by_context(self, context: str, owner_id: str) -> List[Card]:
         pass
-    
+
     @abstractmethod
-    async def find_similar_cards(self, word: str, similarity_threshold: float = 0.8) -> List[Card]:
-        """
-        Busca cards similares à palavra especificada.
-        
-        Args:
-            word: Palavra para comparar
-            similarity_threshold: Limiar de similaridade (0.0 a 1.0)
-            
-        Returns:
-            Lista de cards similares
-            
-        Raises:
-            RepositoryError: Se houver erro na consulta
-        """
+    async def find_similar_cards(self, word: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
         pass
-    
+
     @abstractmethod
-    async def find_duplicates(self, card: Card) -> List[Card]:
-        """
-        Busca cards duplicados ou muito similares.
-        
-        Args:
-            card: Card para verificar duplicatas
-            
-        Returns:
-            Lista de cards duplicados/similares
-            
-        Raises:
-            RepositoryError: Se houver erro na consulta
-        """
+    async def find_duplicates(self, card: Card, owner_id: str) -> List[Card]:
         pass
-    
+
+    @abstractmethod
+    async def find_due(self, owner_id: str, due_before: Optional[datetime] = None) -> List[Card]:
+        """Cards devidos (`due_at <= due_before`, default agora) para um owner."""
+        pass
+
     @abstractmethod
     async def update(self, card: Card) -> Card:
-        """
-        Atualiza um card existente.
-        
-        Args:
-            card: Card com dados atualizados
-            
-        Returns:
-            Card atualizado
-            
-        Raises:
-            RepositoryError: Se houver erro na atualização
-            CardNotFoundError: Se o card não existir
-        """
+        """Atualiza um card (filtro embute `_id` + `card.owner_id`)."""
         pass
-    
+
     @abstractmethod
-    async def delete(self, card_id: uuid.UUID) -> bool:
-        """
-        Remove um card do banco de dados.
-        
-        Args:
-            card_id: ID do card a ser removido
-            
-        Returns:
-            True se o card foi removido, False se não foi encontrado
-            
-        Raises:
-            RepositoryError: Se houver erro na remoção
-        """
+    async def delete(self, card_id: uuid.UUID, owner_id: str) -> bool:
         pass
-    
+
     @abstractmethod
-    async def delete_by_deck_id(self, deck_id: uuid.UUID) -> int:
-        """
-        Remove todos os cards de um deck.
-        
-        Args:
-            deck_id: ID do deck
-            
-        Returns:
-            Número de cards removidos
-            
-        Raises:
-            RepositoryError: Se houver erro na remoção
-        """
+    async def delete_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> int:
         pass
-    
+
     @abstractmethod
-    async def count(self) -> int:
-        """
-        Conta o total de cards no banco.
-        
-        Returns:
-            Número total de cards
-            
-        Raises:
-            RepositoryError: Se houver erro na contagem
-        """
+    async def count(self, owner_id: str) -> int:
         pass
-    
+
     @abstractmethod
-    async def count_by_deck_id(self, deck_id: uuid.UUID) -> int:
-        """
-        Conta o número de cards de um deck.
-        
-        Args:
-            deck_id: ID do deck
-            
-        Returns:
-            Número de cards do deck
-            
-        Raises:
-            RepositoryError: Se houver erro na contagem
-        """
+    async def count_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> int:
         pass
-    
+
     @abstractmethod
-    async def exists(self, card_id: uuid.UUID) -> bool:
-        """
-        Verifica se um card existe.
-        
-        Args:
-            card_id: ID do card
-            
-        Returns:
-            True se o card existe, False caso contrário
-            
-        Raises:
-            RepositoryError: Se houver erro na verificação
-        """
+    async def exists(self, card_id: uuid.UUID, owner_id: str) -> bool:
         pass
-    
+
     @abstractmethod
-    async def exists_by_word(self, word: str, deck_id: Optional[uuid.UUID] = None) -> bool:
-        """
-        Verifica se já existe um card com a palavra especificada.
-        
-        Args:
-            word: Palavra para verificar
-            deck_id: ID do deck (opcional, para verificar apenas em um deck)
-            
-        Returns:
-            True se já existe um card com essa palavra
-            
-        Raises:
-            RepositoryError: Se houver erro na verificação
-        """
+    async def exists_by_word(self, word: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
         pass

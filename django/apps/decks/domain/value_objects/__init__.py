@@ -18,7 +18,7 @@ from .audio_path import AudioPath
 
 __all__ = [
     'Word',
-    'Translation', 
+    'Translation',
     'Example',
     'AudioPath'
 ]

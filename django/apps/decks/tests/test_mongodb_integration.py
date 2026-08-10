@@ -58,6 +58,9 @@ async def test_create_indexes(mongodb_manager):
         raise
 
 
+OWNER_ID = "integration-test-owner"
+
+
 async def test_deck_repository():
     """Testa operações do DeckRepository."""
     print("\n📚 Testando DeckRepository...")
@@ -67,6 +70,7 @@ async def test_deck_repository():
 
         deck = Deck(
             title="Deck de Teste",
+            owner_id=OWNER_ID,
             description="Deck criado para testes de integração",
             max_cards_per_generation=5,
         )
@@ -74,16 +78,16 @@ async def test_deck_repository():
         saved_deck = await deck_repo.save(deck)
         print(f"✅ Deck salvo: {saved_deck.id}")
 
-        found_deck = await deck_repo.find_by_id(saved_deck.id)
+        found_deck = await deck_repo.find_by_id(saved_deck.id, OWNER_ID)
         if found_deck:
             print(f"✅ Deck encontrado: {found_deck.title}")
         else:
             print("❌ Deck não encontrado")
 
-        decks_by_title = await deck_repo.find_by_title("Teste")
+        decks_by_title = await deck_repo.find_by_title("Teste", OWNER_ID)
         print(f"✅ Decks encontrados por título: {len(decks_by_title)}")
 
-        deck_count = await deck_repo.count()
+        deck_count = await deck_repo.count(OWNER_ID)
         print(f"✅ Total de decks: {deck_count}")
 
         return saved_deck
@@ -111,6 +115,7 @@ async def test_card_repository(deck):
             word=word,
             translation=translation,
             example=example,
+            owner_id=OWNER_ID,
             context="programming",
             deck_id=deck.id,
         )
@@ -118,22 +123,22 @@ async def test_card_repository(deck):
         saved_card = await card_repo.save(card)
         print(f"✅ Card salvo: {saved_card.id}")
 
-        found_card = await card_repo.find_by_id(saved_card.id)
+        found_card = await card_repo.find_by_id(saved_card.id, OWNER_ID)
         if found_card:
             print(f"✅ Card encontrado: {found_card.word.value}")
         else:
             print("❌ Card não encontrado")
 
-        cards_by_word = await card_repo.find_by_word("algorithm")
+        cards_by_word = await card_repo.find_by_word("algorithm", OWNER_ID)
         print(f"✅ Cards encontrados por palavra: {len(cards_by_word)}")
 
-        cards_by_deck = await card_repo.find_by_deck_id(deck.id)
+        cards_by_deck = await card_repo.find_by_deck_id(deck.id, OWNER_ID)
         print(f"✅ Cards encontrados no deck: {len(cards_by_deck)}")
 
-        word_exists = await card_repo.exists_by_word("algorithm", deck.id)
+        word_exists = await card_repo.exists_by_word("algorithm", OWNER_ID, deck.id)
         print(f"✅ Palavra existe no deck: {word_exists}")
 
-        card_count = await card_repo.count()
+        card_count = await card_repo.count(OWNER_ID)
         print(f"✅ Total de cards: {card_count}")
 
         return saved_card
@@ -159,7 +164,7 @@ async def test_generation_session_repository(deck):
         saved_session = await session_repo.save(session)
         print(f"✅ Sessão salva: {saved_session.id}")
 
-        found_session = await session_repo.find_by_id(saved_session.id)
+        found_session = await session_repo.find_by_id(saved_session.id, OWNER_ID)
         if found_session:
             print(f"✅ Sessão encontrada: {found_session.status.value}")
         else:

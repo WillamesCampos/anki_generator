@@ -426,6 +426,22 @@ Ordem de implementação dos microsserviços FastAPI: geração de documentos (r
 Cada unidade implantável vive em pasta própria na raiz: `django/` (backend principal, antes espalhado solto na raiz), `microservices/<nome>/` (renomeado de `services/`, para não colidir com o termo já usado em `apps/decks/domain/services/`), `frontend/` (placeholder da Sprint 3). `docker-compose.yml`/`Makefile` continuam na raiz, orquestrando todas as pastas.
 </decisao_resolvida>
 
+<decisao_resolvida id="isolamento-multi-tenant-mongo">
+Sprint 2: isolamento multi-tenant em MongoDB (decks/cards/categorias/card_reviews) é implementado via `owner_id` obrigatório embutido diretamente em toda query do repositório (nunca checado depois em Python) — mecanismo próprio da camada de repositório Motor, já que não há `Manager`/`QuerySet` do Django ORM para essas coleções (o `TenantOwnedModel` da Sprint 1 é ORM/Postgres-only e não se aplica aqui). Ver D1 em `openspec/changes/sprint-2-decks-cards/design.md`.
+</decisao_resolvida>
+
+<decisao_resolvida id="generic-views-sobre-mongo">
+Generic Views do DRF continuam a forma preferencial de expor CRUD, mesmo sobre dado não-ORM: serializers são `serializers.Serializer` manuais (nunca `ModelSerializer`) com `create()`/`update()` delegando ao repositório, e `get_queryset()` devolve uma lista Python já resolvida (a paginação do DRF só exige algo fatiável/contável, não um `QuerySet` real). `APIView` fica reservado para ações que não são CRUD (ex.: registrar revisão de card). Ver D2 em design.md da Sprint 2.
+</decisao_resolvida>
+
+<decisao_resolvida id="sync-views-async-repositorio">
+Views do Django/DRF permanecem síncronas (não se adota `adrf`/views assíncronas nativas nesta fase) — chamam os repositórios Motor via `asgiref.sync.async_to_sync`. Os repositórios continuam em Motor (não migram para `pymongo`), porque já existe um segundo consumidor real que se beneficia de concorrência de verdade sem bridge (o comando de seed, via `asyncio.gather`). Ver D3/D3.1 em design.md da Sprint 2 — inclui um risco real descoberto em implementação (event loop preso no client Mongo) e sua correção, documentado ali.
+</decisao_resolvida>
+
+<decisao_resolvida id="repeticao-espacada-fsrs">
+Algoritmo de repetição espaçada: FSRS via o pacote Python `fsrs` (o mesmo que o Anki real usa desde 2023) — não SM-2 implementado manualmente. Registro de revisão é uma entidade própria, `CardReview` (um documento por evento de revisão, mesma granularidade do `revlog` do Anki), deliberadamente distinta de `GenerationSession` (que continua representando só o job de geração de cards via IA). Ver D4/D5 em design.md da Sprint 2.
+</decisao_resolvida>
+
 </decisoes_resolvidas>
 
 <criterios_de_aceite>
@@ -481,6 +497,10 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Orquestração de containers na VPS**: Docker Compose direto — Kubernetes desacoplado como projeto de estudo separado (usuário sem experiência prévia; ver `<ponto_critico id="idempotencia-revisao">` para outro item levantado na mesma conversa).
 - [x] **Taxa de rate limiting**: 3 requests/segundo.
 - [x] **Estrutura do monorepo**: `django/` + `microservices/<nome>/` + `frontend/`, uma pasta por unidade implantável — ver `<estrutura_monorepo>`.
+- [x] **Isolamento multi-tenant em MongoDB** (Sprint 2): `owner_id` obrigatório embutido em toda query do repositório — ver `isolamento-multi-tenant-mongo`.
+- [x] **Generic Views sobre dado não-ORM** (Sprint 2): serializers manuais + `get_queryset()` retornando lista resolvida — ver `generic-views-sobre-mongo`.
+- [x] **Sync vs. async nas views de deck/card** (Sprint 2): views síncronas + `async_to_sync`, repositórios continuam em Motor — ver `sync-views-async-repositorio`.
+- [x] **Algoritmo de repetição espaçada** (Sprint 2): FSRS via pacote `fsrs`, não SM-2 manual — ver `repeticao-espacada-fsrs`.
 
 ### Itens que ainda dependem de decisão explícita do usuário
 

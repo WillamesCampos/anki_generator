@@ -6,20 +6,32 @@ Cada repositório implementa sua respectiva interface do domínio.
 
 Implementações disponíveis:
 - CardRepository: Implementação MongoDB do ICardRepository
-- DeckRepository: Implementação MongoDB do IDeckRepository  
+- DeckRepository: Implementação MongoDB do IDeckRepository
 - GenerationSessionRepository: Implementação MongoDB do IGenerationSessionRepository
 """
 
-from .card_repository import CardRepository, RepositoryError, CardNotFoundError
-from .deck_repository import DeckRepository, DeckNotFoundError
-from .generation_session_repository import GenerationSessionRepository, SessionNotFoundError
+from .card_repository import CardRepository
+from .deck_repository import DeckRepository
+from .category_repository import CategoryRepository
+from .card_review_repository import CardReviewRepository
+from .generation_session_repository import GenerationSessionRepository
+from ..exceptions import (
+    CardNotFoundError,
+    CategoryNotFoundError,
+    DeckNotFoundError,
+    RepositoryError,
+    SessionNotFoundError,
+)
 
 __all__ = [
     'CardRepository',
-    'DeckRepository', 
+    'DeckRepository',
+    'CategoryRepository',
+    'CardReviewRepository',
     'GenerationSessionRepository',
     'RepositoryError',
     'CardNotFoundError',
     'DeckNotFoundError',
+    'CategoryNotFoundError',
     'SessionNotFoundError'
 ]
