@@ -136,7 +136,22 @@ class CardReviewView(APIView):
             stability_after=card.stability,
             difficulty_after=card.difficulty,
             due_at_after=card.due_at,
+            deck_id=card.deck_id,
         )
         async_to_sync(CardReviewRepository().save)(review)
 
         return Response(CardReviewSerializer(review).data, status=status.HTTP_201_CREATED)
+
+
+class CardReviewListView(generics.ListAPIView):
+    """
+    `GET /api/v1/reviews/` — histórico de revisões do usuário, mais
+    recentes primeiro. Adicionado na Sprint 3 (Home dashboard: último deck
+    estudado, gráfico de estatísticas) — gap encontrado em implementação,
+    já que a Sprint 2 só persistia `CardReview`, sem endpoint de leitura.
+    """
+
+    serializer_class = CardReviewSerializer
+
+    def get_queryset(self):
+        return async_to_sync(CardReviewRepository().find_by_owner)(_owner_id(self.request))

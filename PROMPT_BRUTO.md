@@ -98,6 +98,33 @@ criaremos fluxo de deploy baseado em tags via github actions.
 - Também temos que colocar um swagger no Django, igual o document-generator
   (FastAPI) já tem em /docs.
 - Adicionar .dockerignore (Django e cada microsserviço).
+- Nova sprint (depois da Sprint 3 de frontend, empurrando as demais pra
+  baixo): dropdown acima do gráfico de barras da Home pra selecionar entre
+  os decks do usuário — o gráfico passa a mostrar as estatísticas daquele
+  deck específico, não tudo junto.
+- Confirmar se "cards do deck já estudados/vistos hoje" está sendo
+  persistido. Se não, pensar num campo no deck pra isso, que é zerado
+  todo dia pra todos os decks (a estatística reinicia diariamente).
+- Separar visualmente o bloco de cima (último deck estudado + meta de
+  estudo, lado a lado) do card de Estatísticas (gráfico + exportar PDF) —
+  padding entre as bordas, bordas mais grossas.
+- Melhorar os dados que alimentam o gráfico de estatísticas — criar uma
+  rota dedicada no backend: `decks/{deck_id}/statistics`.
+- Respostas sobre os pontos em aberto da ideia acima:
+  1. A rota `decks/{deck_id}/statistics` traz, por enquanto: distribuição
+     por rating (again/hard/good/easy) + quantidade revisada hoje. Só
+     isso mesmo por ora, pode crescer depois.
+  2. O cálculo é feito direto no Mongo (agregação), não trazendo tudo pra
+     API e somando em Python.
+  3. Sem nenhum deck selecionado no dropdown, mostra o deck mais recente
+     estudado — igual já funciona hoje em "Último deck estudado" (nome +
+     descrição). Quando o dropdown é usado pra selecionar um deck
+     manualmente, o título do card muda de "Último deck estudado" para
+     "Deck estudado".
+- Implementar OWASP de segurança no projeto (a definir quais itens do
+  Top 10 / ASVS entram, e em que sprint) — ainda precisa de refinamento,
+  levantar o que já está coberto (multi-tenant, rate limiting, segredos
+  fora do código) vs. o que falta antes de virar sprint.
 
 # TAREFA
 

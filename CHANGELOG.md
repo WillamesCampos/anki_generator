@@ -2,6 +2,45 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 3] Frontend Base & Home Dashboard — 2026-08-11
+
+Primeira superfície visual do sistema. Ver `openspec/changes/sprint-3-frontend-base-home-dashboard/`.
+
+### Adicionado
+- `frontend/`: SPA React via Vite, `react-router` para navegação entre seções, camada de API client (`fetch` + hooks) apontando para `/api/v1/...` com anexação de JWT.
+- Tokens de design (`frontend/src/tokens/`) extraídos por auditoria real de `refs/Ashley_files/style.css` (o CSS que `design_system/design-system.html` documenta — um template comercial de portfólio, não um design system de app) — cor, tipografia ("Outfit"), espaçamento, raio de borda, cada valor rastreável a uma linha do CSS original (`AUDIT.md`).
+- Componentes base (`Sidebar`, `AppShell`, `Card`, `Button`) construídos do zero em React usando os tokens — não se importa o CSS do template diretamente.
+- Tela Home: último deck estudado, meta de estudo + % alcançado (client-side), gráfico de distribuição de revisões por resultado (Chart.js/`react-chartjs-2`) e exportação desse gráfico para PDF (`jsPDF`, direto do canvas).
+- Menu lateral (decks, categorias, relatórios, chat IA) — chat IA é só placeholder visual, sem chamada de API (agente real chega na Sprint 7).
+- `GET /api/v1/reviews/` (backend) — histórico de `CardReview` do usuário autenticado, mais recentes primeiro; `CardReviewRepository.find_by_owner()` novo.
+- Checklist de auditoria de consistência visual (`frontend/src/tokens/VISUAL_AUDIT.md`), executado contra o código real via grep — encontrou e corrigiu 2 desvios (espaçamento inline fora dos tokens em `HomePage.jsx`).
+- `Makefile`: alvos `frontend-install`/`frontend-dev`/`frontend-build`/`frontend-lint`/`seed`.
+- Tela de login (`/login`) com dois fluxos: e-mail/senha (`dj_rest_auth.views.LoginView`, novo em `apps/accounts/urls.py`) e Google OAuth2 (fluxo "token client" do Google Identity Services — não o botão "Sign In" mais novo, que devolve ID token em vez do `access_token` OAuth2 que o `GoogleOAuth2Adapter` do backend espera). Componente `Input` novo (`frontend/src/components/ui/`).
+- Fluxo de refresh de token na SPA: `access` + `refresh` guardados no `localStorage`; em qualquer 401, `apiFetch` tenta renovar via `/auth/token/refresh/` (deduplicando chamadas concorrentes) antes de repetir a requisição original; só desloga (evento `auth:session-expired`) se o refresh também falhar. `AuthContext`/`useAuth()` novos.
+- Botão de recolher/expandir a sidebar, estado persistido em `localStorage`.
+- `seed_decks.py`: todo usuário seedado agora tem senha conhecida (`anki12345`, documentada em `frontend/README.md`) para permitir login e navegação autenticada de ponta a ponta sem depender de credenciais reais do Google.
+
+### Corrigido (gap de escopo encontrado em implementação)
+- A proposta original desta sprint previa "nenhum impacto no backend" — falso: a Sprint 2 persistia `CardReview` mas nunca expunha leitura via API, e a Home não tem como mostrar "último deck estudado"/gráfico de estatísticas sem esse histórico. Resolvido com o menor impacto possível: um método de repositório + uma Generic View reaproveitando tudo que a Sprint 2 já construiu, não um endpoint novo com lógica própria.
+- **Corrigido também**: CORS nunca tinha sido configurado (`django-cors-headers` não era nem dependência) — a SPA (`:5173`) e a API (`:8000`) são origens diferentes, então o navegador bloqueava a SPA de ler qualquer resposta, mesmo com JWT válido. Adicionado, com `CORS_ALLOWED_ORIGINS` liberado só pra `localhost:5173` em dev e vazio por padrão (via env var) em produção.
+- **Corrigido também**: `Deck.title` gerado pelo comando de seed usava um padrão genérico (`"Categoria — Deck N"`) sem servir como identificador amigável na Home — encontrado testando a Home de verdade, não em revisão de código. `seed_decks.py` agora gera título + descrição reais e variados por deck (`DECK_CATALOG`); a Home exibe `Deck.description` (campo já existente desde a Sprint 2, nunca populado) quando presente.
+- **Corrigido também**: "último deck estudado" fazia `GET /cards/{id}/` seguido de `GET /decks/{id}/` (2 requests em cadeia) só pra descobrir o deck de uma revisão — combinado com o double-effect do React 18 StrictMode em dev (`GET /reviews/` disparado 2x), a cadeia completa de 4 requests estourava o throttle de 3 req/s, retornando 429 e travando o card em "Não foi possível carregar o deck". Corrigido denormalizando `deck_id` (referência estável, não um título — sem risco de ficar desatualizado) direto no `CardReview`, no momento da revisão — a SPA agora busca o deck em 1 request só.
+
+### Alterado
+- `SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]`: 15min (Sprint 1) → 1h — o fluxo de dev manual (sem tela de login, token colado no `localStorage`) tornava a duração curta original irritante de testar. Nenhum ajuste necessário no blocklist de refresh token: seu TTL no Redis já é calculado dinamicamente a partir do `exp` real de cada token, não um valor fixo espelhando `ACCESS_TOKEN_LIFETIME`.
+
+### Corrigido (configuração do allauth para login por e-mail/senha)
+- `ACCOUNT_LOGIN_METHODS` não estava setado — allauth 65.x, sem essa config, usa o default (login só por `username`), incompatível com o `LoginSerializer` do dj-rest-auth (que manda `{email, password}`) e com `User.USERNAME_FIELD = "email"`. Confirmado pelo erro real da API (`"Deve incluir 'username' e 'password'"`) e inspecionando `allauth.account.app_settings` diretamente. Corrigido com `ACCOUNT_LOGIN_METHODS = {"email"}`.
+- `ACCOUNT_SIGNUP_FIELDS` setado inicialmente como dict (formato errado) — confirmado lendo o parser real do allauth (`SIGNUP_FIELDS`, que itera só as chaves de um dict, nunca encontra o sufixo `"*"`) que isso faz todo campo virar `required=False` silenciosamente. Formato correto é lista de strings (`["email*", "password1*", "password2*"]`).
+- `seed_decks.py` deixava usuários seedados pré-existentes com senha efetivamente inutilizável: a condição original (`if created or not user.has_usable_password()`) nunca re-setava a senha em reruns, porque `Django.is_password_usable("")` retorna `True` (só checa o marcador `!` de `set_unusable_password()`, não string vazia). Corrigido setando a senha incondicionalmente a cada seed.
+
+### Decisão de escopo
+- "Meta de estudo" (tarefa 3.2) não tem nenhum modelo no backend — nunca foi definida em nenhum spec de produto o que uma meta significa (cards/dia? semana?). Em vez de inventar schema sem requisito real, fica em `localStorage` por enquanto (não persiste entre dispositivos) — decisão documentada explicitamente (D7 em `design.md`), não escondida.
+
+### Pendências conhecidas
+- Login funciona (e-mail/senha e Google), mas cadastro de conta nova e vínculo de conta (mesmo e-mail via Google e via senha) ainda não — levantamento de requisitos feito, decisão de escopo pendente (ver PRD.md 7.1).
+- Bundle de produção (~720KB não comprimido no chunk principal, por causa de `jsPDF`+`html2canvas`+Chart.js) ainda sem code-splitting — aceitável no volume desta sprint, revisitar se o bundle crescer mais.
+
 ## [Sprint 2] Decks & Cards (domínio core) — 2026-08-10
 
 Primeira feature real sobre o domínio de deck/card migrado na Sprint 0, agora multi-tenant e com repetição espaçada. Ver `openspec/changes/sprint-2-decks-cards/`.
@@ -27,7 +66,7 @@ Primeira feature real sobre o domínio de deck/card migrado na Sprint 0, agora m
 - `seed_decks.py` reescrito para legibilidade: os `asyncio.gather(*( ... for ... ))` aninhados de 3 níveis viraram "monta a lista de objetos" → "salva tudo concorrentemente" como dois passos nomeados e separados, sem custo de performance; números mágicos (`2` decks por categoria, `4` cards por deck) viraram constantes nomeadas.
 
 ### Decisão de escopo
-- Métodos/serviços legados do protótipo antigo de geração de vocabulário (`find_by_word`, `find_similar_cards`, `find_duplicates`, `exists_by_word`, `duplicate_detection_service`, `card_quality_service`) — não usados por nenhuma view/URL, não previstos no PRD — foram mantidos e escopados por `owner_id`, por decisão explícita do usuário, para o caso do agente de IA (Sprint 5) reaproveitar essa lógica.
+- Métodos/serviços legados do protótipo antigo de geração de vocabulário (`find_by_word`, `find_similar_cards`, `find_duplicates`, `exists_by_word`, `duplicate_detection_service`, `card_quality_service`) — não usados por nenhuma view/URL, não previstos no PRD — foram mantidos e escopados por `owner_id`, por decisão explícita do usuário, para o caso do agente de IA (Sprint 7) reaproveitar essa lógica.
 
 ## [Sprint 1] Autenticação & Multi-tenant — 2026-08-05
 

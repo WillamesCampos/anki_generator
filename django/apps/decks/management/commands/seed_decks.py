@@ -38,9 +38,28 @@ from apps.decks.infrastructure.repositories.deck_repository import DeckRepositor
 
 SEED_USERNAMES = ["seed_ana", "seed_bruno", "seed_carla"]
 
-CATEGORY_NAMES = ["Programação", "Viagem"]
+# Senha fixa de dev pros usuários seedados — só pra testar o login por
+# e-mail/senha (`POST /api/v1/auth/login/`) localmente antes de existirem
+# credenciais reais do Google. Documentada em frontend/README.md.
+SEED_PASSWORD = "anki12345"
 
-DECKS_PER_CATEGORY = 2
+# Título + descrição reais por deck — não um padrão genérico tipo
+# "Categoria — Deck N". A Home (Sprint 3) mostra esses valores como
+# identificador amigável do "último deck estudado"; um título repetitivo
+# não serve pra isso (gap encontrado testando a Home de verdade).
+DECK_CATALOG = {
+    "Programação": [
+        ("Estruturas de Dados", "Vocabulário essencial sobre arrays, listas encadeadas, pilhas e filas."),
+        ("Padrões de Projeto", "Termos e conceitos de design patterns usados no dia a dia de desenvolvimento."),
+    ],
+    "Viagem": [
+        ("Aeroporto e Check-in", "Frases e vocabulário para embarque, bagagem e check-in em viagens internacionais."),
+        ("Hospedagem e Transporte", "Vocabulário para reservar hotéis, pedir direções e usar transporte público."),
+    ],
+}
+
+CATEGORY_NAMES = list(DECK_CATALOG.keys())
+
 CARDS_PER_DECK = 4
 
 WORD_BANK = [
@@ -102,10 +121,21 @@ class Command(BaseCommand):
         try:
             users = []
             for username in SEED_USERNAMES:
-                user, _ = User.objects.get_or_create(
+                user, created = User.objects.get_or_create(
                     username=username,
                     defaults={"email": f"{username}@seed.local"},
                 )
+                # `get_or_create` não passa por `set_password()` — sem isso
+                # o usuário fica com `password=""`. `has_usable_password()`
+                # NÃO pega esse caso: ela só verifica o marcador especial de
+                # `set_unusable_password()`, e uma string vazia não é esse
+                # marcador — `is_password_usable("")` retorna `True`
+                # (confirmado lendo o source do Django), então checar só
+                # `has_usable_password()` deixaria o seed antigo (sem senha)
+                # intocado numa reexecução. Define sempre, incondicional —
+                # idempotente, sem custo real de rehash pros 3 usuários.
+                user.set_password(SEED_PASSWORD)
+                user.save(update_fields=["password"])
                 users.append(user)
             return users
         finally:
@@ -142,9 +172,9 @@ class Command(BaseCommand):
 
     async def _create_decks(self, deck_repo: DeckRepository, owner_id: str, categories: List[Category]) -> List[Deck]:
         new_decks = [
-            Deck(title=f"{category.name} — Deck {deck_number}", owner_id=owner_id, category_id=category.id)
+            Deck(title=title, description=description, owner_id=owner_id, category_id=category.id)
             for category in categories
-            for deck_number in range(1, DECKS_PER_CATEGORY + 1)
+            for title, description in DECK_CATALOG[category.name]
         ]
         save_calls = [deck_repo.save(deck) for deck in new_decks]
         return list(await asyncio.gather(*save_calls))
@@ -209,4 +239,5 @@ class Command(BaseCommand):
             stability_after=card.stability,
             difficulty_after=card.difficulty,
             due_at_after=card.due_at,
+            deck_id=card.deck_id,
         )

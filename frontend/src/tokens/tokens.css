@@ -1,0 +1,32 @@
+/* Mesmos valores de tokens.js, como custom properties CSS — usadas nos
+   arquivos .css dos componentes (tokens.js é para uso em JS/inline styles,
+   ex.: configuração do Chart.js). Ver AUDIT.md para a fonte de cada valor. */
+
+:root {
+  --color-accent: rgb(255, 152, 0);
+  --color-text-primary: rgb(0, 0, 0);
+  --color-text-secondary: rgba(0, 0, 0, 0.5);
+  --color-text-on-dark: rgba(255, 255, 255, 0.9);
+  --color-border: rgba(0, 0, 0, 0.1);
+  --color-bg-light: rgb(242, 242, 242);
+  --color-bg-dark: rgb(0, 0, 0);
+  --color-white: rgb(255, 255, 255);
+
+  --font-family: "Outfit", sans-serif;
+  --font-size-base: 16px;
+  --line-height-base: 150%;
+  --font-size-xl: 32px;
+  --font-size-lg: 22px;
+  --font-size-md: 18px;
+  --font-size-sm: 14px;
+
+  --space-xs: 10px;
+  --space-sm: 15px;
+  --space-md: 30px;
+  --space-lg: 50px;
+  --space-xl: 60px;
+
+  --radius-pill: 70px;
+  --radius-card: 16px;
+  --radius-circle: 50%;
+}

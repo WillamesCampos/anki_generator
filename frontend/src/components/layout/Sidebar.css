@@ -1,0 +1,107 @@
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: var(--color-bg-dark);
+  color: var(--color-text-on-dark);
+  padding: var(--space-md) var(--space-sm);
+  box-sizing: border-box;
+  transition: width 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar--collapsed {
+  width: 72px;
+}
+
+.sidebar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+  padding: 0 var(--space-xs);
+}
+
+.sidebar--collapsed .sidebar__header {
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.sidebar__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  line-height: 1.15;
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar__toggle {
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-circle);
+  color: var(--color-white);
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: opacity 0.2s ease;
+}
+
+.sidebar__toggle:hover {
+  opacity: 0.85;
+}
+
+.sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.sidebar__link {
+  display: block;
+  padding: var(--space-xs);
+  border-radius: var(--radius-card);
+  color: var(--color-text-on-dark);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.sidebar--collapsed .sidebar__link {
+  text-align: center;
+}
+
+.sidebar__link:hover,
+.sidebar__link--active {
+  color: var(--color-accent);
+}
+
+.sidebar__logout {
+  width: 100%;
+  text-align: left;
+  background: var(--color-accent);
+  color: var(--color-white);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: opacity 0.2s ease;
+}
+
+.sidebar__logout:hover {
+  color: var(--color-white);
+  opacity: 0.85;
+}
+
+.sidebar--collapsed .sidebar__logout {
+  text-align: center;
+}

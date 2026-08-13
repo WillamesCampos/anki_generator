@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",  # exigido pelo allauth
+    "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
     "allauth",
@@ -53,6 +54,10 @@ AUTHENTICATION_BACKENDS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    # CorsMiddleware o mais alto possível na lista, sempre antes de
+    # CommonMiddleware (recomendação da própria lib) — a SPA (Sprint 3,
+    # localhost:5173 em dev) fica em origem diferente da API.
+    "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -146,11 +151,20 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-# Access token curto + refresh token mais longo, com rotação a cada uso —
-# ver D1 em design.md desta sprint. A revogação (blocklist no Redis) é feita
-# em apps/accounts/tokens.py, chamada explicitamente no logout.
+# Access token + refresh token mais longo, com rotação a cada uso — ver D1
+# em design.md da Sprint 1. A revogação (blocklist no Redis) é feita em
+# apps/accounts/tokens.py, chamada explicitamente no logout.
+#
+# ACCESS_TOKEN_LIFETIME aumentado de 15min para 1h (Sprint 3) — a duração
+# curta original tornava o fluxo de dev manual (sem tela de login ainda,
+# token gerado via shell e colado no localStorage) irritante de testar.
+# Não exige nenhum ajuste no blocklist de refresh token: o TTL de cada
+# entrada no Redis já é calculado dinamicamente a partir do `exp` real do
+# token (`apps/accounts/tokens.py:revoke_refresh_token`), nunca um valor
+# fixo — então continua "acompanhando" a validade real do token sozinho,
+# em vez de precisar ser sincronizado manualmente aqui.
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -169,8 +183,21 @@ REST_AUTH = {
     "TOKEN_MODEL": None,
 }
 
-# allauth: login apenas via Google por enquanto (sem cadastro local por
-# email/senha — fora do escopo desta sprint).
+# allauth: login por e-mail (não username) — User.USERNAME_FIELD já é
+# "email"; sem isso, allauth 65.x usa o default (username), incompatível
+# com o LoginSerializer do dj-rest-auth mandando {email, password}
+# (confirmado via erro real: "Deve incluir 'username' e 'password'").
+# Cadastro local (registro de conta nova) ainda não está conectado — só
+# login, para usuários já existentes (ex.: seed) — ver PRD.md 7.1.
+ACCOUNT_LOGIN_METHODS = {"email"}
+# Default do allauth exige "username" no cadastro (account.W001: conflita
+# com ACCOUNT_LOGIN_METHODS=email) — mesmo sem o cadastro em si conectado
+# ainda, a config precisa ficar consistente. `username` não é user-facing
+# neste projeto (só existe pelo REQUIRED_FIELDS do User, p/ createsuperuser).
+# Formato é LISTA DE STRINGS com "*" pra obrigatório — não dict (testado:
+# um dict aqui faz o parser do allauth iterar só as chaves, sem nunca ver
+# "*", e todo campo vira required=False silenciosamente).
+ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
 
 SOCIALACCOUNT_PROVIDERS = {

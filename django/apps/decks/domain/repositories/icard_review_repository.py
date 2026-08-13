@@ -20,3 +20,8 @@ class ICardReviewRepository(ABC):
     @abstractmethod
     async def find_by_card_id(self, card_id: uuid.UUID, owner_id: str) -> List[CardReview]:
         pass
+
+    @abstractmethod
+    async def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
+        """Revisões do owner, mais recentes primeiro — base da Home (Sprint 3: último deck estudado, gráfico de estatísticas)."""
+        pass
