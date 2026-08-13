@@ -38,6 +38,15 @@ class CardReview:
     difficulty_after: Optional[float] = None
     due_at_after: Optional[datetime] = None
 
+    # Denormalizado a partir de Card.deck_id no momento da revisão — evita
+    # a SPA precisar de um GET /cards/{id}/ só pra descobrir o deck (Sprint 3:
+    # "último deck estudado" virou 2 requests em cadeia, o suficiente pra
+    # estourar o throttle de 3 req/s sob o double-effect do StrictMode em
+    # dev). deck_id é uma referência estável (nunca muda), diferente de um
+    # título/nome de deck — por isso é seguro denormalizar isso e só isso,
+    # sem risco de ficar desatualizado se o deck for renomeado depois.
+    deck_id: Optional[uuid.UUID] = None
+
     def __post_init__(self):
         self._validate_card_review()
 
@@ -61,6 +70,7 @@ class CardReview:
             "stability_after": self.stability_after,
             "difficulty_after": self.difficulty_after,
             "due_at_after": self.due_at_after.isoformat() if self.due_at_after else None,
+            "deck_id": str(self.deck_id) if self.deck_id else None,
         }
 
     @classmethod
@@ -74,6 +84,7 @@ class CardReview:
             stability_after=data.get("stability_after"),
             difficulty_after=data.get("difficulty_after"),
             due_at_after=datetime.fromisoformat(data["due_at_after"]) if data.get("due_at_after") else None,
+            deck_id=uuid.UUID(data["deck_id"]) if data.get("deck_id") else None,
         )
 
     def __str__(self) -> str:

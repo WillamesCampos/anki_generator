@@ -21,6 +21,7 @@ dj-rest-auth = "^7.2.0"
 requests = "^2.34.2"
 cryptography = "^50.0.0"
 fsrs = "^6.3.2"
+django-cors-headers = "^4.9.0"
 
 
 [tool.poetry.group.dev.dependencies]

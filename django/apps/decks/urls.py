@@ -18,4 +18,5 @@ urlpatterns = [
     path("cards/", views.CardListCreateView.as_view(), name="card-list"),
     path("cards/<str:card_id>/", views.CardDetailView.as_view(), name="card-detail"),
     path("cards/<str:card_id>/review/", views.CardReviewView.as_view(), name="card-review"),
+    path("reviews/", views.CardReviewListView.as_view(), name="review-list"),
 ]

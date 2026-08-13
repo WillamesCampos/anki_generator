@@ -1,0 +1,24 @@
+.ui-button {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-pill);
+  padding: var(--space-xs) var(--space-md);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.ui-button:hover {
+  opacity: 0.85;
+}
+
+.ui-button--primary {
+  background: var(--color-accent);
+  color: var(--color-white);
+}
+
+.ui-button--secondary {
+  background: var(--color-bg-light);
+  color: var(--color-text-primary);
+}

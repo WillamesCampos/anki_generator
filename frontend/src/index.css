@@ -1,0 +1,18 @@
+@import "./tokens/tokens.css";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  color: var(--color-text-primary);
+  background: var(--color-white);
+}
+
+button {
+  font-family: inherit;
+}

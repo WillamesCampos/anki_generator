@@ -364,7 +364,8 @@ class CardReviewSchema(MongoDBSchema):
         "reviewed_at": datetime,
         "stability_after": float | null,
         "difficulty_after": float | null,
-        "due_at_after": datetime | null
+        "due_at_after": datetime | null,
+        "deck_id": ObjectId | null
     }
     """
 
@@ -378,6 +379,7 @@ class CardReviewSchema(MongoDBSchema):
             "reviewed_at": datetime.fromisoformat(review_data["reviewed_at"]),
             "stability_after": review_data.get("stability_after"),
             "difficulty_after": review_data.get("difficulty_after"),
+            "deck_id": uuid_to_object_id(review_data["deck_id"]) if review_data.get("deck_id") else None,
         }
 
         if review_data.get("due_at_after"):
@@ -396,6 +398,7 @@ class CardReviewSchema(MongoDBSchema):
             "stability_after": document.get("stability_after"),
             "difficulty_after": document.get("difficulty_after"),
             "due_at_after": datetime_from_mongo(document["due_at_after"]) if document.get("due_at_after") else None,
+            "deck_id": CardReviewSchema.to_string_id(document["deck_id"]) if document.get("deck_id") else None,
         }
 
 

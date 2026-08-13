@@ -56,3 +56,14 @@ class CardReviewRepository(ICardReviewRepository):
 
         except Exception as e:
             raise RepositoryError(f"Failed to find reviews by card ID: {e}")
+
+    async def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
+        try:
+            collection = await self._get_collection()
+            cursor = collection.find({"owner_id": owner_id}).sort("reviewed_at", -1).limit(limit)
+            documents = await cursor.to_list(length=None)
+
+            return [CardReview.from_dict(CardReviewSchema.from_document(doc)) for doc in documents]
+
+        except Exception as e:
+            raise RepositoryError(f"Failed to find reviews by owner: {e}")

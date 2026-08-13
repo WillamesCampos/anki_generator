@@ -40,11 +40,12 @@ Atue como um(a) Arquiteto(a) de Software Sênior, especialista em Django/DRF, Fa
 
     <funcionalidade id="home-dashboard">
     A página inicial (home) DEVE exibir, obrigatoriamente:
-      - o último deck estudado;
+      - o último deck estudado (ou o deck selecionado manualmente, ver abaixo);
       - a meta de estudo proposta e o percentual já alcançado;
       - o feedback do dia gerado pelo agente de IA;
       - um gráfico com estatísticas de cards estudados (acertos vs. erros).
     A home DEVE oferecer a funcionalidade de exportar esse gráfico para PDF.
+    Um dropdown acima do gráfico DEVE permitir selecionar qualquer deck do usuário, escopando o gráfico de estatísticas àquele deck — decisão resolvida (ver `dropdown-deck-home`).
     </funcionalidade>
 
     <funcionalidade id="exportacao-anki">
@@ -442,6 +443,34 @@ Views do Django/DRF permanecem síncronas (não se adota `adrf`/views assíncron
 Algoritmo de repetição espaçada: FSRS via o pacote Python `fsrs` (o mesmo que o Anki real usa desde 2023) — não SM-2 implementado manualmente. Registro de revisão é uma entidade própria, `CardReview` (um documento por evento de revisão, mesma granularidade do `revlog` do Anki), deliberadamente distinta de `GenerationSession` (que continua representando só o job de geração de cards via IA). Ver D4/D5 em design.md da Sprint 2.
 </decisao_resolvida>
 
+<decisao_resolvida id="frontend-tokens-visuais">
+`design_system/design-system.html` documenta `refs/Ashley_files/style.css`, o CSS compilado de um template comercial de portfólio/agência (jQuery/Bootstrap/GSAP) — não um design system de aplicação nem uma biblioteca de componentes. Tokens (cor, tipografia, espaçamento) são extraídos por auditoria real do CSS (`frontend/src/tokens/AUDIT.md`, cada valor rastreável a uma linha de `style.css`) e componentes React são construídos do zero usando esses tokens — não se importa `style.css`/`bootstrap-grid.css` diretamente no app. Ver D1 em design.md da Sprint 3.
+</decisao_resolvida>
+
+<decisao_resolvida id="frontend-grafico-pdf">
+Gráfico de estatísticas da Home: Chart.js (`react-chartjs-2`), não Recharts — renderiza em `<canvas>`, então a exportação em PDF (`jsPDF`) é direta (`canvas.toDataURL()`), sem precisar converter SVG pra canvas primeiro. Ver D2 em design.md da Sprint 3.
+</decisao_resolvida>
+
+<decisao_resolvida id="frontend-data-fetching">
+SPA usa `fetch` nativo + hooks React para consumir a API do Django — sem React Query/SWR nesta fase (YAGNI: Sprint 3 tem poucas telas/chamadas, cache/revalidação não é um problema real ainda). Revisitar se as Sprints 4+ mostrarem necessidade real. Ver D3 em design.md da Sprint 3.
+</decisao_resolvida>
+
+<decisao_resolvida id="meta-de-estudo-client-side">
+"Meta de estudo" (Home) não tem modelo/endpoint no backend — é uma preferência nunca definida em nenhum spec de produto (quantos cards? por dia?). Fica em `localStorage` por enquanto (não persiste entre dispositivos), decisão documentada explicitamente, não um endpoint de backend inventado sem requisito real. Ver D7 em design.md da Sprint 3.
+</decisao_resolvida>
+
+<decisao_resolvida id="estatisticas-por-deck-endpoint">
+Sprint 4 (nova, inserida após a Sprint 3, empurrando as demais): `GET /api/v1/decks/{deck_id}/statistics/`, endpoint dedicado para alimentar o gráfico da Home filtrado por deck. Escopo inicial da resposta: distribuição de revisões por rating (again/hard/good/easy) + quantidade revisada hoje, ambos escopados ao `deck_id`. O cálculo é feito via agregação direto no MongoDB (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python — mais correto conforme o volume de `CardReview` cresce. Escopo pode crescer em sprint futura, mas por ora é só isso — decisão explícita, para não virar escopo especulativo. Ver `openspec/changes/sprint-4-estatisticas-por-deck/`.
+</decisao_resolvida>
+
+<decisao_resolvida id="dropdown-deck-home">
+Um dropdown acima do gráfico de estatísticas da Home permite selecionar qualquer deck do usuário — o gráfico (via `estatisticas-por-deck-endpoint`) passa a refletir esse deck. Sem seleção manual, o default é o deck mais recentemente estudado (mesmo comportamento e card que já existe hoje como "Último deck estudado" — nome + descrição). Quando o usuário seleciona manualmente um deck no dropdown, o título do card muda de "Último deck estudado" para "Deck estudado", já que deixa de ser necessariamente o mais recente.
+</decisao_resolvida>
+
+<decisao_resolvida id="cards-revisados-hoje-sem-campo-novo">
+"Cards revisados hoje" (por deck ou global) NÃO precisa de um campo novo no `Deck`, zerado por job diário — essa persistência já existe: cada `CardReview` grava `reviewed_at` (timestamp) e `deck_id` (denormalizado desde a Sprint 3). Um contador armazenado exigiria um job de reset à meia-noite (Celery beat/cron), peça móvel a mais que pode falhar silenciosamente; filtrar `CardReview` por data já "reseta" sozinho, sem job nenhum. `estatisticas-por-deck-endpoint` deve calcular isso via agregação Mongo filtrando por data, não introduzir um campo persistido novo no `Deck`.
+</decisao_resolvida>
+
 </decisoes_resolvidas>
 
 <criterios_de_aceite>
@@ -501,6 +530,13 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Generic Views sobre dado não-ORM** (Sprint 2): serializers manuais + `get_queryset()` retornando lista resolvida — ver `generic-views-sobre-mongo`.
 - [x] **Sync vs. async nas views de deck/card** (Sprint 2): views síncronas + `async_to_sync`, repositórios continuam em Motor — ver `sync-views-async-repositorio`.
 - [x] **Algoritmo de repetição espaçada** (Sprint 2): FSRS via pacote `fsrs`, não SM-2 manual — ver `repeticao-espacada-fsrs`.
+- [x] **Tokens visuais do frontend** (Sprint 3): extraídos por auditoria real de `refs/Ashley_files/style.css`, não importados diretamente — ver `frontend-tokens-visuais`.
+- [x] **Gráfico + exportação PDF da Home** (Sprint 3): Chart.js + jsPDF — ver `frontend-grafico-pdf`.
+- [x] **Data fetching do frontend** (Sprint 3): fetch nativo, sem React Query por ora — ver `frontend-data-fetching`.
+- [x] **Meta de estudo** (Sprint 3): client-side (localStorage) por não existir modelo de backend definido — ver `meta-de-estudo-client-side`.
+- [x] **Endpoint de estatísticas por deck** (Sprint 4, nova, inserida após a Sprint 3): `GET /api/v1/decks/{deck_id}/statistics/`, distribuição por rating + revisados hoje, calculado via agregação Mongo — ver `estatisticas-por-deck-endpoint`. Formalizado em `PRD.md` e `openspec/changes/sprint-4-estatisticas-por-deck/`.
+- [x] **Dropdown de deck na Home** (Sprint 4): filtra o gráfico por deck, default é o mais recente estudado, título do card muda para "Deck estudado" quando há seleção manual — ver `dropdown-deck-home`. Formalizado em `PRD.md`/openspec (Sprint 4).
+- [x] **"Cards revisados hoje" sem campo novo no Deck** (Sprint 4): já derivável de `CardReview.reviewed_at`+`deck_id`, sem job de reset diário — ver `cards-revisados-hoje-sem-campo-novo`.
 
 ### Itens que ainda dependem de decisão explícita do usuário
 

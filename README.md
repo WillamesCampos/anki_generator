@@ -22,12 +22,12 @@ Este README é só uma porta de entrada. As fontes de verdade do projeto são:
 ```mermaid
 flowchart TB
     subgraph Client["Cliente"]
-        SPA["SPA React (S3) — Sprint 3"]
+        SPA["SPA React (Vite)\nfrontend/ — build estático p/ S3"]
     end
 
     subgraph DjangoApp["Django + DRF (django/)"]
         Auth["apps.accounts\nJWT + Google OAuth\nTenantOwnedModel (ORM)"]
-        Decks["apps.decks\nDeck / Category / Card / CardReview\nGeneric Views + APIView pontual"]
+        Decks["apps.decks\nDeck / Category / Card / CardReview\nGeneric Views + APIView pontual\n+ GET /reviews/ (histórico)"]
         Bridge["async_to_sync\n(view sync → repositório Motor)"]
     end
 
@@ -50,7 +50,7 @@ flowchart TB
     end
 
     subgraph Micro["Microsserviços FastAPI (microservices/)"]
-        DocGen["document-generator\n.apkg + PDF — Sprint 4"]
+        DocGen["document-generator\n.apkg + PDF — Sprint 6"]
     end
 
     SPA -->|"REST /api/v1/..."| Auth
@@ -61,7 +61,7 @@ flowchart TB
     Bridge --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
     DeckRepo & CardRepo & CategoryRepo & ReviewRepo & GenRepo --> Mongo
     SeedCmd --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
-    DjangoApp -.->|"chamada HTTP versionada — Sprint 4"| DocGen
+    DjangoApp -.->|"chamada HTTP versionada — Sprint 6"| DocGen
 ```
 
 Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz — `django/` (o backend principal), `microservices/<nome>/` (cada microsserviço FastAPI, um por pasta) e `frontend/` (SPA React, Sprint 3). `docker-compose.yml` e `Makefile` ficam na raiz e orquestram todas elas.
@@ -69,6 +69,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 - **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
 - **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
 - **Domínio de deck/card**: `django/apps/decks/` — entities (`Deck`/`Category`/`Card`/`CardReview`), value objects e repositórios Mongo (via Motor). Isolamento multi-tenant aqui é `owner_id` obrigatório embutido em toda query do repositório (mecanismo próprio, já que não há ORM do Django sobre Mongo). CRUD via Generic Views do DRF com serializers manuais; repetição espaçada via FSRS (pacote `fsrs`); views síncronas fazendo bridge (`async_to_sync`) para os repositórios assíncronos.
+- **Frontend**: `frontend/` — SPA React (Vite), consumindo a API do Django. Tokens de design extraídos por auditoria real de `refs/Ashley_files/style.css` (ver `frontend/src/tokens/`), não importados diretamente — o `design_system/design-system.html` documenta um template comercial de portfólio, não um design system de app pronto. Home dashboard com gráfico (Chart.js) exportável em PDF (`jsPDF`); sem tela de login ainda (JWT obtido manualmente, ver `frontend/README.md`).
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
 - **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
 - **Deploy real**: VPS (Docker Compose) — não AWS. O único uso de AWS é o bucket S3 do frontend estático.
@@ -86,7 +87,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | Banco relacional | PostgreSQL (auth/permissions do Django) |
 | Banco de domínio | MongoDB (decks/cards/categorias/reviews), via Motor |
 | Fila/assíncrono | Celery + RabbitMQ + Redis |
-| Frontend | React (SPA estática, hospedada em S3) |
+| Frontend | React + Vite (SPA estática, hospedada em S3), `react-router`, Chart.js + `jsPDF` |
 | Deploy | Docker Compose numa VPS |
 
 ## 🚀 Como rodar localmente
@@ -131,6 +132,13 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
    curl http://localhost:8001/document-generator/v1/health/
    ```
 
+6. **Frontend** (opcional, Sprint 3+)
+   ```bash
+   make frontend-install
+   make frontend-dev
+   ```
+   Abre em `http://localhost:5173`. Sem tela de login ainda — ver `frontend/README.md` para obter um JWT manualmente.
+
 ### Comandos úteis (`Makefile`)
 
 | Comando | O que faz |
@@ -139,6 +147,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | `make logs` | Segue os logs de todos os serviços |
 | `make migrate` / `make makemigrations` | Migrations do Django |
 | `make run` | Roda o Django fora de container (`runserver`) |
+| `make frontend-install` / `make frontend-dev` / `make frontend-build` / `make frontend-lint` | SPA React (`frontend/`) |
 
 ## 🧪 Testes
 
@@ -162,14 +171,16 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 0 — Fundação de arquitetura (Django + domínio consolidado + Docker Compose + microsserviço de documentos)
 - [x] Sprint 1 — Autenticação & multi-tenant
 - [x] Sprint 2 — Decks & Cards (domínio core)
-- [ ] Sprint 3 — Frontend base & home dashboard
-- [ ] Sprint 4 — Exportação Anki & microsserviço de documentos (integração completa)
-- [ ] Sprint 5 — Agente de IA (LangChain/LangGraph)
-- [ ] Sprint 6 — Notificações WhatsApp (Evolution API)
-- [ ] Sprint 7 — Relatório semanal por e-mail
-- [ ] Sprint 8 — Deploy real (VPS + S3 + domínio)
-- [ ] Sprint 9 — Observabilidade
-- [ ] Sprint 10 — Hardening & revisão final
+- [x] Sprint 3 — Frontend base & home dashboard (login Google + e-mail/senha, refresh de token adicionados ao escopo)
+- [ ] Sprint 4 — Estatísticas por deck (endpoint dedicado + dropdown na Home) — inserida fora da ordem original
+- [ ] Sprint 5 — Testes & CI/CD (backend + frontend, GitHub Actions) — inserida fora da ordem original
+- [ ] Sprint 6 — Exportação Anki & microsserviço de documentos (integração completa)
+- [ ] Sprint 7 — Agente de IA (LangChain/LangGraph)
+- [ ] Sprint 8 — Notificações WhatsApp (Evolution API)
+- [ ] Sprint 9 — Relatório semanal por e-mail
+- [ ] Sprint 10 — Deploy real (VPS + S3 + domínio)
+- [ ] Sprint 11 — Observabilidade
+- [ ] Sprint 12 — Hardening & revisão final
 
 ## 🤝 Contribuindo
 
