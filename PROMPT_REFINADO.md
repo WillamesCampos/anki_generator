@@ -460,7 +460,7 @@ SPA usa `fetch` nativo + hooks React para consumir a API do Django — sem React
 </decisao_resolvida>
 
 <decisao_resolvida id="estatisticas-por-deck-endpoint">
-Sprint 4 (nova, inserida após a Sprint 3, empurrando as demais): `GET /api/v1/decks/{deck_id}/statistics/`, endpoint dedicado para alimentar o gráfico da Home filtrado por deck. Escopo inicial da resposta: distribuição de revisões por rating (again/hard/good/easy) + quantidade revisada hoje, ambos escopados ao `deck_id`. O cálculo é feito via agregação direto no MongoDB (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python — mais correto conforme o volume de `CardReview` cresce. Escopo pode crescer em sprint futura, mas por ora é só isso — decisão explícita, para não virar escopo especulativo. Ver `openspec/changes/sprint-4-estatisticas-por-deck/`.
+Sprint 7 (nova, inserida após a Sprint 3, empurrando as demais): `GET /api/v1/decks/{deck_id}/statistics/`, endpoint dedicado para alimentar o gráfico da Home filtrado por deck. Escopo da resposta: distribuição de revisões por rating (again/hard/good/easy), quantidade revisada hoje, e progresso contra `daily_review_goal` (ver `deck-daily-review-goal`) — todos escopados ao `deck_id`, excluindo registros soft-deletados (ver `soft-delete-deck-card`). O cálculo é feito via agregação direto no MongoDB (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python. Depende da Sprint 6 (`soft-delete-deck-card`, `deck-daily-review-goal`) estar pronta primeiro. Ver `openspec/changes/sprint-7-estatisticas-por-deck/`.
 </decisao_resolvida>
 
 <decisao_resolvida id="dropdown-deck-home">
@@ -469,6 +469,30 @@ Um dropdown acima do gráfico de estatísticas da Home permite selecionar qualqu
 
 <decisao_resolvida id="cards-revisados-hoje-sem-campo-novo">
 "Cards revisados hoje" (por deck ou global) NÃO precisa de um campo novo no `Deck`, zerado por job diário — essa persistência já existe: cada `CardReview` grava `reviewed_at` (timestamp) e `deck_id` (denormalizado desde a Sprint 3). Um contador armazenado exigiria um job de reset à meia-noite (Celery beat/cron), peça móvel a mais que pode falhar silenciosamente; filtrar `CardReview` por data já "reseta" sozinho, sem job nenhum. `estatisticas-por-deck-endpoint` deve calcular isso via agregação Mongo filtrando por data, não introduzir um campo persistido novo no `Deck`.
+</decisao_resolvida>
+
+<decisao_resolvida id="auditoria-entidades-mongo">
+Sprint 5 (nova, inserida após a Sprint 4): auditoria via `backend-mentor` encontrou que `created_by`/`updated_by` (regra `auditoria`, mandatória desde a Sprint 1) nunca foram aplicados às entidades de produto — `AuditMixin`/`AuditSerializerMixin` só existem no app `accounts`, nunca usados por `Deck`/`Card`/`Category`/`CardReview`. Esses campos passam a existir nessas quatro entidades, preenchidos pelos serializers manuais do domínio Mongo a partir da request autenticada (mesmo princípio do `AuditSerializerMixin`, sem reaproveitar o mixin do Django ORM, que não se aplica a dataclass/Mongo). Motivador concreto, não só teórico: a Sprint 10 (Agente de IA) já exige `created_by`/`updated_by = "ai_agent_machine"` em todo recurso criado pelo agente — sem esses campos, essa sprint travaria.
+</decisao_resolvida>
+
+<decisao_resolvida id="permissoes-grupo-sem-contenttype">
+Sprint 5: `Permission`/`Group` nativos do Django (regra `permissoes-django`) não geram `Permission` automático para `Deck`/`Card`/`Category`/`CardReview` porque essas entidades não são `models.Model` (sem `ContentType`/migração). Em vez de criar `Permission` sintético manualmente, a autorização usa só `Group` como rótulo grosso de capacidade: todo usuário entra automaticamente no grupo `standard_user` (signup e seed); um `permission_classes` customizado verifica pertencimento ao grupo, substituindo o `IsAuthenticated` puro usado até aqui em toda view de decks/cards/categories/reviews. Desenhado pra aceitar um grupo `ai_agent` (Sprint 10) sem mudar de mecanismo — continua "nativo Django, sem sistema paralelo", só não usa a metade do framework que pressupõe ORM.
+</decisao_resolvida>
+
+<decisao_resolvida id="soft-delete-deck-card">
+Sprint 6 (nova, inserida após a Sprint 5): exclusão de `Deck`/`Card` é soft delete via `deleted_at: Optional[datetime]` (timestamp, não booleano — permite calcular a janela de retenção de 7 dias diretamente), não delete físico direto. `DELETE /api/v1/decks/{deck_id}/` cascateia pra todos os cards do deck (marca `deleted_at` neles também) — sem caso de "desvincular", porque a relação Card↔Deck continua 1:1 (decisão explícita: **não** introduzir N:N entre Card e Deck agora, custo de retrofit em todo repositório existente não se justifica sem um requisito de produto real de "card compartilhado entre decks"). `CardReview` nunca é apagada (nem soft nem físico) — é histórico "congelado", só passa a ser excluída das estatísticas (`estatisticas-por-deck-endpoint`) quando o `card_id`/`deck_id` associado está soft-deletado. Todo método de repositório existente precisa passar a filtrar `deleted_at: None` por padrão, via um helper único — resolve de vez o gap de "cascade delete de CardReview" (`PRD.md` §7.1, encontrado na Sprint 3). Também nesta sprint: `apiFetch` (frontend) ganha tratamento distinto de `403`, já que a partir da Sprint 5 (permissão por grupo) esse status passa a poder acontecer de verdade.
+</decisao_resolvida>
+
+<decisao_resolvida id="purge-job-soft-delete">
+Sprint 6: uma task Celery Beat diária purga permanentemente (delete físico) `Deck`/`Card` com `deleted_at` há mais de 7 dias — primeira task Celery real do projeto (Celery Beat instalado desde a Sprint 0, nunca executou nada até aqui).
+</decisao_resolvida>
+
+<decisao_resolvida id="deck-daily-review-goal">
+Sprint 6: `daily_review_goal: Optional[int]` em `Deck`, editável via `PATCH` — meta de cards a revisar daquele deck, persistida no backend. Substitui/supera a decisão `meta-de-estudo-client-side` da Sprint 3 (que era global, só `localStorage`, sem spec de produto definida na época) com um conceito mais preciso e por deck. Consumido por `estatisticas-por-deck-endpoint` (Sprint 7), que passa a devolver o progresso contra essa meta calculado no servidor.
+</decisao_resolvida>
+
+<decisao_resolvida id="frontend-hardening-sprint3">
+Sprint 4 (nova, inserida após a Sprint 3, antes de todas as demais): auditoria via `backend-mentor` (grep direto no código) encontrou pontas reais da Sprint 3 nunca fechadas — zero responsividade (nenhuma `@media query` em todo o CSS, apesar de ser `<regra_obrigatoria>`), sem error boundary (exceção JS derruba a tela pra branco), `LoginPage.jsx`/`HomePage.jsx` usando inline `style` enquanto os outros 6 componentes usam CSS dedicado com tokens, bundle sem code-splitting (`jsPDF`+`html2canvas` no chunk principal mesmo sem uso), e `index.html` sem nenhum `<link rel="icon">`. Responsividade escopada como "não quebrar num tablet" (breakpoint ~1024px, sidebar colapsa automaticamente reaproveitando o toggle da Sprint 3) — mobile de verdade (nav diferente) fica fora de escopo por decisão explícita do usuário, sem uso mobile previsto no curto prazo. Inserida antes das Sprints 5/6/7 de propósito: elas adicionam bastante UI nova, e construir sobre um frontend inconsistente só reproduziria o problema.
 </decisao_resolvida>
 
 </decisoes_resolvidas>
@@ -534,9 +558,15 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Gráfico + exportação PDF da Home** (Sprint 3): Chart.js + jsPDF — ver `frontend-grafico-pdf`.
 - [x] **Data fetching do frontend** (Sprint 3): fetch nativo, sem React Query por ora — ver `frontend-data-fetching`.
 - [x] **Meta de estudo** (Sprint 3): client-side (localStorage) por não existir modelo de backend definido — ver `meta-de-estudo-client-side`.
-- [x] **Endpoint de estatísticas por deck** (Sprint 4, nova, inserida após a Sprint 3): `GET /api/v1/decks/{deck_id}/statistics/`, distribuição por rating + revisados hoje, calculado via agregação Mongo — ver `estatisticas-por-deck-endpoint`. Formalizado em `PRD.md` e `openspec/changes/sprint-4-estatisticas-por-deck/`.
-- [x] **Dropdown de deck na Home** (Sprint 4): filtra o gráfico por deck, default é o mais recente estudado, título do card muda para "Deck estudado" quando há seleção manual — ver `dropdown-deck-home`. Formalizado em `PRD.md`/openspec (Sprint 4).
-- [x] **"Cards revisados hoje" sem campo novo no Deck** (Sprint 4): já derivável de `CardReview.reviewed_at`+`deck_id`, sem job de reset diário — ver `cards-revisados-hoje-sem-campo-novo`.
+- [x] **Robustecimento do frontend** (Sprint 4, nova, inserida após a Sprint 3, antes de todas as demais): responsividade tablet, error boundary, consistência de estilo (CSS dedicado em vez de inline), code-splitting, favicon — ver `frontend-hardening-sprint3`. Formalizado em `PRD.md`/openspec (Sprint 4).
+- [x] **Auditoria em entidades Mongo** (Sprint 5): `created_by`/`updated_by` em Deck/Card/Category/CardReview, nunca implementados apesar da regra `auditoria` desde a Sprint 1 — ver `auditoria-entidades-mongo`. Formalizado em `PRD.md`/openspec (Sprint 5).
+- [x] **Permissões via Group, sem ContentType** (Sprint 5): `Deck`/`Card` não são `models.Model`, sem `Permission` automático — autorização via `Group` (`standard_user`) + `permission_classes` customizado — ver `permissoes-grupo-sem-contenttype`.
+- [x] **Soft delete de Deck/Card** (Sprint 6): `deleted_at` timestamp, cascade Deck→Card, sem N:N entre Card e Deck, `CardReview` preservada como histórico — ver `soft-delete-deck-card`. Resolve de vez o gap de cascade delete de `CardReview` do `PRD.md` §7.1.
+- [x] **Purge job de soft delete** (Sprint 6): task Celery Beat diária, primeira task Celery real do projeto — ver `purge-job-soft-delete`.
+- [x] **Meta de estudo por deck** (Sprint 6): `daily_review_goal` persistido no `Deck`, substitui a meta client-side global da Sprint 3 — ver `deck-daily-review-goal`.
+- [x] **Endpoint de estatísticas por deck** (Sprint 7): `GET /api/v1/decks/{deck_id}/statistics/`, distribuição por rating + revisados hoje + progresso da meta, calculado via agregação Mongo — ver `estatisticas-por-deck-endpoint`. Formalizado em `PRD.md`/openspec (Sprint 7).
+- [x] **Dropdown de deck na Home** (Sprint 7): filtra o gráfico por deck, default é o mais recente estudado, título do card muda para "Deck estudado" quando há seleção manual — ver `dropdown-deck-home`.
+- [x] **"Cards revisados hoje" sem campo novo no Deck** (Sprint 7): já derivável de `CardReview.reviewed_at`+`deck_id`, sem job de reset diário — ver `cards-revisados-hoje-sem-campo-novo`.
 
 ### Itens que ainda dependem de decisão explícita do usuário
 

@@ -50,7 +50,7 @@ flowchart TB
     end
 
     subgraph Micro["Microsserviços FastAPI (microservices/)"]
-        DocGen["document-generator\n.apkg + PDF — Sprint 6"]
+        DocGen["document-generator\n.apkg + PDF — Sprint 9"]
     end
 
     SPA -->|"REST /api/v1/..."| Auth
@@ -61,7 +61,7 @@ flowchart TB
     Bridge --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
     DeckRepo & CardRepo & CategoryRepo & ReviewRepo & GenRepo --> Mongo
     SeedCmd --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
-    DjangoApp -.->|"chamada HTTP versionada — Sprint 6"| DocGen
+    DjangoApp -.->|"chamada HTTP versionada — Sprint 9"| DocGen
 ```
 
 Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz — `django/` (o backend principal), `microservices/<nome>/` (cada microsserviço FastAPI, um por pasta) e `frontend/` (SPA React, Sprint 3). `docker-compose.yml` e `Makefile` ficam na raiz e orquestram todas elas.
@@ -172,15 +172,18 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 1 — Autenticação & multi-tenant
 - [x] Sprint 2 — Decks & Cards (domínio core)
 - [x] Sprint 3 — Frontend base & home dashboard (login Google + e-mail/senha, refresh de token adicionados ao escopo)
-- [ ] Sprint 4 — Estatísticas por deck (endpoint dedicado + dropdown na Home) — inserida fora da ordem original
-- [ ] Sprint 5 — Testes & CI/CD (backend + frontend, GitHub Actions) — inserida fora da ordem original
-- [ ] Sprint 6 — Exportação Anki & microsserviço de documentos (integração completa)
-- [ ] Sprint 7 — Agente de IA (LangChain/LangGraph)
-- [ ] Sprint 8 — Notificações WhatsApp (Evolution API)
-- [ ] Sprint 9 — Relatório semanal por e-mail
-- [ ] Sprint 10 — Deploy real (VPS + S3 + domínio)
-- [ ] Sprint 11 — Observabilidade
-- [ ] Sprint 12 — Hardening & revisão final
+- [ ] Sprint 4 — Robustecimento do frontend (responsividade tablet, error boundary, code-splitting, favicon, consistência de estilo) — inserida fora da ordem original
+- [ ] Sprint 5 — Fundações transversais: auditoria & permissões (campos `created_by`/`updated_by` + grupo/permissão real) — inserida fora da ordem original
+- [ ] Sprint 6 — Ciclo de vida de Deck/Card (edição, soft delete com retenção de 7 dias, meta por deck) — inserida fora da ordem original
+- [ ] Sprint 7 — Estatísticas por deck (endpoint dedicado + dropdown na Home) — inserida fora da ordem original
+- [ ] Sprint 8 — Testes & CI/CD (backend + frontend, GitHub Actions) — inserida fora da ordem original
+- [ ] Sprint 9 — Exportação Anki & microsserviço de documentos (integração completa)
+- [ ] Sprint 10 — Agente de IA (LangChain/LangGraph)
+- [ ] Sprint 11 — Notificações WhatsApp (Evolution API)
+- [ ] Sprint 12 — Relatório semanal por e-mail
+- [ ] Sprint 13 — Deploy real (VPS + S3 + domínio)
+- [ ] Sprint 14 — Observabilidade
+- [ ] Sprint 15 — Hardening & revisão final
 
 ## 🤝 Contribuindo
 

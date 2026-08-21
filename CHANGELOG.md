@@ -11,7 +11,7 @@ Primeira superfície visual do sistema. Ver `openspec/changes/sprint-3-frontend-
 - Tokens de design (`frontend/src/tokens/`) extraídos por auditoria real de `refs/Ashley_files/style.css` (o CSS que `design_system/design-system.html` documenta — um template comercial de portfólio, não um design system de app) — cor, tipografia ("Outfit"), espaçamento, raio de borda, cada valor rastreável a uma linha do CSS original (`AUDIT.md`).
 - Componentes base (`Sidebar`, `AppShell`, `Card`, `Button`) construídos do zero em React usando os tokens — não se importa o CSS do template diretamente.
 - Tela Home: último deck estudado, meta de estudo + % alcançado (client-side), gráfico de distribuição de revisões por resultado (Chart.js/`react-chartjs-2`) e exportação desse gráfico para PDF (`jsPDF`, direto do canvas).
-- Menu lateral (decks, categorias, relatórios, chat IA) — chat IA é só placeholder visual, sem chamada de API (agente real chega na Sprint 7).
+- Menu lateral (decks, categorias, relatórios, chat IA) — chat IA é só placeholder visual, sem chamada de API (agente real chega na Sprint 10).
 - `GET /api/v1/reviews/` (backend) — histórico de `CardReview` do usuário autenticado, mais recentes primeiro; `CardReviewRepository.find_by_owner()` novo.
 - Checklist de auditoria de consistência visual (`frontend/src/tokens/VISUAL_AUDIT.md`), executado contra o código real via grep — encontrou e corrigiu 2 desvios (espaçamento inline fora dos tokens em `HomePage.jsx`).
 - `Makefile`: alvos `frontend-install`/`frontend-dev`/`frontend-build`/`frontend-lint`/`seed`.
@@ -66,7 +66,7 @@ Primeira feature real sobre o domínio de deck/card migrado na Sprint 0, agora m
 - `seed_decks.py` reescrito para legibilidade: os `asyncio.gather(*( ... for ... ))` aninhados de 3 níveis viraram "monta a lista de objetos" → "salva tudo concorrentemente" como dois passos nomeados e separados, sem custo de performance; números mágicos (`2` decks por categoria, `4` cards por deck) viraram constantes nomeadas.
 
 ### Decisão de escopo
-- Métodos/serviços legados do protótipo antigo de geração de vocabulário (`find_by_word`, `find_similar_cards`, `find_duplicates`, `exists_by_word`, `duplicate_detection_service`, `card_quality_service`) — não usados por nenhuma view/URL, não previstos no PRD — foram mantidos e escopados por `owner_id`, por decisão explícita do usuário, para o caso do agente de IA (Sprint 7) reaproveitar essa lógica.
+- Métodos/serviços legados do protótipo antigo de geração de vocabulário (`find_by_word`, `find_similar_cards`, `find_duplicates`, `exists_by_word`, `duplicate_detection_service`, `card_quality_service`) — não usados por nenhuma view/URL, não previstos no PRD — foram mantidos e escopados por `owner_id`, por decisão explícita do usuário, para o caso do agente de IA (Sprint 10) reaproveitar essa lógica.
 
 ## [Sprint 1] Autenticação & Multi-tenant — 2026-08-05
 
