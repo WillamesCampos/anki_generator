@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { logout } from "../../api/auth";
-import { useAuth } from "../../context/AuthContext";
+import useAuth from "../../context/useAuth";
 import "./Sidebar.css";
 
 const NAV_ITEMS = [
@@ -14,11 +14,32 @@ const NAV_ITEMS = [
 ];
 
 const COLLAPSED_KEY = "anki_generator_sidebar_collapsed";
+const TABLET_MEDIA_QUERY = "(max-width: 1024px)";
+
+function getInitialCollapsed() {
+  const savedPreference = localStorage.getItem(COLLAPSED_KEY);
+  if (savedPreference !== null) return savedPreference === "true";
+
+  return window.matchMedia(TABLET_MEDIA_QUERY).matches;
+}
 
 export default function Sidebar() {
   const navigate = useNavigate();
   const { markLoggedOut } = useAuth();
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(COLLAPSED_KEY) === "true");
+  const [collapsed, setCollapsed] = useState(getInitialCollapsed);
+
+  useEffect(() => {
+    const tabletMedia = window.matchMedia(TABLET_MEDIA_QUERY);
+
+    function handleViewportChange(event) {
+      if (localStorage.getItem(COLLAPSED_KEY) === null) {
+        setCollapsed(event.matches);
+      }
+    }
+
+    tabletMedia.addEventListener("change", handleViewportChange);
+    return () => tabletMedia.removeEventListener("change", handleViewportChange);
+  }, []);
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
@@ -38,7 +59,7 @@ export default function Sidebar() {
   }
 
   return (
-    <nav className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
+    <nav aria-label="Navegação principal" className={`sidebar${collapsed ? " sidebar--collapsed" : ""}`}>
       <div className="sidebar__header">
         <div className="sidebar__brand">
           {collapsed ? (

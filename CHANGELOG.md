@@ -2,6 +2,30 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 4] Robustecimento do Frontend — 2026-08-21
+
+Fechamento das lacunas técnicas da primeira entrega da SPA. Ver `openspec/changes/sprint-4-robustecimento-frontend/`.
+
+### Adicionado
+- Fundação mínima de testes frontend com Vitest 4, React Testing Library, jest-dom e jsdom; scripts `npm test`/`npm run test:watch` e 6 testes cobrindo Error Boundary, responsividade da sidebar, preferência persistida e exportação PDF sob demanda.
+- `ErrorBoundary` global com fallback alinhado aos componentes/tokens existentes, evitando tela branca em falhas não tratadas de renderização.
+- Favicon PNG 192×192 derivado do mascote exibido no `README.md`, com composição simplificada para legibilidade em abas do navegador.
+- CSS dedicado para `HomePage` e `LoginPage`, eliminando todos os atributos `style` das páginas/componentes.
+
+### Alterado
+- Exportação PDF extraída para `lib/exportPdf.js`; `jsPDF` agora usa `import()` dinâmico e sai do caminho crítico. Build de produção: chunk principal de 338 kB, `jspdf` de 391 kB e `html2canvas` de 202 kB, não comprimidos.
+- Sidebar passa a recolher automaticamente em viewport de até 1024px quando não há escolha manual. A preferência do usuário continua persistida no `localStorage` e prevalece sobre o breakpoint.
+- Home ganhou largura máxima, grid que não força overflow e área do gráfico adaptável; Login ganhou largura fluida com limite preservando a composição original.
+- `useAuth` e o contexto base foram separados do `AuthProvider`, eliminando o warning de Fast Refresh e mantendo o lint limpo.
+- Makefile e READMEs atualizados com o alvo `frontend-test` e o fluxo de qualidade da SPA.
+- Vite atualizado para 6.4.3 e Vitest para 4.1.11; `npm audit` passou com 0 vulnerabilidades em dependências de produção e desenvolvimento.
+
+### Validado
+- `make frontend-test`: 3 arquivos, 6 testes, 0 falhas.
+- `npm run lint`: 0 erros e 0 warnings.
+- `npm run build`: build estático concluído e chunks de PDF separados do principal.
+- Chrome headless em 1024×768: Login e Home inspecionadas; sidebar colapsada na Home e nenhuma quebra horizontal (`scrollWidth = viewportWidth = 1024`).
+
 ## [Sprint 3] Frontend Base & Home Dashboard — 2026-08-11
 
 Primeira superfície visual do sistema. Ver `openspec/changes/sprint-3-frontend-base-home-dashboard/`.

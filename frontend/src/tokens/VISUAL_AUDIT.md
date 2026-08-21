@@ -26,3 +26,11 @@ grep -n "style={{" src/pages/*.jsx src/components/**/*.jsx
 - **Raio de borda**: `Card`/`Button` usam `var(--radius-card)`/`var(--radius-pill)` — nenhum `border-radius` hardcoded fora de `tokens.css`.
 
 Reexecutar este checklist sempre que uma tela nova for adicionada (Sprint 4+).
+
+## Revalidação — Sprint 4
+
+- `LoginPage.jsx` e `HomePage.jsx` não contêm mais `style={{...}}`; todos os estilos visuais foram movidos para CSS dedicado.
+- Nenhuma cor literal foi introduzida no CSS/JSX fora de `tokens.css`/`tokens.js`; o favicon é um asset de marca derivado diretamente da imagem do mascote exibida no `README.md`.
+- O breakpoint estrutural único é `1024px`, conforme o PRD; espaçamento continua usando `var(--space-*)`.
+- Inspeção real em Chrome headless a 1024×768 confirmou Login centralizado, Home com sidebar colapsada, grid em duas colunas e ausência de overflow horizontal (`scrollWidth = viewportWidth = 1024`).
+- Auditoria automatizada executada junto de `npm test`, `npm run lint` e `npm run build` antes do fechamento da sprint.

@@ -105,3 +105,10 @@
 .sidebar--collapsed .sidebar__logout {
   text-align: center;
 }
+
+@media (max-width: 1024px) {
+  .sidebar {
+    padding-right: var(--space-xs);
+    padding-left: var(--space-xs);
+  }
+}

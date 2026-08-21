@@ -5,12 +5,17 @@
 }
 
 body {
+  min-width: 320px;
   margin: 0;
   font-family: var(--font-family);
   font-size: var(--font-size-base);
   line-height: var(--line-height-base);
   color: var(--color-text-primary);
   background: var(--color-white);
+}
+
+#root {
+  min-height: 100vh;
 }
 
 button {

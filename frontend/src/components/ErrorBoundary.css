@@ -1,0 +1,13 @@
+.error-boundary {
+  display: grid;
+  min-height: 100vh;
+  padding: var(--space-md);
+  place-items: center;
+  background: var(--color-bg-light);
+  text-align: center;
+}
+
+.error-boundary__message {
+  max-width: 360px;
+  margin: 0 0 var(--space-md);
+}
