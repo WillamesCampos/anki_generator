@@ -149,14 +149,15 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 4 — Robustecimento do Frontend
 
-**Objetivo**: fecha pontas reais da Sprint 3, encontradas via `backend-mentor` (grep no código, não suposição): zero responsividade (`grep "@media"` não encontra nada, apesar de ser `<regra_obrigatoria>` em `PROMPT_REFINADO.md`), sem error boundary (uma exceção JS derruba a tela pra branco sem recuperação), inconsistência de estilo (`LoginPage.jsx`/`HomePage.jsx` usam inline `style`, os outros 6 componentes usam CSS dedicado com tokens), bundle sem code-splitting, e sem favicon (`index.html` não tem `<link rel="icon">`). Inserida antes da Sprint 5 (Fundações Transversais) de propósito — as próximas sprints adicionam bastante UI nova (formulários, dropdown), e construir isso sobre um frontend inconsistente só reproduz o problema em vez de corrigi-lo.
+**Objetivo**: fecha pontas reais da Sprint 3, encontradas via `backend-mentor` (grep no código, não suposição): zero responsividade (`grep "@media"` não encontra nada, apesar de ser `<regra_obrigatoria>` em `PROMPT_REFINADO.md`), sem error boundary (uma exceção JS derruba a tela pra branco sem recuperação), inconsistência de estilo (`LoginPage.jsx`/`HomePage.jsx` usam inline `style`, os outros 6 componentes usam CSS dedicado com tokens), bundle sem code-splitting, sem favicon (`index.html` não tem `<link rel="icon">`) e sem testes automatizados de frontend. Inserida antes da Sprint 5 (Fundações Transversais) de propósito — as próximas sprints adicionam bastante UI nova (formulários, dropdown), e construir isso sobre um frontend inconsistente e sem proteção mínima só reproduziria o problema em vez de corrigi-lo.
 
-- [ ] 4.1 Code-splitting: `import()` dinâmico de `jsPDF`+`html2canvas`, carregados só ao clicar "Exportar PDF" — hoje entram no bundle principal mesmo sem uso
-- [ ] 4.2 `LoginPage.jsx`/`HomePage.jsx` migrados de inline `style` pra CSS dedicado com tokens, no mesmo padrão de `Sidebar`/`Card`/`Button`/`Input`/`AppShell`
-- [ ] 4.3 Error boundary global em `App.jsx`, com tela de fallback simples em vez de branco
-- [ ] 4.4 Responsividade: breakpoint tablet (~1024px) — sidebar colapsa automaticamente (reaproveita o toggle já existente da Sprint 3), grid da Home e formulários com `max-width`, sem quebra horizontal. Mobile de verdade (nav diferente) fica fora de escopo por decisão explícita — projeto pessoal, sem uso mobile previsto no curto prazo
-- [ ] 4.5 Favicon — `index.html` não tem nenhum `<link rel="icon">` hoje
-- [ ] 4.6 Validação manual em viewport de tablet real/devtools — sem framework de teste frontend ainda (só chega na Sprint 8)
+- [x] 4.1 Code-splitting: `import()` dinâmico de `jsPDF`+`html2canvas`, carregados só ao clicar "Exportar PDF" — build validado com chunks separados (`jspdf` 391 kB, `html2canvas` 202 kB e principal 338 kB, tamanhos não comprimidos)
+- [x] 4.2 `LoginPage.jsx`/`HomePage.jsx` migrados de inline `style` pra CSS dedicado com tokens, no mesmo padrão de `Sidebar`/`Card`/`Button`/`Input`/`AppShell`
+- [x] 4.3 Error boundary global em `App.jsx`, com tela de fallback simples em vez de branco
+- [x] 4.4 Responsividade: breakpoint tablet (1024px) — sidebar colapsa automaticamente (reaproveita o toggle já existente da Sprint 3), grid da Home e formulários com `max-width`, sem quebra horizontal. Mobile de verdade (nav diferente) fica fora de escopo por decisão explícita — projeto pessoal, sem uso mobile previsto no curto prazo
+- [x] 4.5 Favicon PNG derivado do mascote exibido no `README.md`, otimizado para 192×192 e referenciado em `index.html`
+- [x] 4.6 Validação em Chrome headless a 1024×768 — Login e Home inspecionadas; Home com sidebar colapsada e `scrollWidth === viewportWidth === 1024`, sem quebra horizontal
+- [x] 4.7 Fundação mínima de testes frontend — Vitest + React Testing Library + jsdom, scripts `test`/`test:watch` e setup compartilhado; 6 testes cobrem fallback do error boundary, auto-colapso/reação ao viewport, precedência da preferência manual persistida e carregamento sob demanda da exportação PDF
 
 *Critérios de aceite relevantes: 12 (consistência visual) — responsividade é `<regra_obrigatoria>` nos Requisitos Não-Funcionais (seção 4 do PRD), mas não tem item próprio na lista de 12 critérios de aceite.*
 
@@ -210,9 +211,9 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 8 — Testes & CI/CD
 
-**Objetivo**: cobertura de teste real dos dois lados (backend já tem pytest desde a Sprint 1; frontend, criado na Sprint 3, ainda não tem nenhum teste automatizado) + pipeline de integração contínua no GitHub Actions, rodando os dois antes de qualquer merge. Inserida aqui de propósito — depois que o frontend passou a existir (Sprint 3), antes de mais features se acumularem sem rede de segurança automatizada.
+**Objetivo**: ampliar a fundação mínima de testes frontend criada na Sprint 4 para uma cobertura abrangente dos dois lados (backend já tem pytest desde a Sprint 1) + pipeline de integração contínua no GitHub Actions, rodando ambos antes de qualquer merge. Inserida aqui de propósito — depois que as Sprints 4–7 consolidam novos comportamentos, antes das integrações externas das sprints seguintes.
 
-- [ ] 8.1 Escolher e configurar framework de teste do frontend — Vitest + React Testing Library (integra nativamente com Vite, já usado no projeto desde a Sprint 3)
+- [ ] 8.1 Evoluir a configuração de Vitest + React Testing Library iniciada na Sprint 4 — adicionar relatório de cobertura, limites mínimos e utilitários compartilhados necessários para a suíte abrangente
 - [ ] 8.2 Testes automatizados para a camada de API client (`apiFetch`, refresh de token, tratamento de 401/403) e hooks (`useApiResource`, `useLastStudiedDeck`)
 - [ ] 8.3 Testes automatizados para os componentes/telas críticos (Home, login, navegação)
 - [ ] 8.4 Pipeline GitHub Actions — job de backend: `pytest` com Postgres/MongoDB/Redis como service containers, rodando em cada PR

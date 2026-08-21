@@ -1,14 +1,16 @@
 # Frontend
 
-SPA React (Vite), consumindo a API do Django (`/api/v1/...`). Ver Sprint 3
+SPA React (Vite), consumindo a API do Django (`/api/v1/...`). Ver Sprints 3 e 4
 do [PRD.md](../PRD.md), `<frontend>` em [PROMPT_REFINADO.md](../PROMPT_REFINADO.md)
-e `openspec/changes/sprint-3-frontend-base-home-dashboard/`.
+e `openspec/changes/sprint-3-frontend-base-home-dashboard/`/
+`openspec/changes/sprint-4-robustecimento-frontend/`.
 
 ## Como rodar
 
 ```bash
 make frontend-install   # ou: cd frontend && npm install
 make frontend-dev       # ou: cd frontend && npm run dev
+make frontend-test      # ou: cd frontend && npm test
 ```
 
 Abre em `http://localhost:5173`. A API do Django precisa estar rodando
@@ -93,6 +95,25 @@ Pra ter dados reais na Home (decks/cards/reviews), rode o seed antes:
 poetry -C django run python manage.py seed_decks --reset
 # ou: make seed
 ```
+
+## Qualidade e testes
+
+A Sprint 4 introduziu a fundação mínima com Vitest, React Testing Library e
+jsdom. A suíte cobre o fallback global de erro, o comportamento responsivo da
+sidebar e a exportação PDF sob demanda:
+
+```bash
+npm test             # execução única
+npm run test:watch   # modo interativo durante desenvolvimento
+npm run lint
+npm run build
+```
+
+O layout usa um breakpoint de tablet em `1024px`: na ausência de uma
+preferência manual, a sidebar recolhe automaticamente. Uma escolha feita pelo
+usuário continua persistida no `localStorage` e prevalece sobre o breakpoint.
+Layout real continua sendo validado no navegador, pois jsdom não calcula
+geometria CSS.
 
 ## Tokens de design
 

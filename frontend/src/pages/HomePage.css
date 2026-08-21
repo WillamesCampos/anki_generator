@@ -1,0 +1,43 @@
+.home-page {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.home-page__title {
+  margin: 0 0 var(--space-md);
+}
+
+.home-page__summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+  gap: var(--space-md);
+}
+
+.home-page__deck-title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.home-page__deck-description {
+  margin: var(--space-xs) 0 0;
+}
+
+.home-page__statistics {
+  margin-top: var(--space-md);
+}
+
+.home-page__chart {
+  position: relative;
+  min-height: 320px;
+}
+
+.home-page__actions {
+  margin-top: var(--space-sm);
+}
+
+@media (max-width: 1024px) {
+  .home-page__chart {
+    min-height: 260px;
+  }
+}

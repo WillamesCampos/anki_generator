@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { loginWithGoogle, loginWithPassword } from "../api/auth";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
-import { useAuth } from "../context/AuthContext";
-import { colors, spacing } from "../tokens/tokens";
+import useAuth from "../context/useAuth";
+import "./LoginPage.css";
 
 // Client ID (público) do mesmo projeto OAuth cujo Client ID/Secret já são
 // esperados em django/.env (GOOGLE_OAUTH_CLIENT_ID/SECRET) — ver
@@ -66,23 +66,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        minHeight: "100vh",
-        gap: spacing.md,
-        fontFamily: "var(--font-family)",
-      }}
-    >
-      <h1>Anki Generator</h1>
+    <main className="login-page">
+      <h1 className="login-page__title">Anki Generator</h1>
 
-      <form
-        onSubmit={handlePasswordLogin}
-        style={{ display: "flex", flexDirection: "column", gap: spacing.sm, width: 280 }}
-      >
+      <form className="login-page__form" onSubmit={handlePasswordLogin}>
         <Input
           label="E-mail"
           type="email"
@@ -97,22 +84,22 @@ export default function LoginPage() {
           onChange={(event) => setPassword(event.target.value)}
           required
         />
-        {error && <p style={{ color: colors.accent, fontSize: "var(--font-size-sm)", margin: 0 }}>{error}</p>}
+        {error && <p className="login-page__error">{error}</p>}
         <Button type="submit">{submitting ? "Entrando…" : "Entrar"}</Button>
       </form>
 
-      <div style={{ color: colors.textSecondary, fontSize: "var(--font-size-sm)" }}>ou</div>
+      <div className="login-page__divider">ou</div>
 
       {GOOGLE_CLIENT_ID ? (
         <Button onClick={handleGoogleLogin} variant="secondary">
           Entrar com Google
         </Button>
       ) : (
-        <p style={{ color: colors.textSecondary, maxWidth: 360, textAlign: "center" }}>
+        <p className="login-page__google-message">
           Login com Google ainda não configurado (<code>VITE_GOOGLE_CLIENT_ID</code> vazio). Veja{" "}
           <code>frontend/README.md</code>.
         </p>
       )}
-    </div>
+    </main>
   );
 }

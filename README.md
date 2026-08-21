@@ -69,7 +69,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 - **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
 - **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
 - **Domínio de deck/card**: `django/apps/decks/` — entities (`Deck`/`Category`/`Card`/`CardReview`), value objects e repositórios Mongo (via Motor). Isolamento multi-tenant aqui é `owner_id` obrigatório embutido em toda query do repositório (mecanismo próprio, já que não há ORM do Django sobre Mongo). CRUD via Generic Views do DRF com serializers manuais; repetição espaçada via FSRS (pacote `fsrs`); views síncronas fazendo bridge (`async_to_sync`) para os repositórios assíncronos.
-- **Frontend**: `frontend/` — SPA React (Vite), consumindo a API do Django. Tokens de design extraídos por auditoria real de `refs/Ashley_files/style.css` (ver `frontend/src/tokens/`), não importados diretamente — o `design_system/design-system.html` documenta um template comercial de portfólio, não um design system de app pronto. Home dashboard com gráfico (Chart.js) exportável em PDF (`jsPDF`); sem tela de login ainda (JWT obtido manualmente, ver `frontend/README.md`).
+- **Frontend**: `frontend/` — SPA React (Vite), consumindo a API do Django. Tokens de design extraídos por auditoria real de `refs/Ashley_files/style.css` (ver `frontend/src/tokens/`), não importados diretamente — o `design_system/design-system.html` documenta um template comercial de portfólio, não um design system de app pronto. Home dashboard responsiva para tablet, login por e-mail/senha ou Google, gráfico Chart.js com exportação PDF sob demanda e fallback global de erro. A fundação de testes usa Vitest + React Testing Library.
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
 - **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
 - **Deploy real**: VPS (Docker Compose) — não AWS. O único uso de AWS é o bucket S3 do frontend estático.
@@ -137,7 +137,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
    make frontend-install
    make frontend-dev
    ```
-   Abre em `http://localhost:5173`. Sem tela de login ainda — ver `frontend/README.md` para obter um JWT manualmente.
+   Abre em `http://localhost:5173`. Use um usuário seedado para o login por e-mail/senha; detalhes e fluxo JWT manual alternativo estão em `frontend/README.md`.
 
 ### Comandos úteis (`Makefile`)
 
@@ -147,7 +147,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | `make logs` | Segue os logs de todos os serviços |
 | `make migrate` / `make makemigrations` | Migrations do Django |
 | `make run` | Roda o Django fora de container (`runserver`) |
-| `make frontend-install` / `make frontend-dev` / `make frontend-build` / `make frontend-lint` | SPA React (`frontend/`) |
+| `make frontend-install` / `make frontend-dev` / `make frontend-test` / `make frontend-build` / `make frontend-lint` | SPA React (`frontend/`) |
 
 ## 🧪 Testes
 
@@ -159,6 +159,9 @@ poetry -C django run pytest apps/accounts apps/decks
 
 # Teste de integração MongoDB (script standalone, à parte do pytest — requer `make up` rodando, ao menos o serviço mongo)
 poetry -C django run python -m apps.decks.tests.test_mongodb_integration
+
+# Fundação de testes frontend (Vitest + React Testing Library)
+make frontend-test
 
 # Popular o banco com dados de desenvolvimento (múltiplos usuários/decks/categorias/cards/reviews)
 poetry -C django run python manage.py seed_decks        # --reset para recriar do zero
@@ -172,7 +175,7 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 1 — Autenticação & multi-tenant
 - [x] Sprint 2 — Decks & Cards (domínio core)
 - [x] Sprint 3 — Frontend base & home dashboard (login Google + e-mail/senha, refresh de token adicionados ao escopo)
-- [ ] Sprint 4 — Robustecimento do frontend (responsividade tablet, error boundary, code-splitting, favicon, consistência de estilo) — inserida fora da ordem original
+- [x] Sprint 4 — Robustecimento do frontend (responsividade tablet, error boundary, code-splitting, favicon, consistência de estilo e fundação mínima de testes) — inserida fora da ordem original
 - [ ] Sprint 5 — Fundações transversais: auditoria & permissões (campos `created_by`/`updated_by` + grupo/permissão real) — inserida fora da ordem original
 - [ ] Sprint 6 — Ciclo de vida de Deck/Card (edição, soft delete com retenção de 7 dias, meta por deck) — inserida fora da ordem original
 - [ ] Sprint 7 — Estatísticas por deck (endpoint dedicado + dropdown na Home) — inserida fora da ordem original

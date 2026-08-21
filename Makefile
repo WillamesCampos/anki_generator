@@ -1,3 +1,5 @@
+.PHONY: up down logs migrate makemigrations run seed frontend-install frontend-dev frontend-build frontend-lint frontend-test
+
 up:
 	docker compose up -d
 
@@ -30,3 +32,6 @@ frontend-build:
 
 frontend-lint:
 	cd frontend && npm run lint
+
+frontend-test:
+	cd frontend && npm test

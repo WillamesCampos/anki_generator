@@ -1,16 +1,17 @@
 import { useEffect, useRef, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from "chart.js";
-import jsPDF from "jspdf";
 
 import { fetchReviews } from "../api/reviews";
 import { fetchDeck } from "../api/decks";
 import { useApiResource } from "../api/hooks";
 import { computeGoalProgress, getDailyGoal } from "../lib/goal";
+import { exportChartToPdf } from "../lib/exportPdf";
 import { computeRatingDistribution, mostRecentReview } from "../lib/stats";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import { colors, spacing } from "../tokens/tokens";
+import { colors } from "../tokens/tokens";
+import "./HomePage.css";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
@@ -76,22 +77,15 @@ export default function HomePage() {
     ],
   };
 
-  function handleExportPdf() {
-    const chart = chartRef.current;
-    if (!chart) return;
-
-    const imageData = chart.toBase64Image();
-    const pdf = new jsPDF({ orientation: "landscape" });
-    pdf.text("Estatísticas de estudo", 14, 15);
-    pdf.addImage(imageData, "PNG", 14, 25, 260, 120);
-    pdf.save("estatisticas-anki-generator.pdf");
+  async function handleExportPdf() {
+    await exportChartToPdf(chartRef.current);
   }
 
   return (
-    <div>
-      <h1>Home</h1>
+    <section className="home-page">
+      <h1 className="home-page__title">Home</h1>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: spacing.md }}>
+      <div className="home-page__summary-grid">
         <Card title="Último deck estudado">
           {reviewsLoading && <p>Carregando…</p>}
           {!reviewsLoading && !recentReview && <p>Você ainda não revisou nenhum card.</p>}
@@ -99,8 +93,8 @@ export default function HomePage() {
           {!reviewsLoading && recentReview && !lastDeckLoading && lastDeckError && <p>Não foi possível carregar o deck.</p>}
           {!reviewsLoading && recentReview && !lastDeckLoading && !lastDeckError && lastDeck && (
             <>
-              <p style={{ fontWeight: 600, margin: 0 }}>{lastDeck.title}</p>
-              {lastDeck.description && <p style={{ marginTop: spacing.xs }}>{lastDeck.description}</p>}
+              <p className="home-page__deck-title">{lastDeck.title}</p>
+              {lastDeck.description && <p className="home-page__deck-description">{lastDeck.description}</p>}
             </>
           )}
         </Card>
@@ -112,12 +106,16 @@ export default function HomePage() {
         </Card>
       </div>
 
-      <Card title="Estatísticas">
-        <Bar ref={chartRef} data={chartData} options={{ responsive: true }} />
-        <div style={{ marginTop: spacing.sm }}>
-          <Button onClick={handleExportPdf}>Exportar PDF</Button>
-        </div>
-      </Card>
-    </div>
+      <div className="home-page__statistics">
+        <Card title="Estatísticas">
+          <div className="home-page__chart">
+            <Bar ref={chartRef} data={chartData} options={{ maintainAspectRatio: false, responsive: true }} />
+          </div>
+          <div className="home-page__actions">
+            <Button onClick={handleExportPdf}>Exportar PDF</Button>
+          </div>
+        </Card>
+      </div>
+    </section>
   );
 }
