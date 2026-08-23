@@ -165,12 +165,14 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 5 — Fundações Transversais: Auditoria & Permissões
 
-**Objetivo**: auditoria via `backend-mentor` encontrou que regras mandatórias declaradas em `PROMPT_REFINADO.md` desde a Sprint 0/1 (`permissoes-django`, `auditoria`) nunca foram de fato aplicadas — `DEFAULT_PERMISSION_CLASSES` é só `IsAuthenticated` em toda view, e `Deck`/`Card`/`Category`/`CardReview` não têm `created_by`/`updated_by` (o `AuditMixin` da Sprint 1 só existe no app `accounts`, nunca usado pelas entidades de produto). Fechar isso agora, enquanto a superfície (poucos endpoints) torna o retrofit barato — a Sprint 10 (Agente de IA) já exige `created_by`/`updated_by = "ai_agent_machine"`, campo que hoje nem existe.
+**Objetivo**: auditoria via `backend-mentor` encontrou que regras mandatórias declaradas em `PROMPT_REFINADO.md` desde a Sprint 0/1 (`permissoes-django`, `auditoria`) nunca foram de fato aplicadas — `DEFAULT_PERMISSION_CLASSES` é só `IsAuthenticated` em toda view, e `Deck`/`Card`/`Category`/`CardReview` não têm `created_by`/`updated_by` (o `AuditMixin` da Sprint 1 só existe no app `accounts`, nunca usado pelas entidades de produto). Fechar isso agora, enquanto a superfície (poucos endpoints) torna o retrofit barato — a Sprint 10 (Agente de IA) já exige `created_by`/`updated_by = "ai_agent_machine"`, campo que hoje nem existe. Escopo ampliado via `backend-mentor` pra também endurecer a autenticação **service-to-service** (Django→microsserviço), movida pra cá da Sprint 9: hoje `document-generator` está com o endpoint de export sem autenticação nenhuma e a porta publicada pro host — ver `autenticacao-service-to-service-jwt`.
 
 - [ ] 5.1 `created_by`/`updated_by` em `Deck`, `Card`, `Category`, `CardReview` — preenchidos automaticamente pelos serializers a partir da request autenticada, nunca aceitos como input do cliente (mesmo princípio do `AuditSerializerMixin` da Sprint 1, adaptado aos serializers manuais do domínio Mongo, já que essas entidades não são `models.Model`)
 - [ ] 5.2 Grupo `standard_user` (Django `Group` nativo) atribuído automaticamente a todo usuário no signup e no seed — `Permission` por model não se aplica aqui (`Deck`/`Card` não têm `ContentType`, por não serem `models.Model`); a checagem é por grupo, não por `Permission` granular
 - [ ] 5.3 `permission_classes` customizado verificando pertencimento ao grupo, substituindo o `IsAuthenticated` puro nas views de decks/cards/categories/reviews — mecanismo pensado pra aceitar um grupo `ai_agent` na Sprint 10 sem mudar de estrutura
-- [ ] 5.4 Testes automatizados: audit fields preenchidos corretamente em create/update, protegidos contra input do cliente, grupo atribuído automaticamente a todo novo usuário, acesso negado fora do grupo
+- [ ] 5.4 JWT de serviço (HS256) auto-assinado pelo Django em toda chamada ao `document-generator` — segredo compartilhado só entre esse par (não global), verificação local no FastAPI (sem introspection/round-trip), claim `iss` identificando a aplicação chamadora, expiração curta (30-60s), chave de assinatura separada do `SIMPLE_JWT`/`DJANGO_SECRET_KEY` de usuário
+- [ ] 5.5 Rotação de chave de serviço via `kid` versionado no header do JWT — verificador aceita qualquer `kid` presente no seu mapa local de segredos, permitindo rotação sem downtime em dois redeploys (chave nova aceita → promovida a ativa → chave antiga removida)
+- [ ] 5.6 Testes automatizados: audit fields preenchidos corretamente em create/update, protegidos contra input do cliente, grupo atribuído automaticamente a todo novo usuário, acesso negado fora do grupo, chamada ao `document-generator` rejeitada sem JWT de serviço válido (assinatura errada, expirado, `kid` desconhecido)
 
 *Critérios de aceite relevantes: 1 (isolamento multi-tenant).*
 
@@ -226,11 +228,11 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 9 — Exportação Anki & Microsserviço de Documentos
 
-**Objetivo**: fechar o ciclo do microsserviço de documentos já reclassificado na Sprint 0, ligando-o de ponta a ponta.
+**Objetivo**: fechar o ciclo do microsserviço de documentos já reclassificado na Sprint 0, ligando-o de ponta a ponta. Autenticação service-to-service já resolvida na Sprint 5 (`autenticacao-service-to-service-jwt`) — esta sprint só consome o JWT de serviço já implementado, não define o mecanismo.
 
-- [ ] 9.1 Endpoint Django que dispara (via Celery) a geração de `.apkg` no microsserviço de documentos
+- [ ] 9.1 Endpoint Django que dispara (via Celery) a geração de `.apkg` no microsserviço de documentos, autenticando a chamada com o JWT de serviço da Sprint 5
 - [ ] 9.2 Circuit breaker + retry exponencial na chamada Django → microsserviço de documentos
-- [ ] 9.3 Contrato de payload/resposta documentado entre Django e o microsserviço
+- [ ] 9.3 Contrato de payload/resposta documentado entre Django e o microsserviço, incluindo o header de autenticação
 - [ ] 9.4 Geração de PDF genérica no mesmo microsserviço (reaproveitada na Sprint 12)
 - [ ] 9.5 Validar `.apkg` gerado abrindo no Anki real
 

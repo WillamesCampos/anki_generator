@@ -176,7 +176,7 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 2 — Decks & Cards (domínio core)
 - [x] Sprint 3 — Frontend base & home dashboard (login Google + e-mail/senha, refresh de token adicionados ao escopo)
 - [x] Sprint 4 — Robustecimento do frontend (responsividade tablet, error boundary, code-splitting, favicon, consistência de estilo e fundação mínima de testes) — inserida fora da ordem original
-- [ ] Sprint 5 — Fundações transversais: auditoria & permissões (campos `created_by`/`updated_by` + grupo/permissão real) — inserida fora da ordem original
+- [ ] Sprint 5 — Fundações transversais: auditoria & permissões (campos `created_by`/`updated_by` + grupo/permissão real + autenticação service-to-service via JWT com o `document-generator`) — inserida fora da ordem original
 - [ ] Sprint 6 — Ciclo de vida de Deck/Card (edição, soft delete com retenção de 7 dias, meta por deck) — inserida fora da ordem original
 - [ ] Sprint 7 — Estatísticas por deck (endpoint dedicado + dropdown na Home) — inserida fora da ordem original
 - [ ] Sprint 8 — Testes & CI/CD (backend + frontend, GitHub Actions) — inserida fora da ordem original
