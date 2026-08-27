@@ -27,6 +27,6 @@
 
 ## 5. Documentação
 
-- [ ] 5.1 Atualizar `PRD.md` (Sprint 7) marcando as tarefas concluídas, com notas de implementação
-- [ ] 5.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 7]`
+- [ ] 5.1 Atualizar `PRD.md` (Sprint 8) marcando as tarefas concluídas, com notas de implementação
+- [ ] 5.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 8]`
 - [ ] 5.3 Validar manualmente no navegador (login já funciona desde a Sprint 3) — trocar de deck no dropdown, conferir que o gráfico muda e o título do card também

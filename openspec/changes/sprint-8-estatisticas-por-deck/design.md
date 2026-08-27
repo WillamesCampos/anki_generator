@@ -4,7 +4,7 @@ A Home (Sprint 3) calcula tudo no cliente a partir de `GET /api/v1/reviews/`: `c
 
 `CardReview` já tem tudo que esta sprint precisa, sem mudança de schema: `owner_id`, `deck_id` (denormalizado desde a Sprint 3, ver `deck_id` em `card_review.py`), `rating`, `reviewed_at`. O índice atual da collection `card_reviews` (`CARD_REVIEWS_INDEXES` em `schemas.py`) cobre `owner_id`, `card_id`, `reviewed_at` e o composto `(owner_id, card_id)` — **não cobre `deck_id`**, então o novo padrão de query desta sprint (filtrar por `deck_id`+`owner_id`, com corte por data) precisa de um índice novo.
 
-**Dependência**: esta sprint (renumerada algumas vezes conforme mais sprints foram inseridas via `backend-mentor` — hoje é a Sprint 7) agora depende de dois campos que só existem a partir da Sprint 6 — `Deck.deleted_at` (soft delete) e `Deck.daily_review_goal` (meta por deck, substituindo a antiga meta global client-side da Sprint 3). Não implementar antes da Sprint 6 estar concluída.
+**Dependência**: esta sprint (renumerada algumas vezes conforme mais sprints foram inseridas via `backend-mentor` — hoje é a Sprint 8, depois de a Sprint 7 de gerenciamento de Deck/Card no frontend ter sido inserida) agora depende de dois campos que só existem a partir da Sprint 6 — `Deck.deleted_at` (soft delete) e `Deck.daily_review_goal` (meta por deck, substituindo a antiga meta global client-side da Sprint 3). Não implementar antes da Sprint 6 estar concluída.
 
 ## Goals / Non-Goals
 
