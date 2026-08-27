@@ -29,12 +29,30 @@ The system SHALL never set `deleted_at` on or physically remove a `CardReview`, 
 - **THEN** those `CardReview` records still exist in the database afterward, unmodified
 
 ### Requirement: Records soft-deleted for more than 7 days are permanently purged
-The system SHALL run a daily scheduled task that permanently deletes `Deck`/`Card` records whose `deleted_at` is more than 7 days in the past.
+The system SHALL run a daily scheduled task that permanently deletes `Deck`/`Card`/`Category` records whose `deleted_at` is more than 7 days in the past.
 
 #### Scenario: Purge removes old soft-deleted records
 - **WHEN** the daily purge task runs
-- **THEN** every `Deck`/`Card` with `deleted_at` older than 7 days is physically removed from the database
+- **THEN** every `Deck`/`Card`/`Category` with `deleted_at` older than 7 days is physically removed from the database
 
 #### Scenario: Purge preserves records within the retention window
 - **WHEN** the daily purge task runs
-- **THEN** `Deck`/`Card` records with `deleted_at` less than 7 days old are left untouched
+- **THEN** `Deck`/`Card`/`Category` records with `deleted_at` less than 7 days old are left untouched
+
+### Requirement: Deleting a category marks it for deletion and does not cascade to its decks
+The system SHALL, on `DELETE` of a `Category`, set `deleted_at` to the current timestamp instead of physically removing the record, and SHALL NOT cascade the deletion to any `Deck` that references it.
+
+#### Scenario: Deleting a category soft-deletes it
+- **WHEN** an authenticated user deletes a category they own
+- **THEN** the category's `deleted_at` is set, and the category no longer appears in normal reads
+
+#### Scenario: Category deletion does not delete linked decks
+- **WHEN** an authenticated user deletes a category that decks reference via `category_id`
+- **THEN** those decks are not deleted and remain accessible
+
+### Requirement: Deleting a category unlinks decks that reference it
+The system SHALL set `category_id` to `null` on every `Deck` that references a `Category` being deleted, since `category_id` is an optional organizational label, not an ownership relationship.
+
+#### Scenario: Deck is unlinked when its category is deleted
+- **WHEN** a category referenced by a deck's `category_id` is deleted
+- **THEN** that deck's `category_id` is set to `null`, and the deck itself is unaffected otherwise
