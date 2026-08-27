@@ -9,6 +9,7 @@ openspec/changes/sprint-2-decks-cards/design.md).
 
 import uuid
 from datetime import datetime, timezone
+from typing import Optional
 from dataclasses import dataclass, field
 from ..exceptions import DomainValidationError
 
@@ -26,6 +27,11 @@ class Category:
 
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Auditoria (Sprint 5) — quem criou/alterou por último, preenchido pelo
+    # serializer a partir da request autenticada, nunca aceito do cliente.
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
 
     def __post_init__(self):
         self._validate_category()
@@ -53,6 +59,8 @@ class Category:
             "owner_id": self.owner_id,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "created_by": self.created_by,
+            "updated_by": self.updated_by,
         }
 
     @classmethod
@@ -63,6 +71,8 @@ class Category:
             owner_id=data["owner_id"],
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
+            created_by=data.get("created_by"),
+            updated_by=data.get("updated_by"),
         )
 
     def __str__(self) -> str:

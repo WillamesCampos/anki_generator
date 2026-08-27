@@ -75,6 +75,11 @@ class Card:
     due_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     last_reviewed_at: Optional[datetime] = None
 
+    # Auditoria (Sprint 5) — quem criou/alterou por último, preenchido pelo
+    # serializer a partir da request autenticada, nunca aceito do cliente.
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
     def __post_init__(self):
         """
         Validações que são executadas após a criação do objeto.
@@ -199,7 +204,9 @@ class Card:
             "due_at": self.due_at.isoformat(),
             "last_reviewed_at": self.last_reviewed_at.isoformat() if self.last_reviewed_at else None,
             "created_at": self.created_at.isoformat(),
-            "updated_at": self.updated_at.isoformat()
+            "updated_at": self.updated_at.isoformat(),
+            "created_by": self.created_by,
+            "updated_by": self.updated_by
         }
 
     @classmethod
@@ -231,7 +238,9 @@ class Card:
             last_reviewed_at=datetime.fromisoformat(data["last_reviewed_at"]) if data.get("last_reviewed_at") else None,
             deck_id=uuid.UUID(data["deck_id"]) if data.get("deck_id") else None,
             created_at=datetime.fromisoformat(data["created_at"]),
-            updated_at=datetime.fromisoformat(data["updated_at"])
+            updated_at=datetime.fromisoformat(data["updated_at"]),
+            created_by=data.get("created_by"),
+            updated_by=data.get("updated_by")
         )
 
     def __str__(self) -> str:

@@ -1,7 +1,13 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
-from app.errors import BaseAPIException, InternalServerError, NotFoundError, ValidationError
+from app.errors import (
+    BaseAPIException,
+    InternalServerError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
+)
 
 
 async def base_exception_handler(request: Request, exc: BaseAPIException):
@@ -22,6 +28,13 @@ async def not_found_exception_handler(request: Request, exc: NotFoundError):
     return JSONResponse(
         status_code=exc.status_code,
         content={"error": exc.message, "type": "NotFoundError"},
+    )
+
+
+async def unauthorized_exception_handler(request: Request, exc: UnauthorizedError):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": exc.message, "type": "UnauthorizedError"},
     )
 
 
