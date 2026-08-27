@@ -55,6 +55,11 @@ class Deck:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
+    # Auditoria (Sprint 5) — quem criou/alterou por último, preenchido pelo
+    # serializer a partir da request autenticada, nunca aceito do cliente.
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
     def __post_init__(self):
         """
         Validações que são executadas após a criação do objeto.
@@ -306,6 +311,8 @@ class Deck:
             "max_cards_per_generation": self.max_cards_per_generation,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
+            "created_by": self.created_by,
+            "updated_by": self.updated_by,
             "card_count": self.card_count,
             "is_empty": self.is_empty
         }
@@ -323,7 +330,9 @@ class Deck:
             category_id=uuid.UUID(data["category_id"]) if data.get("category_id") else None,
             max_cards_per_generation=data.get("max_cards_per_generation", 10),
             created_at=datetime.fromisoformat(data["created_at"]),
-            updated_at=datetime.fromisoformat(data["updated_at"])
+            updated_at=datetime.fromisoformat(data["updated_at"]),
+            created_by=data.get("created_by"),
+            updated_by=data.get("updated_by")
         )
 
         # Adiciona os cards

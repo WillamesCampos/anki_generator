@@ -2,7 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import exceptions as exc_handlers
-from app.errors import BaseAPIException, InternalServerError, NotFoundError, ValidationError
+from app.errors import (
+    BaseAPIException,
+    InternalServerError,
+    NotFoundError,
+    UnauthorizedError,
+    ValidationError,
+)
 from app.routes.decks import router as decks_router
 from app.routes.health import router as health_router
 
@@ -34,6 +40,7 @@ def create_app() -> FastAPI:
     app.add_exception_handler(
         InternalServerError, exc_handlers.internal_server_error_exception_handler
     )
+    app.add_exception_handler(UnauthorizedError, exc_handlers.unauthorized_exception_handler)
 
     app.include_router(health_router, prefix=API_PREFIX)
     app.include_router(decks_router, prefix=API_PREFIX)

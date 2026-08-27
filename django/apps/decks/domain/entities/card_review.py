@@ -47,6 +47,11 @@ class CardReview:
     # sem risco de ficar desatualizado se o deck for renomeado depois.
     deck_id: Optional[uuid.UUID] = None
 
+    # Auditoria (Sprint 5) — CardReview é imutável (nunca é atualizada, só
+    # criada), então updated_by sempre reflete o mesmo autor de created_by.
+    created_by: Optional[str] = None
+    updated_by: Optional[str] = None
+
     def __post_init__(self):
         self._validate_card_review()
 
@@ -71,6 +76,8 @@ class CardReview:
             "difficulty_after": self.difficulty_after,
             "due_at_after": self.due_at_after.isoformat() if self.due_at_after else None,
             "deck_id": str(self.deck_id) if self.deck_id else None,
+            "created_by": self.created_by,
+            "updated_by": self.updated_by,
         }
 
     @classmethod
@@ -85,6 +92,8 @@ class CardReview:
             difficulty_after=data.get("difficulty_after"),
             due_at_after=datetime.fromisoformat(data["due_at_after"]) if data.get("due_at_after") else None,
             deck_id=uuid.UUID(data["deck_id"]) if data.get("deck_id") else None,
+            created_by=data.get("created_by"),
+            updated_by=data.get("updated_by"),
         )
 
     def __str__(self) -> str:

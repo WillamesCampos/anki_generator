@@ -2,6 +2,23 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 5] Fundações Transversais: Auditoria & Permissões — 2026-08-23
+
+Fecha duas regras mandatórias declaradas desde a Sprint 0/1 mas nunca implementadas (`permissoes-django`, `auditoria`), e endurece a autenticação service-to-service entre Django e o microsserviço de documentos — item originalmente planejado pra Sprint 9, adiantado pra cá por ser o mesmo tema de hardening. Ver `openspec/changes/sprint-5-fundacoes-transversais/`.
+
+### Adicionado
+- `created_by`/`updated_by` em `Deck`, `Card`, `Category`, `CardReview` — preenchidos pelos serializers a partir da request autenticada, nunca aceitos como input do cliente (mesmo padrão de `owner_id`).
+- Grupo `standard_user` (Django `Group` nativo), atribuído automaticamente a todo usuário via `post_save` signal (`apps/accounts/signals.py`) — cobre Google, seed (`get_or_create`) e um futuro cadastro por e-mail/senha com um único hook; data migration (`0002_standard_user_group.py`) cria o grupo e faz backfill de usuários já existentes.
+- `HasAuthorizedGroup` (`apps/decks/permissions.py`) substitui `IsAuthenticated` puro nas 8 views de decks/cards/categories/reviews — usuário autenticado sem grupo autorizado recebe 403, distinto do 401 de não-autenticado.
+- JWT de serviço (HS256) auto-assinado pelo Django (`core/service_auth.py`) e verificado localmente pelo `document-generator` (`app/auth.py`), sem round-trip/introspection — fecha o endpoint `POST /document-generator/v1/decks/export`, que estava sem autenticação nenhuma e com a porta publicada pro host. Rotação sem downtime via `kid` versionado (`SERVICE_JWT_KEYS`/`SERVICE_JWT_ACTIVE_KID`), chave separada do `SIMPLE_JWT`/`DJANGO_SECRET_KEY` de usuário.
+- `core/service_clients.py` (`call_document_generator`) — cliente HTTP autenticado reutilizável, pronto pra Sprint 9 (integração Django→document-generator) importar sem reimplementar a assinatura do token.
+- Fundação de testes do `document-generator` (FastAPI): `pytest` + `fastapi.testclient.TestClient`, 9 testes cobrindo a verificação do JWT de serviço (token ausente/expirado/`kid` desconhecido/`aud` errada/segredo errado, janela de rotação com duas chaves, rejeição após remoção da chave antiga).
+
+### Validado
+- `pytest apps/` (Django): 43/43 testes passando, incluindo os das Sprints 1–4 (nada quebrou com a permission class nova).
+- `document-generator` (FastAPI): 9/9 testes passando.
+- Verificação manual ponta a ponta via curl: login funcional inalterado; `GET /api/v1/decks/` retorna 200 pra usuário no grupo, 403 pra autenticado sem grupo, 401 sem autenticação; `POST /decks/export` do `document-generator` rejeita sem token (401) e aceita com JWT válido assinado pelo Django (200 + `.apkg` gerado); cenário de rotação completo simulado (duas chaves simultâneas → remoção da antiga → só a nova aceita).
+
 ## [Sprint 4] Robustecimento do Frontend — 2026-08-21
 
 Fechamento das lacunas técnicas da primeira entrega da SPA. Ver `openspec/changes/sprint-4-robustecimento-frontend/`.

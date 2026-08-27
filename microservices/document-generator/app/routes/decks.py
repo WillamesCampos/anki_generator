@@ -1,14 +1,15 @@
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from app.auth import require_service_jwt
 from app.config import get_settings
 from app.errors import ValidationError
 from app.generator import CardInput, generate_deck_package
 
-router = APIRouter(prefix="/decks", tags=["Decks"])
+router = APIRouter(prefix="/decks", tags=["Decks"], dependencies=[Depends(require_service_jwt)])
 
 
 class CardPayload(BaseModel):

@@ -35,12 +35,18 @@ class CategorySerializer(serializers.Serializer):
 
     def create(self, validated_data):
         owner_id = str(self.context["request"].user.id)
-        category = Category(name=validated_data["name"], owner_id=owner_id)
+        category = Category(
+            name=validated_data["name"],
+            owner_id=owner_id,
+            created_by=owner_id,
+            updated_by=owner_id,
+        )
         return async_to_sync(CategoryRepository().save)(category)
 
     def update(self, instance: Category, validated_data):
         if "name" in validated_data:
             instance.rename(validated_data["name"])
+        instance.updated_by = str(self.context["request"].user.id)
         return async_to_sync(CategoryRepository().update)(instance)
 
 
@@ -63,6 +69,8 @@ class DeckSerializer(serializers.Serializer):
             description=validated_data.get("description", ""),
             category_id=validated_data.get("category_id"),
             max_cards_per_generation=validated_data.get("max_cards_per_generation", 10),
+            created_by=owner_id,
+            updated_by=owner_id,
         )
         return async_to_sync(DeckRepository().save)(deck)
 
@@ -74,6 +82,7 @@ class DeckSerializer(serializers.Serializer):
         if "category_id" in validated_data:
             instance.category_id = validated_data["category_id"]
             instance.updated_at = datetime.now(timezone.utc)
+        instance.updated_by = str(self.context["request"].user.id)
         return async_to_sync(DeckRepository().update)(instance)
 
 
@@ -127,6 +136,8 @@ class CardSerializer(serializers.Serializer):
             context=validated_data.get("context", ""),
             deck_id=validated_data["deck_id"],
             tags=list(validated_data.get("tags", [])),
+            created_by=owner_id,
+            updated_by=owner_id,
         )
         return async_to_sync(CardRepository().save)(card)
 
@@ -147,6 +158,7 @@ class CardSerializer(serializers.Serializer):
         if "tags" in validated_data:
             instance.tags = list(validated_data["tags"])
         instance.updated_at = datetime.now(timezone.utc)
+        instance.updated_by = str(self.context["request"].user.id)
         return async_to_sync(CardRepository().update)(instance)
 
 

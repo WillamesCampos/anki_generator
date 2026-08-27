@@ -7,6 +7,7 @@ PROMPT_REFINADO.md). `python-dotenv` é carregado aqui, uma única vez, na
 inicialização do Django.
 """
 
+import json
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -169,6 +170,28 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
+
+# JWT de serviço (Sprint 5, `autenticacao-service-to-service-jwt`) — assina
+# chamadas Django -> microsserviços (hoje só document-generator). Chave
+# DELIBERADAMENTE separada do SIMPLE_JWT acima: um vazamento aqui não deve
+# comprometer sessão de usuário, e vice-versa (ver D4 em
+# openspec/changes/sprint-5-fundacoes-transversais/design.md).
+#
+# `SERVICE_JWT_KEYS` é um JSON `{"kid": "secret", ...}` — todas as chaves que
+# este processo aceita/pode usar. `SERVICE_JWT_ACTIVE_KID` diz qual delas
+# assina tokens novos. Rotação sem downtime: adiciona um kid novo a
+# `SERVICE_JWT_KEYS` nos dois lados (Django e document-generator), promove
+# `SERVICE_JWT_ACTIVE_KID` pra ele, depois remove o kid antigo dos dois
+# lados — dois redeploys, nunca um token rejeitado no meio da troca.
+SERVICE_JWT_KEYS = json.loads(os.environ.get("SERVICE_JWT_KEYS", "{}"))
+SERVICE_JWT_ACTIVE_KID = os.environ.get("SERVICE_JWT_ACTIVE_KID", "")
+
+# Nome do serviço no docker-compose (`document-generator`), resolvido via
+# rede interna do Compose — não `localhost`, que só funcionaria rodando os
+# dois processos fora de container.
+DOCUMENT_GENERATOR_BASE_URL = os.environ.get(
+    "DOCUMENT_GENERATOR_BASE_URL", "http://document-generator:8001"
+)
 
 # `USE_JWT=True` faz o dj-rest-auth delegar a emissão de token pro simplejwt
 # em vez do TokenAuthentication padrão do DRF (um único token sem expiração).

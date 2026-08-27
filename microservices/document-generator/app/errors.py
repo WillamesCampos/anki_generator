@@ -21,6 +21,13 @@ class ValidationError(BaseAPIException):
         super().__init__(message, 400)
 
 
+class UnauthorizedError(BaseAPIException):
+    """Exception when the service JWT is missing, invalid, expired, or signed with an unknown kid."""
+
+    def __init__(self, message: str = "Missing or invalid service credentials."):
+        super().__init__(message, 401)
+
+
 class InternalServerError(BaseAPIException):
     """Exception when an internal server error occurs."""
 

@@ -20,6 +20,7 @@ from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.card_review_repository import CardReviewRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
 from .infrastructure.repositories.deck_repository import DeckRepository
+from .permissions import HasAuthorizedGroup
 from .serializers import (
     CardReviewRequestSerializer,
     CardReviewSerializer,
@@ -35,6 +36,7 @@ def _owner_id(request) -> str:
 
 class CategoryListCreateView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
         return async_to_sync(CategoryRepository().find_all)(_owner_id(self.request))
@@ -42,6 +44,7 @@ class CategoryListCreateView(generics.ListCreateAPIView):
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CategorySerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_object(self):
         category_id = uuid.UUID(self.kwargs["category_id"])
@@ -56,6 +59,7 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class DeckListCreateView(generics.ListCreateAPIView):
     serializer_class = DeckSerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
         return async_to_sync(DeckRepository().find_all)(_owner_id(self.request))
@@ -63,6 +67,7 @@ class DeckListCreateView(generics.ListCreateAPIView):
 
 class DeckDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = DeckSerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_object(self):
         deck_id = uuid.UUID(self.kwargs["deck_id"])
@@ -77,6 +82,7 @@ class DeckDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class CardListCreateView(generics.ListCreateAPIView):
     serializer_class = CardSerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
         owner_id = _owner_id(self.request)
@@ -94,6 +100,7 @@ class CardListCreateView(generics.ListCreateAPIView):
 
 class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CardSerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_object(self):
         card_id = uuid.UUID(self.kwargs["card_id"])
@@ -113,6 +120,8 @@ class CardReviewView(APIView):
     `CardReview` (D4/D5 em design.md). Ação de domínio, não CRUD, por isso
     `APIView` em vez de um Generic View (D2).
     """
+
+    permission_classes = [HasAuthorizedGroup]
 
     def post(self, request, card_id):
         owner_id = _owner_id(request)
@@ -137,6 +146,8 @@ class CardReviewView(APIView):
             difficulty_after=card.difficulty,
             due_at_after=card.due_at,
             deck_id=card.deck_id,
+            created_by=owner_id,
+            updated_by=owner_id,
         )
         async_to_sync(CardReviewRepository().save)(review)
 
@@ -152,6 +163,7 @@ class CardReviewListView(generics.ListAPIView):
     """
 
     serializer_class = CardReviewSerializer
+    permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
         return async_to_sync(CardReviewRepository().find_by_owner)(_owner_id(self.request))

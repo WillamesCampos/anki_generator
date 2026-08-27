@@ -171,7 +171,9 @@ class CardSchema(MongoDBSchema):
                 if card_data.get("last_reviewed_at") else None
             ),
             "created_at": datetime.fromisoformat(card_data["created_at"]),
-            "updated_at": datetime.fromisoformat(card_data["updated_at"])
+            "updated_at": datetime.fromisoformat(card_data["updated_at"]),
+            "created_by": card_data.get("created_by"),
+            "updated_by": card_data.get("updated_by")
         }
 
         # Adiciona audio_path se existir
@@ -232,7 +234,9 @@ class CardSchema(MongoDBSchema):
             "due_at": datetime_from_mongo(document["due_at"]),
             "last_reviewed_at": datetime_from_mongo(document["last_reviewed_at"]) if document.get("last_reviewed_at") else None,
             "created_at": datetime_from_mongo(document["created_at"]),
-            "updated_at": datetime_from_mongo(document["updated_at"])
+            "updated_at": datetime_from_mongo(document["updated_at"]),
+            "created_by": document.get("created_by"),
+            "updated_by": document.get("updated_by")
         }
 
         # Adiciona audio_path se existir
@@ -287,6 +291,8 @@ class DeckSchema(MongoDBSchema):
             "max_cards_per_generation": deck_data["max_cards_per_generation"],
             "created_at": datetime.fromisoformat(deck_data["created_at"]),
             "updated_at": datetime.fromisoformat(deck_data["updated_at"]),
+            "created_by": deck_data.get("created_by"),
+            "updated_by": deck_data.get("updated_by"),
             "card_count": deck_data["card_count"],
             "is_empty": deck_data["is_empty"]
         }
@@ -312,6 +318,8 @@ class DeckSchema(MongoDBSchema):
             "max_cards_per_generation": document["max_cards_per_generation"],
             "created_at": datetime_from_mongo(document["created_at"]),
             "updated_at": datetime_from_mongo(document["updated_at"]),
+            "created_by": document.get("created_by"),
+            "updated_by": document.get("updated_by"),
             "card_count": document["card_count"],
             "is_empty": document["is_empty"]
         }
@@ -338,6 +346,8 @@ class CategorySchema(MongoDBSchema):
             "owner_id": category_data["owner_id"],
             "created_at": datetime.fromisoformat(category_data["created_at"]),
             "updated_at": datetime.fromisoformat(category_data["updated_at"]),
+            "created_by": category_data.get("created_by"),
+            "updated_by": category_data.get("updated_by"),
         }
 
     @staticmethod
@@ -348,6 +358,8 @@ class CategorySchema(MongoDBSchema):
             "owner_id": document["owner_id"],
             "created_at": datetime_from_mongo(document["created_at"]),
             "updated_at": datetime_from_mongo(document["updated_at"]),
+            "created_by": document.get("created_by"),
+            "updated_by": document.get("updated_by"),
         }
 
 
@@ -380,6 +392,8 @@ class CardReviewSchema(MongoDBSchema):
             "stability_after": review_data.get("stability_after"),
             "difficulty_after": review_data.get("difficulty_after"),
             "deck_id": uuid_to_object_id(review_data["deck_id"]) if review_data.get("deck_id") else None,
+            "created_by": review_data.get("created_by"),
+            "updated_by": review_data.get("updated_by"),
         }
 
         if review_data.get("due_at_after"):
@@ -399,6 +413,8 @@ class CardReviewSchema(MongoDBSchema):
             "difficulty_after": document.get("difficulty_after"),
             "due_at_after": datetime_from_mongo(document["due_at_after"]) if document.get("due_at_after") else None,
             "deck_id": CardReviewSchema.to_string_id(document["deck_id"]) if document.get("deck_id") else None,
+            "created_by": document.get("created_by"),
+            "updated_by": document.get("updated_by"),
         }
 
 
