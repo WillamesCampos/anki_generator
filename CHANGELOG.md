@@ -2,6 +2,32 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 6] Ciclo de Vida de Deck/Card — 2026-08-27
+
+Fecha o gap de "só existe create/read completo" — Deck/Card/Category ganham exclusão com retenção de 7 dias (soft delete, não delete físico direto), edição completa via PATCH e meta de estudo persistida por deck. Resolve de vez o gap de cascade delete de `CardReview`, aberto desde a Sprint 3 (`PRD.md` §7.1). Ver `openspec/changes/sprint-6-ciclo-de-vida-deck-card/`.
+
+### Adicionado
+- `deleted_at: Optional[datetime]` em `Deck`, `Card` e `Category` — soft delete via timestamp, não um booleano, permite calcular a janela de retenção de 7 dias diretamente.
+- Helper único de filtro (`schemas.base_filter`) usado por todo método de leitura das três entidades — inclui os métodos legados do protótipo antigo (`find_by_word`/`find_similar_cards`/`find_duplicates`/`exists_by_word`, mantidos desde a Sprint 2 pro futuro agente de IA).
+- `DELETE /api/v1/decks/{deck_id}/` cascateia soft delete pros cards do deck; `DELETE /api/v1/cards/{card_id}/` soft-deleta individualmente; `DELETE /api/v1/categories/{category_id}/` soft-deleta a categoria e **desvincula** (não cascateia) os decks que a referenciam (`category_id → None`) — categoria é rótulo organizacional opcional, diferente da relação obrigatória Card→Deck.
+- `apps/decks/tasks.py` (`purge_soft_deleted`) — primeira task Celery real do projeto, registrada em `CELERY_BEAT_SCHEDULE`, remove fisicamente registros soft-deletados há mais de 7 dias nas três entidades.
+- Serviço `celery-beat` no `docker-compose.yml` — gap encontrado depois do primeiro "pronto": `CELERY_BEAT_SCHEDULE` sozinho não agenda nada, precisa de um processo `celery beat` rodando pra disparar a task na hora certa (só existia `celery-worker`, que apenas consome fila). Volume nomeado `celery_beat_data:/var/lib/celery` (mesmo padrão do `document_generator_audio`) — `--schedule` fora de `/app` porque o bind mount de dev sobrescreve o `chown` da imagem, e o usuário não-root não conseguia escrever o arquivo de estado do scheduler ali.
+- `purge-soft-deleted-daily` migrado de `timedelta(days=1)` pra `crontab(hour=0, minute=0)` — horário fixo (meia-noite), não "24h depois de o `celery-beat` ter iniciado" (que dependeria de quando o container subiu/reiniciou pela última vez). `CELERY_TIMEZONE = "America/Sao_Paulo"` (novo) — meia-noite de Brasília, não UTC; `TIME_ZONE` do Django continua UTC (grava tudo em UTC no banco), só o agendamento do Celery respeita o fuso local.
+- `daily_review_goal: Optional[int]` em `Deck`, editável via `PATCH` — substitui a meta de estudo client-side/global da Sprint 3.
+- `apiFetch` (frontend) trata `403` distintamente de outros erros, com mensagem de permissão clara em vez do erro técnico genérico — `HomePage.jsx` já reflete isso na única tela que hoje renderiza erro de fetch.
+
+### Alterado
+- `DeckRepository.delete()`/`CardRepository.delete()`/`CategoryRepository.delete()` passam de delete físico pra soft delete; `update()` de cada repositório passa a exigir `deleted_at: None` no filtro (não é possível editar um registro já soft-deletado por essa via).
+- `DeckRepository.delete()` deixou de cascatear delete físico em `GenerationSessionRepository` — com o soft delete, apagar fisicamente uma entidade satélite na hora não faz mais sentido (contradiria a janela de retenção); `GenerationSession` é código morto do protótipo antigo de geração via IA, sem nenhum caminho de criação no produto atual, então isso não tem efeito observável hoje.
+
+### Removido
+- `DeckRepository.find_by_user_id`/`count_by_user_id` — código morto achado numa auditoria pré-sprint (duplicavam `find_all`/`count`, nenhum call-site em view/teste/seed).
+
+### Validado
+- `pytest apps/`: 53/53 testes passando, incluindo os 10 novos de `test_soft_delete_lifecycle.py` (soft delete, cascade, desvínculo, purge com timestamp forjado, `CardReview` sobrevivendo à exclusão, PATCH imune a `owner_id`/`created_by`/`updated_by` no payload) e os das Sprints 1–5 (nada quebrou).
+- `celery-beat` sobe sem erro de permissão, `celery-worker` registra `apps.decks.tasks.purge_soft_deleted`; disparo real via `.delay()` percorrendo RabbitMQ → worker → Mongo confirmado nos logs (`succeeded in 0.02s`).
+- `CELERY_TIMEZONE` confirmado nos logs reais do `celery-beat`: `"Reset: Timezone changed from 'UTC' to 'America/Sao_Paulo'"`. `app.conf.timezone`/`app.now()` conferidos via shell, próxima execução calculada batendo com meia-noite de Brasília.
+
 ## [Sprint 5] Fundações Transversais: Auditoria & Permissões — 2026-08-23
 
 Fecha duas regras mandatórias declaradas desde a Sprint 0/1 mas nunca implementadas (`permissoes-django`, `auditoria`), e endurece a autenticação service-to-service entre Django e o microsserviço de documentos — item originalmente planejado pra Sprint 9, adiantado pra cá por ser o mesmo tema de hardening. Ver `openspec/changes/sprint-5-fundacoes-transversais/`.

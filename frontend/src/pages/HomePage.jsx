@@ -90,7 +90,13 @@ export default function HomePage() {
           {reviewsLoading && <p>Carregando…</p>}
           {!reviewsLoading && !recentReview && <p>Você ainda não revisou nenhum card.</p>}
           {!reviewsLoading && recentReview && lastDeckLoading && <p>Carregando deck…</p>}
-          {!reviewsLoading && recentReview && !lastDeckLoading && lastDeckError && <p>Não foi possível carregar o deck.</p>}
+          {!reviewsLoading && recentReview && !lastDeckLoading && lastDeckError && (
+            <p>
+              {lastDeckError.status === 403
+                ? lastDeckError.message
+                : "Não foi possível carregar o deck."}
+            </p>
+          )}
           {!reviewsLoading && recentReview && !lastDeckLoading && !lastDeckError && lastDeck && (
             <>
               <p className="home-page__deck-title">{lastDeck.title}</p>

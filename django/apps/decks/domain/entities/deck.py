@@ -60,6 +60,13 @@ class Deck:
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
 
+    # Ciclo de vida (Sprint 6) — soft delete via timestamp (não booleano,
+    # permite calcular a janela de retenção de 7 dias diretamente) e meta
+    # de cards a revisar por dia, substituindo a meta client-side da
+    # Sprint 3 (ver deck-daily-review-goal).
+    deleted_at: Optional[datetime] = None
+    daily_review_goal: Optional[int] = None
+
     def __post_init__(self):
         """
         Validações que são executadas após a criação do objeto.
@@ -87,6 +94,9 @@ class Deck:
 
         if not self.owner_id or not str(self.owner_id).strip():
             raise DomainValidationError("owner_id cannot be empty")
+
+        if self.daily_review_goal is not None and self.daily_review_goal <= 0:
+            raise DomainValidationError("daily_review_goal must be a positive integer")
 
         # Normaliza o título
         self.title = self.title.strip()
@@ -290,6 +300,25 @@ class Deck:
         self.description = new_description
         self.updated_at = datetime.now(timezone.utc)
 
+    def soft_delete(self) -> None:
+        """
+        Marca o deck como excluído (soft delete) — não remove fisicamente.
+        A janela de retenção de 7 dias é calculada a partir de `deleted_at`
+        pelo purge job (Celery Beat), não por um campo separado.
+        """
+        self.deleted_at = datetime.now(timezone.utc)
+        self.updated_at = self.deleted_at
+
+    def update_daily_review_goal(self, goal: Optional[int]) -> None:
+        """
+        Atualiza a meta diária de cards a revisar deste deck.
+
+        Args:
+            goal: Nova meta, ou None para remover a meta definida.
+        """
+        self.daily_review_goal = goal
+        self.updated_at = datetime.now(timezone.utc)
+
     def clear_cards(self) -> None:
         """
         Remove todos os cards do deck.
@@ -313,6 +342,8 @@ class Deck:
             "updated_at": self.updated_at.isoformat(),
             "created_by": self.created_by,
             "updated_by": self.updated_by,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
+            "daily_review_goal": self.daily_review_goal,
             "card_count": self.card_count,
             "is_empty": self.is_empty
         }
@@ -332,7 +363,9 @@ class Deck:
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
             created_by=data.get("created_by"),
-            updated_by=data.get("updated_by")
+            updated_by=data.get("updated_by"),
+            deleted_at=datetime.fromisoformat(data["deleted_at"]) if data.get("deleted_at") else None,
+            daily_review_goal=data.get("daily_review_goal")
         )
 
         # Adiciona os cards

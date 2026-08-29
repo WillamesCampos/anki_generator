@@ -23,7 +23,9 @@ RUN poetry install --no-root --no-interaction --no-ansi
 COPY . .
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh \
-    && chown -R anki_generator:anki_generator /app
+    && chown -R anki_generator:anki_generator /app \
+    && mkdir -p /var/lib/celery \
+    && chown -R anki_generator:anki_generator /var/lib/celery
 
 USER anki_generator
 

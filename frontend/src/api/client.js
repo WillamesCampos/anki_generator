@@ -92,8 +92,16 @@ async function refreshAccessToken() {
   return refreshPromise;
 }
 
+// Login/Google login não devem levar um access token guardado — se sobrou
+// um token velho/inválido no localStorage (de uma sessão anterior), o DRF
+// rejeita a request inteira com 401 assim que vê um Authorization header
+// inválido, mesmo antes de validar email/senha. Bug real encontrado
+// investigando um "login não funciona" que na verdade eram credenciais
+// corretas sendo bloqueadas por um token velho.
+const UNAUTHENTICATED_PATHS = ["/auth/login/", "/auth/google/"];
+
 export async function apiFetch(path, options = {}, { isRetry = false } = {}) {
-  const token = getAccessToken();
+  const token = UNAUTHENTICATED_PATHS.includes(path) ? null : getAccessToken();
   const response = await rawFetch(path, options, token);
 
   if (response.status === 401 && !isRetry && !path.startsWith("/auth/")) {
@@ -104,6 +112,14 @@ export async function apiFetch(path, options = {}, { isRetry = false } = {}) {
       throw new ApiError(`${options.method || "GET"} ${path} failed with 401: sessão expirada`, 401);
     }
     return apiFetch(path, options, { isRetry: true });
+  }
+
+  // 403 é distinto de outros erros (Sprint 6, forbidden-error-handling): a
+  // partir da Sprint 5 (permissão por grupo) esse status passa a poder
+  // acontecer de verdade — usuário autenticado, mas sem permissão pra essa
+  // ação. Mensagem clara em vez do texto técnico genérico abaixo.
+  if (response.status === 403) {
+    throw new ApiError("Você não tem permissão para executar essa ação.", 403);
   }
 
   if (!response.ok) {

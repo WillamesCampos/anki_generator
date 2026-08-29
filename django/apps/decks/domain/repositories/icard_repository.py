@@ -64,10 +64,12 @@ class ICardRepository(ABC):
 
     @abstractmethod
     async def delete(self, card_id: uuid.UUID, owner_id: str) -> bool:
+        """Soft delete (Sprint 6) — marca `deleted_at`, não remove fisicamente."""
         pass
 
     @abstractmethod
     async def delete_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> int:
+        """Soft delete de todos os cards do deck (Sprint 6) — cascade a partir de `DeckRepository.delete()`."""
         pass
 
     @abstractmethod
@@ -84,4 +86,9 @@ class ICardRepository(ABC):
 
     @abstractmethod
     async def exists_by_word(self, word: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
+        pass
+
+    @abstractmethod
+    async def purge_soft_deleted(self, older_than: datetime) -> int:
+        """Remove fisicamente cards com `deleted_at` anterior a `older_than` (Sprint 6, purge job)."""
         pass

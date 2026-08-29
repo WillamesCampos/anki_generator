@@ -115,7 +115,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
    ```
    Pra login com Google funcionar de ponta a ponta, preencha também `GOOGLE_OAUTH_CLIENT_ID`/`GOOGLE_OAUTH_CLIENT_SECRET` no `django/.env` com credenciais reais de um projeto OAuth no [Google Cloud Console](https://console.cloud.google.com/) — sem isso, o restante do backend funciona normalmente, só o endpoint `/api/v1/auth/google/` não completa o handshake.
 
-3. **Suba a stack completa** (Django, Postgres, MongoDB, Redis, RabbitMQ, Celery worker, document-generator)
+3. **Suba a stack completa** (Django, Postgres, MongoDB, Redis, RabbitMQ, Celery worker + beat, document-generator)
    ```bash
    make up
    ```
@@ -147,15 +147,15 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | `make logs` | Segue os logs de todos os serviços |
 | `make migrate` / `make makemigrations` | Migrations do Django |
 | `make run` | Roda o Django fora de container (`runserver`) |
+| `make test` | Suíte pytest do backend (`apps/`) |
 | `make frontend-install` / `make frontend-dev` / `make frontend-test` / `make frontend-build` / `make frontend-lint` | SPA React (`frontend/`) |
 
 ## 🧪 Testes
 
 ```bash
-# Suíte pytest completa — 28 testes: auth/multi-tenant/auditoria/rate limiting (Sprint 1)
-# + isolamento multi-tenant Mongo/CRUD/revisão FSRS/seed (Sprint 2)
-# Requer Postgres + Redis + MongoDB rodando (`make up`)
-poetry -C django run pytest apps/accounts apps/decks
+# Suíte pytest completa do backend — requer Postgres + Redis + MongoDB rodando (`make up`)
+make test
+# equivalente a: poetry -C django run pytest apps/
 
 # Teste de integração MongoDB (script standalone, à parte do pytest — requer `make up` rodando, ao menos o serviço mongo)
 poetry -C django run python -m apps.decks.tests.test_mongodb_integration

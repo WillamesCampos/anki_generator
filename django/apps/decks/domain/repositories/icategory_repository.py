@@ -7,6 +7,7 @@ openspec/changes/sprint-2-decks-cards/design.md).
 
 import uuid
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import List, Optional
 from ..entities.category import Category
 
@@ -32,8 +33,14 @@ class ICategoryRepository(ABC):
 
     @abstractmethod
     async def delete(self, category_id: uuid.UUID, owner_id: str) -> bool:
+        """Soft delete (Sprint 6) — marca `deleted_at` e desvincula (não cascateia) os decks que a referenciam."""
         pass
 
     @abstractmethod
     async def exists(self, category_id: uuid.UUID, owner_id: str) -> bool:
+        pass
+
+    @abstractmethod
+    async def purge_soft_deleted(self, older_than: datetime) -> int:
+        """Remove fisicamente categorias com `deleted_at` anterior a `older_than` (Sprint 6, purge job)."""
         pass
