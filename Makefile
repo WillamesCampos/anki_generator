@@ -1,4 +1,4 @@
-.PHONY: up down logs migrate makemigrations run seed frontend-install frontend-dev frontend-build frontend-lint frontend-test
+.PHONY: up down logs migrate makemigrations run seed test frontend-install frontend-dev frontend-build frontend-lint frontend-test
 
 up:
 	docker compose up -d
@@ -20,6 +20,9 @@ run:
 
 seed:
 	poetry -C django run python manage.py seed_decks --reset
+
+test:
+	poetry -C django run pytest apps/
 
 frontend-install:
 	cd frontend && npm install
