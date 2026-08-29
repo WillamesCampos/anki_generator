@@ -80,6 +80,10 @@ class Card:
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
 
+    # Ciclo de vida (Sprint 6) — soft delete via timestamp, mesma
+    # semântica do Deck (ver deleted_at em Deck).
+    deleted_at: Optional[datetime] = None
+
     def __post_init__(self):
         """
         Validações que são executadas após a criação do objeto.
@@ -156,6 +160,11 @@ class Card:
         self.deck_id = deck_id
         self.updated_at = datetime.now(timezone.utc)
 
+    def soft_delete(self) -> None:
+        """Marca o card como excluído (soft delete) — não remove fisicamente."""
+        self.deleted_at = datetime.now(timezone.utc)
+        self.updated_at = self.deleted_at
+
     def is_similar_to(self, other: 'Card', similarity_threshold: float = 0.8) -> bool:
         """
         Verifica se este card é similar a outro card.
@@ -206,7 +215,8 @@ class Card:
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "created_by": self.created_by,
-            "updated_by": self.updated_by
+            "updated_by": self.updated_by,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None
         }
 
     @classmethod
@@ -240,7 +250,8 @@ class Card:
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
             created_by=data.get("created_by"),
-            updated_by=data.get("updated_by")
+            updated_by=data.get("updated_by"),
+            deleted_at=datetime.fromisoformat(data["deleted_at"]) if data.get("deleted_at") else None
         )
 
     def __str__(self) -> str:

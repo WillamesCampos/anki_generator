@@ -115,7 +115,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
    ```
    Pra login com Google funcionar de ponta a ponta, preencha também `GOOGLE_OAUTH_CLIENT_ID`/`GOOGLE_OAUTH_CLIENT_SECRET` no `django/.env` com credenciais reais de um projeto OAuth no [Google Cloud Console](https://console.cloud.google.com/) — sem isso, o restante do backend funciona normalmente, só o endpoint `/api/v1/auth/google/` não completa o handshake.
 
-3. **Suba a stack completa** (Django, Postgres, MongoDB, Redis, RabbitMQ, Celery worker, document-generator)
+3. **Suba a stack completa** (Django, Postgres, MongoDB, Redis, RabbitMQ, Celery worker + beat, document-generator)
    ```bash
    make up
    ```

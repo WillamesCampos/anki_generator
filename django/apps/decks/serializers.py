@@ -56,6 +56,7 @@ class DeckSerializer(serializers.Serializer):
     description = serializers.CharField(allow_blank=True, required=False, default="")
     category_id = serializers.UUIDField(required=False, allow_null=True)
     max_cards_per_generation = serializers.IntegerField(required=False, default=10)
+    daily_review_goal = serializers.IntegerField(required=False, allow_null=True, min_value=1)
     card_count = serializers.IntegerField(read_only=True)
     is_empty = serializers.BooleanField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
@@ -69,6 +70,7 @@ class DeckSerializer(serializers.Serializer):
             description=validated_data.get("description", ""),
             category_id=validated_data.get("category_id"),
             max_cards_per_generation=validated_data.get("max_cards_per_generation", 10),
+            daily_review_goal=validated_data.get("daily_review_goal"),
             created_by=owner_id,
             updated_by=owner_id,
         )
@@ -82,6 +84,8 @@ class DeckSerializer(serializers.Serializer):
         if "category_id" in validated_data:
             instance.category_id = validated_data["category_id"]
             instance.updated_at = datetime.now(timezone.utc)
+        if "daily_review_goal" in validated_data:
+            instance.update_daily_review_goal(validated_data["daily_review_goal"])
         instance.updated_by = str(self.context["request"].user.id)
         return async_to_sync(DeckRepository().update)(instance)
 

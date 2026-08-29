@@ -12,6 +12,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -238,13 +239,34 @@ SOCIALACCOUNT_PROVIDERS = {
 # limiting já estão todos definidos — falta mapear, em change futura, quais
 # operações precisam de garantia de idempotência antes de reprocessar.
 
-# Celery + RabbitMQ (broker) + Redis (result backend/cache) — fundação de
-# infraestrutura desta sprint, sem tasks reais ainda.
+# Celery + RabbitMQ (broker) + Redis (result backend/cache).
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "amqp://guest:guest@localhost:5672//")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+# `TIME_ZONE` do Django continua UTC (ver acima — grava tudo em UTC no
+# banco, boa prática independente de onde o usuário está) — mas os
+# horários de `CELERY_BEAT_SCHEDULE` (ex.: "meia-noite") devem respeitar o
+# fuso real do usuário, não UTC. `CELERY_TIMEZONE` é lido por
+# `app.config_from_object("django.conf:settings", namespace="CELERY")`
+# (core/celery.py) e é só o fuso usado pra avaliar `crontab(...)` — não
+# afeta como timestamps são armazenados.
+CELERY_TIMEZONE = "America/Sao_Paulo"
+
+# Primeira task Celery Beat real do projeto (Sprint 6, D4 em
+# openspec/changes/sprint-6-ciclo-de-vida-deck-card/design.md) — purga
+# fisicamente Deck/Card/Category soft-deletados há mais de 7 dias.
+# `crontab` (não `timedelta`) de propósito: horário fixo (meia-noite,
+# CELERY_TIMEZONE acima), em vez de "24h depois de o celery-beat ter
+# iniciado" — que dependeria de quando o container subiu/reiniciou.
+CELERY_BEAT_SCHEDULE = {
+    "purge-soft-deleted-daily": {
+        "task": "apps.decks.tasks.purge_soft_deleted",
+        "schedule": crontab(hour=0, minute=0),
+    },
+}
 
 CACHES = {
     "default": {

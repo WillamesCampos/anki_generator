@@ -35,6 +35,19 @@ def datetime_from_mongo(value: datetime) -> str:
     return value.isoformat()
 
 
+def base_filter(owner_id: str, **kwargs) -> Dict[str, Any]:
+    """
+    Filtro base usado por todo método de leitura dos repositórios de Deck/
+    Card/Category (Sprint 6, D1 em
+    openspec/changes/sprint-6-ciclo-de-vida-deck-card/design.md) — exclui
+    registros soft-deletados por padrão, sem precisar repetir
+    `"deleted_at": None` manualmente em cada query (risco real de esquecer
+    numa query nova). Passar `deleted_at` em `kwargs` sobrescreve o default,
+    para o raro caso de precisar incluir deletados.
+    """
+    return {"owner_id": owner_id, "deleted_at": None, **kwargs}
+
+
 def uuid_to_object_id(value) -> ObjectId:
     """
     Converte de volta para ObjectId um identificador que veio de
@@ -173,7 +186,11 @@ class CardSchema(MongoDBSchema):
             "created_at": datetime.fromisoformat(card_data["created_at"]),
             "updated_at": datetime.fromisoformat(card_data["updated_at"]),
             "created_by": card_data.get("created_by"),
-            "updated_by": card_data.get("updated_by")
+            "updated_by": card_data.get("updated_by"),
+            "deleted_at": (
+                datetime.fromisoformat(card_data["deleted_at"])
+                if card_data.get("deleted_at") else None
+            )
         }
 
         # Adiciona audio_path se existir
@@ -236,7 +253,8 @@ class CardSchema(MongoDBSchema):
             "created_at": datetime_from_mongo(document["created_at"]),
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "created_by": document.get("created_by"),
-            "updated_by": document.get("updated_by")
+            "updated_by": document.get("updated_by"),
+            "deleted_at": datetime_from_mongo(document["deleted_at"]) if document.get("deleted_at") else None
         }
 
         # Adiciona audio_path se existir
@@ -293,6 +311,11 @@ class DeckSchema(MongoDBSchema):
             "updated_at": datetime.fromisoformat(deck_data["updated_at"]),
             "created_by": deck_data.get("created_by"),
             "updated_by": deck_data.get("updated_by"),
+            "deleted_at": (
+                datetime.fromisoformat(deck_data["deleted_at"])
+                if deck_data.get("deleted_at") else None
+            ),
+            "daily_review_goal": deck_data.get("daily_review_goal"),
             "card_count": deck_data["card_count"],
             "is_empty": deck_data["is_empty"]
         }
@@ -320,6 +343,8 @@ class DeckSchema(MongoDBSchema):
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "created_by": document.get("created_by"),
             "updated_by": document.get("updated_by"),
+            "deleted_at": datetime_from_mongo(document["deleted_at"]) if document.get("deleted_at") else None,
+            "daily_review_goal": document.get("daily_review_goal"),
             "card_count": document["card_count"],
             "is_empty": document["is_empty"]
         }
@@ -348,6 +373,10 @@ class CategorySchema(MongoDBSchema):
             "updated_at": datetime.fromisoformat(category_data["updated_at"]),
             "created_by": category_data.get("created_by"),
             "updated_by": category_data.get("updated_by"),
+            "deleted_at": (
+                datetime.fromisoformat(category_data["deleted_at"])
+                if category_data.get("deleted_at") else None
+            ),
         }
 
     @staticmethod
@@ -360,6 +389,7 @@ class CategorySchema(MongoDBSchema):
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "created_by": document.get("created_by"),
             "updated_by": document.get("updated_by"),
+            "deleted_at": datetime_from_mongo(document["deleted_at"]) if document.get("deleted_at") else None,
         }
 
 
@@ -519,10 +549,12 @@ class IndexDefinitions:
         ("context", 1),
         ("due_at", 1),
         ("tags", 1),
+        ("deleted_at", 1),
         ([("owner_id", 1), ("deck_id", 1)], {}),
         ([("owner_id", 1), ("due_at", 1)], {}),
         ([("deck_id", 1), ("word.normalized", 1)], {"unique": True}),
         ([("deck_id", 1), ("created_at", 1)], {}),
+        ([("owner_id", 1), ("deleted_at", 1)], {}),
     ]
 
     # Índices para collection decks
@@ -532,13 +564,17 @@ class IndexDefinitions:
         ("created_at", 1),
         ("updated_at", 1),
         ("card_count", 1),
+        ("deleted_at", 1),
         ([("owner_id", 1), ("category_id", 1)], {}),
+        ([("owner_id", 1), ("deleted_at", 1)], {}),
     ]
 
     # Índices para collection categories
     CATEGORIES_INDEXES = [
         ("owner_id", 1),
         ("name", 1),
+        ("deleted_at", 1),
+        ([("owner_id", 1), ("deleted_at", 1)], {}),
     ]
 
     # Índices para collection card_reviews

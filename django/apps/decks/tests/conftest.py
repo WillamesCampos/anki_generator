@@ -21,6 +21,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.models import User
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
+from apps.decks.infrastructure.schemas import uuid_to_object_id
 
 SEEDED_COLLECTIONS = ("cards", "decks", "categories", "card_reviews", "generation_sessions")
 
@@ -34,6 +35,32 @@ async def _clear_collections():
     for name in SEEDED_COLLECTIONS:
         collection = await manager.get_collection(name)
         await collection.delete_many({})
+
+
+async def _read_raw_document(collection_name: str, entity_id):
+    manager = await ensure_mongodb_connection()
+    collection = await manager.get_collection(collection_name)
+    return await collection.find_one({"_id": uuid_to_object_id(entity_id)})
+
+
+def read_raw_document(collection_name: str, entity_id):
+    """Lê um documento direto do Mongo, ignorando qualquer filtro de domínio
+    (ex.: `base_filter`/soft delete) — usado pra confirmar que um soft
+    delete gravou `deleted_at` sem depender do próprio filtro que o esconde
+    das leituras normais."""
+    return run_async(_read_raw_document(collection_name, entity_id))
+
+
+async def _backdate_deleted_at(collection_name: str, entity_id, when):
+    manager = await ensure_mongodb_connection()
+    collection = await manager.get_collection(collection_name)
+    await collection.update_one({"_id": uuid_to_object_id(entity_id)}, {"$set": {"deleted_at": when}})
+
+
+def backdate_deleted_at(collection_name: str, entity_id, when):
+    """Força `deleted_at` pra uma data no passado — simula "já passou da
+    janela de retenção de 7 dias" sem precisar esperar 7 dias de verdade."""
+    run_async(_backdate_deleted_at(collection_name, entity_id, when))
 
 
 @pytest.fixture(autouse=True)

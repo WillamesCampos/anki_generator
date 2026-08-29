@@ -33,6 +33,13 @@ class Category:
     created_by: Optional[str] = None
     updated_by: Optional[str] = None
 
+    # Ciclo de vida (Sprint 6) — soft delete via timestamp. Diferente do
+    # cascade Deck→Card, excluir uma categoria NÃO cascateia pros decks que
+    # a referenciam — eles são desvinculados (Deck.category_id = None) pelo
+    # repositório/view, não pela entidade Category em si (ver D6 em
+    # openspec/changes/sprint-6-ciclo-de-vida-deck-card/design.md).
+    deleted_at: Optional[datetime] = None
+
     def __post_init__(self):
         self._validate_category()
 
@@ -52,6 +59,11 @@ class Category:
         self.name = new_name.strip()
         self.updated_at = datetime.now(timezone.utc)
 
+    def soft_delete(self) -> None:
+        """Marca a categoria como excluída (soft delete) — não remove fisicamente."""
+        self.deleted_at = datetime.now(timezone.utc)
+        self.updated_at = self.deleted_at
+
     def to_dict(self) -> dict:
         return {
             "id": str(self.id),
@@ -61,6 +73,7 @@ class Category:
             "updated_at": self.updated_at.isoformat(),
             "created_by": self.created_by,
             "updated_by": self.updated_by,
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
     @classmethod
@@ -73,6 +86,7 @@ class Category:
             updated_at=datetime.fromisoformat(data["updated_at"]),
             created_by=data.get("created_by"),
             updated_by=data.get("updated_by"),
+            deleted_at=datetime.fromisoformat(data["deleted_at"]) if data.get("deleted_at") else None,
         )
 
     def __str__(self) -> str:

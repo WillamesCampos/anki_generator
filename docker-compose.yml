@@ -93,6 +93,29 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  celery-beat:
+    build:
+      context: ./django
+      dockerfile: Dockerfile
+    command: celery-beat
+    env_file: ./django/.env
+    environment:
+      POSTGRES_HOST: postgres
+      MONGODB_HOST: mongo
+      CELERY_BROKER_URL: amqp://guest:guest@rabbitmq:5672//
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/1
+    volumes:
+      - ./django:/app
+      - celery_beat_data:/var/lib/celery
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   document-generator:
     build:
       context: ./microservices/document-generator
@@ -110,3 +133,4 @@ volumes:
   redis_data:
   rabbitmq_data:
   document_generator_audio:
+  celery_beat_data:

@@ -19,7 +19,7 @@ from apps.decks.domain.entities.card import Card
 from apps.decks.domain.repositories.icard_repository import ICardRepository
 from apps.decks.infrastructure.exceptions import CardNotFoundError, RepositoryError
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
-from apps.decks.infrastructure.schemas import CardSchema, uuid_to_object_id
+from apps.decks.infrastructure.schemas import CardSchema, base_filter, uuid_to_object_id
 
 
 class CardRepository(ICardRepository):
@@ -80,7 +80,7 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
             document = await collection.find_one({
                 "_id": uuid_to_object_id(card_id),
-                "owner_id": owner_id,
+                **base_filter(owner_id),
             })
 
             if document is None:
@@ -99,7 +99,7 @@ class CardRepository(ICardRepository):
 
             cursor = collection.find({
                 "word.normalized": word_normalized,
-                "owner_id": owner_id,
+                **base_filter(owner_id),
             })
             documents = await cursor.to_list(length=None)
 
@@ -113,7 +113,7 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
             cursor = collection.find({
                 "deck_id": uuid_to_object_id(deck_id),
-                "owner_id": owner_id,
+                **base_filter(owner_id),
             })
             documents = await cursor.to_list(length=None)
 
@@ -125,7 +125,7 @@ class CardRepository(ICardRepository):
     async def find_by_context(self, context: str, owner_id: str) -> List[Card]:
         try:
             collection = await self._get_collection()
-            cursor = collection.find({"context": context, "owner_id": owner_id})
+            cursor = collection.find({"context": context, **base_filter(owner_id)})
             documents = await cursor.to_list(length=None)
 
             return [Card.from_dict(CardSchema.from_document(doc)) for doc in documents]
@@ -140,7 +140,7 @@ class CardRepository(ICardRepository):
             regex_pattern = f".*{word_normalized}.*"
 
             cursor = collection.find({
-                "owner_id": owner_id,
+                **base_filter(owner_id),
                 "$or": [
                     {"word.normalized": {"$regex": regex_pattern, "$options": "i"}},
                     {"translation.normalized": {"$regex": regex_pattern, "$options": "i"}}
@@ -160,7 +160,7 @@ class CardRepository(ICardRepository):
 
             exact_matches = await collection.find({
                 "word.normalized": card.word.normalized,
-                "owner_id": owner_id,
+                **base_filter(owner_id),
             }).to_list(length=None)
 
             cards = []
@@ -179,7 +179,7 @@ class CardRepository(ICardRepository):
             due_before = due_before or datetime.now(timezone.utc)
 
             cursor = collection.find({
-                "owner_id": owner_id,
+                **base_filter(owner_id),
                 "due_at": {"$lte": due_before},
             }).sort("due_at", 1)
             documents = await cursor.to_list(length=None)
@@ -197,7 +197,7 @@ class CardRepository(ICardRepository):
             document.pop("_id", None)
 
             result = await collection.replace_one(
-                {"_id": uuid_to_object_id(card.id), "owner_id": card.owner_id},
+                {"_id": uuid_to_object_id(card.id), **base_filter(card.owner_id)},
                 document
             )
 
@@ -212,27 +212,33 @@ class CardRepository(ICardRepository):
             raise RepositoryError(f"Failed to update card: {e}")
 
     async def delete(self, card_id: uuid.UUID, owner_id: str) -> bool:
+        """Soft delete (Sprint 6) — marca `deleted_at`, não remove fisicamente."""
         try:
             collection = await self._get_collection()
-            result = await collection.delete_one({
-                "_id": uuid_to_object_id(card_id),
-                "owner_id": owner_id,
-            })
+            now = datetime.now(timezone.utc)
 
-            return result.deleted_count > 0
+            result = await collection.update_one(
+                {"_id": uuid_to_object_id(card_id), **base_filter(owner_id)},
+                {"$set": {"deleted_at": now, "updated_at": now}},
+            )
+
+            return result.matched_count > 0
 
         except Exception as e:
             raise RepositoryError(f"Failed to delete card: {e}")
 
     async def delete_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> int:
+        """Soft delete de todos os cards do deck (Sprint 6) — cascade a partir de `DeckRepository.delete()`."""
         try:
             collection = await self._get_collection()
-            result = await collection.delete_many({
-                "deck_id": uuid_to_object_id(deck_id),
-                "owner_id": owner_id,
-            })
+            now = datetime.now(timezone.utc)
 
-            return result.deleted_count
+            result = await collection.update_many(
+                {"deck_id": uuid_to_object_id(deck_id), **base_filter(owner_id)},
+                {"$set": {"deleted_at": now, "updated_at": now}},
+            )
+
+            return result.modified_count
 
         except Exception as e:
             raise RepositoryError(f"Failed to delete cards by deck ID: {e}")
@@ -240,7 +246,7 @@ class CardRepository(ICardRepository):
     async def count(self, owner_id: str) -> int:
         try:
             collection = await self._get_collection()
-            return await collection.count_documents({"owner_id": owner_id})
+            return await collection.count_documents(base_filter(owner_id))
 
         except Exception as e:
             raise RepositoryError(f"Failed to count cards: {e}")
@@ -250,7 +256,7 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
             return await collection.count_documents({
                 "deck_id": uuid_to_object_id(deck_id),
-                "owner_id": owner_id,
+                **base_filter(owner_id),
             })
 
         except Exception as e:
@@ -261,7 +267,7 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
             count = await collection.count_documents({
                 "_id": uuid_to_object_id(card_id),
-                "owner_id": owner_id,
+                **base_filter(owner_id),
             })
             return count > 0
 
@@ -273,7 +279,7 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
             word_normalized = word.lower().strip()
 
-            query = {"word.normalized": word_normalized, "owner_id": owner_id}
+            query = {"word.normalized": word_normalized, **base_filter(owner_id)}
             if deck_id:
                 query["deck_id"] = uuid_to_object_id(deck_id)
 
@@ -282,3 +288,13 @@ class CardRepository(ICardRepository):
 
         except Exception as e:
             raise RepositoryError(f"Failed to check if word exists: {e}")
+
+    async def purge_soft_deleted(self, older_than: datetime) -> int:
+        """Remove fisicamente cards com `deleted_at` anterior a `older_than` — não escopado por `owner_id` (job de manutenção varre todos os donos)."""
+        try:
+            collection = await self._get_collection()
+            result = await collection.delete_many({"deleted_at": {"$ne": None, "$lt": older_than}})
+            return result.deleted_count
+
+        except Exception as e:
+            raise RepositoryError(f"Failed to purge soft-deleted cards: {e}")
