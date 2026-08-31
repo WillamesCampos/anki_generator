@@ -125,6 +125,102 @@ criaremos fluxo de deploy baseado em tags via github actions.
   Top 10 / ASVS entram, e em que sprint) — ainda precisa de refinamento,
   levantar o que já está coberto (multi-tenant, rate limiting, segredos
   fora do código) vs. o que falta antes de virar sprint.
+- Cadastro de cards em lote via planilha — Google Sheets ou upload de
+  arquivo. O usuário deve poder cadastrar decks, cards, categorias e tags
+  numa única planilha. Se a planilha trouxer só cards, todos os campos
+  obrigatórios do card devem estar presentes, junto com o deck
+  relacionado: se o deck já existir, os cards são adicionados a ele; se
+  não existir, lança erro (não cria deck implicitamente nesse fluxo). Se
+  a ideia for criar deck a partir do arquivo, o deck tem que ser
+  informado na planilha. Categorias e tags podem ser incluídas — se forem
+  opcionais no modelo de dados, tudo bem ficarem de fora, mas se forem
+  obrigatórias precisam ser tratadas/validadas no processamento da
+  planilha. Ainda precisa de refinamento: formato exato da planilha
+  (template?), validação linha a linha vs. tudo ou nada, feedback de erro
+  pro usuário (quais linhas falharam e por quê).
+- Adicionar campo "objetivo" no Deck, pra servir de contexto pra um
+  agente de IA (ex.: "revisar conceitos de anatomia pra prova"). No
+  frontend, ter uma opção de "refinar objetivo com IA" — o usuário
+  escreve um objetivo cru e a IA melhora o texto pra ficar um contexto
+  mais útil pro agente. Ainda precisa de refinamento: onde esse campo
+  aparece na UI, se é obrigatório, como o refino via IA se encaixa no
+  fluxo de criação/edição do deck.
+- Sugestão de deck a partir de um link de vídeo: o usuário manda um link
+  de vídeo + uma mensagem dizendo o que quer (ex.: "esse vídeo fala de
+  anatomia, quero revisar os conceitos"). O sistema processa o vídeo,
+  extrai o áudio, transcreve, identifica as palavras/termos de maior peso
+  no conteúdo e sugere um deck (com cards) baseado nisso. Se o usuário
+  confirmar a sugestão, o deck é criado de fato. Ainda precisa de
+  refinamento: quem faz a transcrição (serviço externo? modelo local?),
+  como extrair "peso" dos termos, se isso vira mais uma responsabilidade
+  do agente de IA existente ou um fluxo/microsserviço novo, custo de
+  processar vídeo.
+- Assistente de consulta read-only sobre decks/cards, via tool calling —
+  ideia levantada com o `backend-mentor` como prática de backend+IA antes
+  da Sprint 12 (Agente de IA completo, LangChain/LangGraph). Endpoint
+  novo e desacoplado (ex.: `POST /api/v1/ai/ask/`) que recebe uma
+  pergunta em linguagem natural (ex.: "quantos cards tenho pra revisar no
+  deck de Francês?") e responde chamando a API do LLM diretamente (sem
+  framework, mesmo padrão do flix-api), com 2-3 tools mínimas que só
+  leem dados já expostos hoje (listar decks, contar cards devidos por
+  deck, etc.) — sem tocar em nenhum fluxo de escrita. Objetivo é fechar o
+  gap de tool calling (nunca implementado, só teoria) com baixo risco,
+  antes de partir pro agente completo com permissão de escrita. Ainda
+  precisa de refinamento: provedor/SDK (OpenAI, já usado no flix-api, ou
+  Anthropic), onde esse endpoint mora (Django direto ou um microsserviço
+  novo), quais tools exatamente entram no escopo mínimo.
+- Logging estruturado + correlation ID atravessando Django → task Celery
+  → microsserviço FastAPI — ideia levantada com o `backend-mentor`. Hoje
+  não existe nada disso no projeto (cada serviço loga isolado, sem jeito
+  de seguir uma requisição de ponta a ponta). Um ID gerado na entrada da
+  requisição, propagado no header/contexto da task, sem precisar de
+  tracing completo (OpenTelemetry). Serve de base pra Sprint 16
+  (observabilidade/Grafana) — sem isso, os dashboards não conseguem
+  responder "essa falha veio de onde". Ainda precisa de refinamento: qual
+  lib (structlog?), onde o ID é gerado/propagado exatamente, em que
+  sprint entra (antes da 16, ou como parte dela).
+- Testes de contrato entre Django e os microsserviços FastAPI — ideia
+  levantada com o `backend-mentor`. Hoje a integração com
+  `document-generator` (e futuramente o agente de IA) só é validada
+  manualmente ou via teste de integração pesado. Um schema compartilhado
+  (Pydantic ou JSON schema) validado nos dois lados pegaria quebra de
+  payload sem precisar subir os dois serviços — sem ir até um framework
+  de contract testing dedicado (Pact), que seria overkill pro tamanho do
+  projeto. Ainda precisa de refinamento: como compartilhar o schema entre
+  Django e FastAPI (pacote comum? duplicado com teste de igualdade?), em
+  que sprint entra.
+- Estratégia de backup/restore de Mongo + Postgres — ideia levantada com
+  o `backend-mentor`, mais devops que código. Faz mais sentido perto da
+  Sprint 15 (deploy real na VPS), antes disso não há produção de verdade
+  pra proteger. Ainda precisa de refinamento: frequência, retenção, onde
+  o backup fica armazenado, teste de restore de verdade (não só o
+  backup rodar sem erro).
+- Guardrail de custo pra chamada de LLM — ideia levantada com o
+  `backend-mentor`, complementar ao assistente de tool calling já
+  registrado acima. Reaproveitar o Redis já usado pra cache de token:
+  cachear pergunta idêntica (evita pagar de novo pela mesma resposta) e
+  um contador de orçamento diário por usuário. Ainda precisa de
+  refinamento: TTL do cache de resposta, o que acontece quando o usuário
+  estoura o orçamento diário (bloqueia? avisa?), se isso é genérico pra
+  qualquer feature de IA ou específico do assistente de consulta.
+- Harness de avaliação do domínio restrito do agente de IA — ideia
+  levantada com o `backend-mentor`. O `PROMPT_BRUTO.md` já define
+  exemplos de pergunta válida/inválida pro agente (ex.: pedir receita de
+  bolo é fora de escopo, ver seção "agente de IA" acima). Um teste
+  automatizado (pytest) que roda um conjunto fixo dessas perguntas contra
+  o modelo e verifica se ele recusa o que deveria recusar, antes da
+  Sprint 12 chegar e essa restrição só ser validada na mão. Ainda precisa
+  de refinamento: conjunto de perguntas de teste, critério de "passou"
+  (match exato? outro LLM avaliando a resposta?), roda em CI ou só local.
+- Streaming da resposta do LLM via SSE — ideia levantada com o
+  `backend-mentor`, extensão natural do assistente de tool calling já
+  registrado acima: em vez de esperar a resposta inteira, o Django
+  devolve em streaming (`StreamingHttpResponse`), melhorando percepção de
+  latência. Fazer só depois do tool calling básico estar funcionando, não
+  junto — são dois conceitos novos, melhor um de cada vez. Ainda precisa
+  de refinamento: SSE puro ou WebSocket, como o frontend consome o
+  streaming.
+  - Criar modo noturno no front.
 
 # TAREFA
 

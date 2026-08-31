@@ -6,7 +6,7 @@ openspec/changes/sprint-2-decks-cards/design.md).
 
 import uuid
 from abc import ABC, abstractmethod
-from typing import List
+from typing import Any, Dict, List
 from ..entities.card_review import CardReview
 
 
@@ -24,4 +24,9 @@ class ICardReviewRepository(ABC):
     @abstractmethod
     async def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
         """Revisões do owner, mais recentes primeiro — base da Home (Sprint 3: último deck estudado, gráfico de estatísticas)."""
+        pass
+
+    @abstractmethod
+    async def get_deck_statistics(self, owner_id: str, deck_id: uuid.UUID) -> Dict[str, Any]:
+        """Agrega a distribuição histórica e as revisões de hoje de um deck ativo."""
         pass

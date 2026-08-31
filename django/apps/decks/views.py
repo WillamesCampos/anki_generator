@@ -1,21 +1,22 @@
 """
 Views REST de decks/cards (Sprint 2). Generic Views do DRF sobre
 repositórios Motor: serializers puros, `get_queryset()` devolve uma lista
-Python já resolvida via `async_to_sync`, nunca um `QuerySet` real (D2/D3 em
+Python já resolvida pela ponte assíncrona persistente, nunca um `QuerySet` real (D2/D3 em
 openspec/changes/sprint-2-decks-cards/design.md). `APIView` pontual para a
 ação de registrar revisão, que não é uma substituição de estado CRUD.
 """
 
 import uuid
 
-from asgiref.sync import async_to_sync
 from rest_framework import generics, status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .domain.entities.card_review import CardReview
 from .domain.services import scheduling_service
+from .infrastructure.async_bridge import persistent_async_to_sync as async_to_sync
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.card_review_repository import CardReviewRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
@@ -80,9 +81,48 @@ class DeckDetailView(generics.RetrieveUpdateDestroyAPIView):
         async_to_sync(DeckRepository().delete)(instance.id, _owner_id(self.request))
 
 
+class DeckStatisticsView(APIView):
+    """Estatísticas agregadas do histórico ativo de um único deck."""
+
+    permission_classes = [HasAuthorizedGroup]
+
+    def get(self, request, deck_id):
+        try:
+            parsed_deck_id = uuid.UUID(deck_id)
+        except (TypeError, ValueError, AttributeError):
+            raise NotFound() from None
+
+        owner_id = _owner_id(request)
+        deck = async_to_sync(DeckRepository().find_by_id)(parsed_deck_id, owner_id)
+        if deck is None:
+            raise NotFound()
+
+        statistics = async_to_sync(CardReviewRepository().get_deck_statistics)(
+            owner_id,
+            parsed_deck_id,
+        )
+        goal = deck.daily_review_goal
+        reviewed_today = statistics["reviewed_today"]
+        progress = (
+            min(100, round((reviewed_today / goal) * 100))
+            if goal is not None
+            else None
+        )
+        return Response({
+            **statistics,
+            "daily_review_goal": goal,
+            "goal_progress_percentage": progress,
+        })
+
+
+class CardPageNumberPagination(PageNumberPagination):
+    page_size = 10
+
+
 class CardListCreateView(generics.ListCreateAPIView):
     serializer_class = CardSerializer
     permission_classes = [HasAuthorizedGroup]
+    pagination_class = CardPageNumberPagination
 
     def get_queryset(self):
         owner_id = _owner_id(self.request)
@@ -96,6 +136,28 @@ class CardListCreateView(generics.ListCreateAPIView):
             return []
 
         return async_to_sync(card_repo.find_by_deck_id)(uuid.UUID(deck_id), owner_id)
+
+
+class CardCountView(APIView):
+    """Contagem mínima por deck; não materializa documentos de Card."""
+
+    permission_classes = [HasAuthorizedGroup]
+
+    def get(self, request):
+        raw_deck_id = request.query_params.get("deck_id")
+        try:
+            deck_id = uuid.UUID(raw_deck_id) if raw_deck_id else None
+        except (TypeError, ValueError, AttributeError):
+            deck_id = None
+
+        if deck_id is None:
+            raise ValidationError({"deck_id": "Informe um UUID válido."})
+
+        count = async_to_sync(CardRepository().count_by_deck_id)(
+            deck_id,
+            _owner_id(request),
+        )
+        return Response({"count": count})
 
 
 class CardDetailView(generics.RetrieveUpdateDestroyAPIView):

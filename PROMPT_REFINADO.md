@@ -120,7 +120,7 @@ Atue como um(a) Arquiteto(a) de Software Sênior, especialista em Django/DRF, Fa
     Todas as URLs de API DEVEM ser versionadas (ex.: `/api/v1/...`).
     </regra_obrigatoria>
     <regra_obrigatoria id="rate-limiting-circuit-breaker">
-    A aplicação DEVE implementar rate limiting na taxa de **3 requests/segundo** por usuário/cliente — decisão resolvida (ver `<decisoes_resolvidas>`) — e circuit breaker com retry exponencial para toda chamada a microsserviço externo.
+    A aplicação DEVE implementar rate limiting na taxa de **10 requests/segundo** por usuário/cliente — decisão atualizada explicitamente na Sprint 7 (ver `<decisoes_resolvidas>`) — e circuit breaker com retry exponencial para toda chamada a microsserviço externo.
     </regra_obrigatoria>
     <regra_obrigatoria id="publicacao-eventos">
     A publicação de eventos na fila DEVE ocorrer de forma assíncrona via Celery.
@@ -416,7 +416,7 @@ Docker Compose direto na VPS Hostinger — não Kubernetes. Kubernetes é tratad
 </decisao_resolvida>
 
 <decisao_resolvida id="taxa-rate-limiting">
-3 requests/segundo por usuário/cliente no rate limiting do Django.
+10 requests/segundo por usuário/cliente no rate limiting do Django. A decisão original de 3 req/s foi substituída explicitamente na Sprint 7 após reproduzir o frontend legítimo recebendo `429`.
 </decisao_resolvida>
 
 <decisao_resolvida id="ordem-microservicos">
@@ -436,7 +436,7 @@ Generic Views do DRF continuam a forma preferencial de expor CRUD, mesmo sobre d
 </decisao_resolvida>
 
 <decisao_resolvida id="sync-views-async-repositorio">
-Views do Django/DRF permanecem síncronas (não se adota `adrf`/views assíncronas nativas nesta fase) — chamam os repositórios Motor via `asgiref.sync.async_to_sync`. Os repositórios continuam em Motor (não migram para `pymongo`), porque já existe um segundo consumidor real que se beneficia de concorrência de verdade sem bridge (o comando de seed, via `asyncio.gather`). Ver D3/D3.1 em design.md da Sprint 2 — inclui um risco real descoberto em implementação (event loop preso no client Mongo) e sua correção, documentado ali.
+Views do Django/DRF permanecem síncronas (não se adota `adrf`/views assíncronas nativas nesta fase) e chamam os repositórios Motor por uma ponte com event loop persistente por processo (`infrastructure/async_bridge.py`). O `asgiref.sync.async_to_sync` por chamada foi substituído na Sprint 7 depois de reproduzir um `500` concorrente: requests simultâneos criavam loops diferentes e invalidavam o singleton Motor. Os repositórios continuam em Motor (não migram para `pymongo`), porque o comando de seed usa concorrência assíncrona real via `asyncio.gather`. Ver D9 no design da Sprint 7.
 </decisao_resolvida>
 
 <decisao_resolvida id="repeticao-espacada-fsrs">
@@ -498,11 +498,11 @@ Sprint 6: `daily_review_goal: Optional[int]` em `Deck`, editável via `PATCH` �
 </decisao_resolvida>
 
 <decisao_resolvida id="gerenciamento-deck-card-frontend">
-Sprint 7 (nova, inserida após a Sprint 6, empurrando Estatísticas por Deck e as demais sprints em cadeia): gap encontrado numa auditoria pré-Sprint 6 via `backend-mentor` — a Sprint 2 (e agora a Sprint 6) construíram todo o CRUD de Deck/Card/Category no backend, mas o frontend nunca ganhou uma tela pra usar isso. Confirmado por grep, não suposição: `App.jsx` tem `/decks` como `<PlaceholderPage>` desde a Sprint 3; nenhum arquivo em `frontend/src` faz `POST`/`PATCH`/`DELETE` pra API; até `setDailyGoal()` (`lib/goal.js`, meta client-side da Sprint 3) existe mas nunca é chamada em componente nenhum. Hoje o produto só é populável via `seed_decks`/curl. Escopo: tela `/decks` real (lista), criar/editar/excluir deck (incluindo `daily_review_goal` e confirmação com aviso da janela de 7 dias), criar/editar/excluir card dentro de um deck, e gerenciamento mínimo de categoria (listar + criar, necessário pra alimentar o seletor de categoria do formulário de deck). **Fora de escopo, por decisão explícita**: a tela de estudo em si (revisar card, avaliar again/hard/good/easy) — gap ainda maior (é o motivo do produto existir), registrado separadamente em `PRD.md` §7.1 e resolvido na Sprint 8 (ver `tela-de-estudo`).
+Sprint 7 (nova, inserida após a Sprint 6): a Sprint 2/6 construiu o CRUD de Deck/Card/Category, mas o frontend não tinha UI para usá-lo. Escopo final: `/decks` real; criação/edição/exclusão de deck; detalhe com somente a quantidade de cards consultada por `GET /api/v1/cards/count/?deck_id=` e botão "Ver todos os cards"; página dedicada `/decks/:deckId/cards` com CRUD; categoria inline; contrato de Card `front`/`back`/`front_description`/`back_description` em todo o monorepo, com rótulos visíveis em português; rate limit de 10 req/s; ponte Motor concorrente estável. **Fora de escopo**: a tela de estudo, resolvida na Sprint 8.
 </decisao_resolvida>
 
 <decisao_resolvida id="tela-de-estudo">
-Sprint 8 (nova, inserida após a Sprint 7, empurrando Estatísticas por Deck e as demais sprints em cadeia): gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria pré-Sprint 6 — nenhuma sprint do roadmap jamais construiu a tela que mostra um card e permite avaliá-lo. Levantamento de requisitos conduzido via `backend-mentor`: (1) estudo é sempre por deck específico, não uma sessão global misturando todos os decks — o usuário entra pelo deck (tela da Sprint 7) e clica "Estudar"; (2) sessão não é persistida — sempre recomeça buscando os cards ainda devidos, sem conceito de "retomar de onde parou"; consequência direta: cards avaliados como "again" não são reconsultados dentro da mesma sessão, só reaparecem numa sessão futura. Backend: `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` ganha filtro opcional por deck, e `GET /api/v1/cards/?due=true&deck_id=X` passa a aceitar os dois parâmetros juntos (hoje são mutuamente exclusivos na view). `POST /api/v1/cards/{card_id}/review/` (FSRS) já existia desde a Sprint 2 e é reaproveitado sem alteração — o grosso do trabalho novo é UI: buscar os cards devidos do deck uma vez, mostrar frente (`word`)/verso (`translation`+`example`), 4 botões de rating, progresso "X de Y", estado vazio e tela de fim de sessão.
+Sprint 8 (nova, inserida após a Sprint 7): gap mais fundamental do produto — nenhuma sprint anterior construiu a tela que mostra um card e permite avaliá-lo. Estudo é por deck específico e a sessão não é persistida. Backend: `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` ganha filtro opcional por deck, e `GET /api/v1/cards/?due=true&deck_id=X` aceita os dois parâmetros juntos. A UI mostra `front` primeiro e revela `back`, `front_description` e `back_description`, com rótulos em português, 4 ratings, progresso, estado vazio e fim de sessão.
 </decisao_resolvida>
 
 <decisao_resolvida id="frontend-hardening-sprint3">
@@ -562,11 +562,11 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Ordem de instrumentação de observabilidade**: logs estruturados → django-prometheus → node_exporter → exporter RabbitMQ/Celery (fila/DLQ).
 - [x] **Ordem dos microsserviços**: documentos → agente de IA → WhatsApp/Evolution API.
 - [x] **Orquestração de containers na VPS**: Docker Compose direto — Kubernetes desacoplado como projeto de estudo separado (usuário sem experiência prévia; ver `<ponto_critico id="idempotencia-revisao">` para outro item levantado na mesma conversa).
-- [x] **Taxa de rate limiting**: 3 requests/segundo.
+- [x] **Taxa de rate limiting**: 10 requests/segundo (atualizada na Sprint 7).
 - [x] **Estrutura do monorepo**: `django/` + `microservices/<nome>/` + `frontend/`, uma pasta por unidade implantável — ver `<estrutura_monorepo>`.
 - [x] **Isolamento multi-tenant em MongoDB** (Sprint 2): `owner_id` obrigatório embutido em toda query do repositório — ver `isolamento-multi-tenant-mongo`.
 - [x] **Generic Views sobre dado não-ORM** (Sprint 2): serializers manuais + `get_queryset()` retornando lista resolvida — ver `generic-views-sobre-mongo`.
-- [x] **Sync vs. async nas views de deck/card** (Sprint 2): views síncronas + `async_to_sync`, repositórios continuam em Motor — ver `sync-views-async-repositorio`.
+- [x] **Sync vs. async nas views de deck/card**: views síncronas + ponte de event loop persistente, repositórios continuam em Motor — ver `sync-views-async-repositorio`.
 - [x] **Algoritmo de repetição espaçada** (Sprint 2): FSRS via pacote `fsrs`, não SM-2 manual — ver `repeticao-espacada-fsrs`.
 - [x] **Tokens visuais do frontend** (Sprint 3): extraídos por auditoria real de `refs/Ashley_files/style.css`, não importados diretamente — ver `frontend-tokens-visuais`.
 - [x] **Gráfico + exportação PDF da Home** (Sprint 3): Chart.js + jsPDF — ver `frontend-grafico-pdf`.
@@ -579,7 +579,7 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Soft delete de Deck/Card/Category** (Sprint 6): `deleted_at` timestamp em todas as três, cascade Deck→Card, desvínculo (não cascade) Category→Deck, sem N:N entre Card e Deck, `CardReview` preservada como histórico — ver `soft-delete-deck-card`. Resolve de vez o gap de cascade delete de `CardReview` do `PRD.md` §7.1.
 - [x] **Purge job de soft delete** (Sprint 6): task Celery Beat diária, primeira task Celery real do projeto — ver `purge-job-soft-delete`.
 - [x] **Meta de estudo por deck** (Sprint 6): `daily_review_goal` persistido no `Deck`, substitui a meta client-side global da Sprint 3 — ver `deck-daily-review-goal`.
-- [x] **Gerenciamento de Deck/Card no frontend** (Sprint 7, nova, inserida após a Sprint 6): tela `/decks` real, criar/editar/excluir deck e card, gerenciamento mínimo de categoria — ver `gerenciamento-deck-card-frontend`. Fecha o gap de o backend ter CRUD completo desde a Sprint 2 sem nenhuma UI pra usá-lo.
+- [x] **Gerenciamento de Deck/Card no frontend** (Sprint 7): detalhe com contagem mínima, página dedicada de cards, CRUD completo, nomes de campos atualizados e categoria inline — ver `gerenciamento-deck-card-frontend`.
 - [x] **Tela de estudo** (Sprint 8, nova, inserida após a Sprint 7): estudo por deck específico, sessão sem persistência, filtro `due`+`deck_id` novo no backend — ver `tela-de-estudo`. Fecha o gap mais fundamental do produto (revisar um card e avaliar).
 - [x] **Endpoint de estatísticas por deck** (Sprint 9, renumerada mais de uma vez conforme sprints novas foram inseridas): `GET /api/v1/decks/{deck_id}/statistics/`, distribuição por rating + revisados hoje + progresso da meta, calculado via agregação Mongo — ver `estatisticas-por-deck-endpoint`. Formalizado em `PRD.md`/openspec (Sprint 9).
 - [x] **Dropdown de deck na Home** (Sprint 9): filtra o gráfico por deck, default é o mais recente estudado, título do card muda para "Deck estudado" quando há seleção manual — ver `dropdown-deck-home`.

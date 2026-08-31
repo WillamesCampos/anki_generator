@@ -72,10 +72,10 @@ def test_card_create_sets_created_by(client_a, owner_a):
     card_response = client_a.post(
         "/api/v1/cards/",
         {
-            "word": "network",
-            "translation": "rede",
-            "example_original": "The network is down today.",
-            "example_translated": "A rede esta fora do ar hoje.",
+            "front": "network",
+            "back": "rede",
+            "front_description": "The network is down today.",
+            "back_description": "A rede esta fora do ar hoje.",
             "deck_id": deck_id,
         },
         format="json",
@@ -96,10 +96,10 @@ def test_card_update_refreshes_updated_by(client_a, owner_a):
     card_response = client_a.post(
         "/api/v1/cards/",
         {
-            "word": "network",
-            "translation": "rede",
-            "example_original": "The network is down today.",
-            "example_translated": "A rede esta fora do ar hoje.",
+            "front": "network",
+            "back": "rede",
+            "front_description": "The network is down today.",
+            "back_description": "A rede esta fora do ar hoje.",
             "deck_id": deck_id,
         },
         format="json",
@@ -122,10 +122,10 @@ def test_card_review_sets_created_by_and_updated_by(client_a, owner_a):
     card_response = client_a.post(
         "/api/v1/cards/",
         {
-            "word": "network",
-            "translation": "rede",
-            "example_original": "The network is down today.",
-            "example_translated": "A rede esta fora do ar hoje.",
+            "front": "network",
+            "back": "rede",
+            "front_description": "The network is down today.",
+            "back_description": "A rede esta fora do ar hoje.",
             "deck_id": deck_id,
         },
         format="json",

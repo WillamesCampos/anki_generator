@@ -15,11 +15,11 @@ The system SHALL fetch the deck's due cards once when the study session starts, 
 - **THEN** the new session fetches the currently due cards again, with no memory of the prior session's position
 
 ### Requirement: A study session shows a card's front, then reveals its back on demand
-The system SHALL show a card's term first, and reveal its translation and example only after the user requests it.
+The system SHALL show a card's `front` first, and reveal `back`, `front_description`, and `back_description` only after the user requests it.
 
 #### Scenario: Revealing the back of a card
 - **WHEN** an authenticated user requests to see the answer for the current card
-- **THEN** the translation and example become visible
+- **THEN** `back`, `front_description`, and `back_description` become visible
 
 ### Requirement: Rating a card submits a review and advances to the next card
 The system SHALL submit the selected rating (`again`, `hard`, `good`, or `easy`) for the current card, then advance to the next card in the session's list without re-querying due cards.

@@ -61,7 +61,7 @@ function rawFetch(path, options, token) {
 // Compartilhada entre chamadas concorrentes: se duas requisições levarem
 // 401 ao mesmo tempo (ex.: Home disparando /reviews/ e /decks/{id}/ perto
 // uma da outra), só um /auth/token/refresh/ real é feito — economiza uma
-// chamada do orçamento de 3 req/s, além de evitar corrida.
+// chamada do orçamento global, além de evitar corrida.
 let refreshPromise = null;
 
 async function refreshAccessToken() {

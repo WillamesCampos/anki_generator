@@ -235,39 +235,39 @@ class GenerationSession:
         self.completed_at = datetime.now(timezone.utc)
         self.updated_at = datetime.now(timezone.utc)
 
-    def get_cards_by_word(self, word: str) -> List[Card]:
+    def get_cards_by_front(self, front: str) -> List[Card]:
         """
         Busca cards gerados por palavra.
 
         Args:
-            word: Palavra para buscar
+            front: Frente para buscar
 
         Returns:
             Lista de cards que contêm a palavra
         """
-        word_normalized = word.lower().strip()
+        front_normalized = front.lower().strip()
         return [
             card for card in self.generated_cards
-            if card.word.normalized == word_normalized
+            if card.front.normalized == front_normalized
         ]
 
-    def has_duplicate_word(self, word: str) -> bool:
+    def has_duplicate_front(self, front: str) -> bool:
         """
         Verifica se já existe um card com a palavra especificada.
 
         Args:
-            word: Palavra para verificar
+            front: Frente para verificar
 
         Returns:
             True se já existe um card com essa palavra
         """
-        return len(self.get_cards_by_word(word)) > 0
+        return len(self.get_cards_by_front(front)) > 0
 
-    def get_unique_words(self) -> List[str]:
+    def get_unique_fronts(self) -> List[str]:
         """
-        Retorna lista de palavras únicas geradas na sessão.
+        Retorna lista de fronts únicas geradas na sessão.
         """
-        return list(set(card.word.normalized for card in self.generated_cards))
+        return list(set(card.front.normalized for card in self.generated_cards))
 
     def to_dict(self) -> dict:
         """

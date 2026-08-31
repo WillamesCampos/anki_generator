@@ -79,19 +79,22 @@ class CardQualityService:
         metrics = {}
 
         # Avalia a palavra
-        word_score, word_issues, word_suggestions = self._evaluate_word(card.word.value)
+        word_score, word_issues, word_suggestions = self._evaluate_word(card.front.value)
         issues.extend(word_issues)
         suggestions.extend(word_suggestions)
         metrics['word_score'] = word_score
 
         # Avalia a tradução
-        translation_score, translation_issues, translation_suggestions = self._evaluate_translation(card.translation.value)
+        translation_score, translation_issues, translation_suggestions = self._evaluate_translation(card.back.value)
         issues.extend(translation_issues)
         suggestions.extend(translation_suggestions)
         metrics['translation_score'] = translation_score
 
         # Avalia o exemplo
-        example_score, example_issues, example_suggestions = self._evaluate_example(card.example.original, card.example.translated)
+        example_score, example_issues, example_suggestions = self._evaluate_example(
+            card.front_description,
+            card.back_description,
+        )
         issues.extend(example_issues)
         suggestions.extend(example_suggestions)
         metrics['example_score'] = example_score
@@ -279,10 +282,10 @@ class CardQualityService:
 
         for context_card in context_cards:
             # Verifica se as palavras são muito similares
-            if card.word.normalized == context_card.word.normalized:
+            if card.front.normalized == context_card.front.normalized:
                 similar_count += 1
             # Verifica se as traduções são muito similares
-            elif card.translation.normalized == context_card.translation.normalized:
+            elif card.back.normalized == context_card.back.normalized:
                 similar_count += 1
 
         # Calcula score de diversidade

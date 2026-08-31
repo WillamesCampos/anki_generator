@@ -9,7 +9,7 @@ A Sprint 0 entregou a fundação de arquitetura (Django + domínio + infraestrut
 - Isolamento multi-tenant obrigatório: mixin/base de queryset que filtra por tenant em toda consulta, auditável antes de qualquer endpoint ser considerado pronto.
 - Autorização construída sobre `Permission`/`Group` nativos do Django — sem sistema de permissões paralelo.
 - Model/mixin de auditoria (`created_at`, `created_by`, `updated_at`, `updated_by`), preenchido automaticamente pelos serializers a partir da request autenticada.
-- Rate limiting de 3 req/s por usuário/cliente (valor já decidido em `PROMPT_REFINADO.md`).
+- Rate limiting de 10 req/s por usuário/cliente (valor atualizado explicitamente na Sprint 7 em `PROMPT_REFINADO.md`).
 - Cache (Redis) do token de autenticação, evitando reautenticação enquanto válido.
 - **Primeira infraestrutura de testes automatizados do projeto**: pytest + pytest-django, com testes cobrindo as tarefas acima — escritos ao final, depois das tarefas de feature (convenção já registrada, não é TDD).
 
@@ -21,7 +21,7 @@ A Sprint 0 entregou a fundação de arquitetura (Django + domínio + infraestrut
 - `google-oauth-authentication`: login via Google OAuth e cache do token de autenticação em Redis enquanto válido.
 - `authorization-permissions`: autorização via `Permission`/`Group` nativos do Django, sem sistema paralelo.
 - `audit-trail`: model/mixin de auditoria (`created_at/by`, `updated_at/by`), preenchido automaticamente pelos serializers.
-- `api-rate-limiting`: throttling de 3 req/s por usuário/cliente nas APIs do Django.
+- `api-rate-limiting`: throttling de 10 req/s por usuário/cliente nas APIs do Django.
 - `testing-foundation`: pytest + pytest-django configurados; primeiros testes automatizados do projeto, cobrindo isolamento multi-tenant e rate limiting.
 
 ### Modified Capabilities

@@ -20,10 +20,10 @@ from .conftest import backdate_deleted_at, read_raw_document, run_async
 
 def _create_card(client, deck_id, **overrides):
     payload = {
-        "word": "network",
-        "translation": "rede",
-        "example_original": "The network is down today.",
-        "example_translated": "A rede esta fora do ar hoje.",
+        "front": "network",
+        "back": "rede",
+        "front_description": "The network is down today.",
+        "back_description": "A rede esta fora do ar hoje.",
         "deck_id": deck_id,
         **overrides,
     }

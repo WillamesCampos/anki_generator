@@ -123,12 +123,12 @@ class Deck:
         return self.card_count > 0
 
     @property
-    def unique_words(self) -> Set[str]:
+    def unique_fronts(self) -> Set[str]:
         """
         Retorna um conjunto com todas as palavras únicas no deck.
         Útil para verificação de duplicatas.
         """
-        return {card.word.normalized for card in self.cards}
+        return {card.front.normalized for card in self.cards}
 
     @property
     def contexts_used(self) -> Set[str]:
@@ -217,33 +217,33 @@ class Deck:
         """
         return [card for card in self.cards if card.context == context]
 
-    def has_word(self, word: str) -> bool:
+    def has_front(self, front: str) -> bool:
         """
         Verifica se o deck já contém uma palavra específica.
 
         Args:
-            word: Palavra para verificar
+            front: Frente para verificar
 
         Returns:
             True se a palavra já existe no deck
         """
-        word_normalized = word.lower().strip()
-        return word_normalized in self.unique_words
+        front_normalized = front.lower().strip()
+        return front_normalized in self.unique_fronts
 
-    def find_similar_card(self, word: str) -> Optional[Card]:
+    def find_similar_card(self, front: str) -> Optional[Card]:
         """
         Busca um card similar à palavra especificada.
 
         Args:
-            word: Palavra para buscar
+            front: Frente para buscar
 
         Returns:
             Card similar se encontrado, None caso contrário
         """
-        word_normalized = word.lower().strip()
+        front_normalized = front.lower().strip()
 
         for card in self.cards:
-            if card.word.normalized == word_normalized:
+            if card.front.normalized == front_normalized:
                 return card
 
         return None

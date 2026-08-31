@@ -11,6 +11,7 @@ export const colors = {
   bgLight: "rgb(242, 242, 242)",
   bgDark: "rgb(0, 0, 0)",
   white: "rgb(255, 255, 255)",
+  overlay: "rgba(0, 0, 0, 0.5)",
 };
 
 export const typography = {
@@ -23,6 +24,8 @@ export const typography = {
   fontSizeLg: "22px",
   fontSizeMd: "18px",
   fontSizeSm: "14px",
+  fontSizeUpper: "12px",
+  letterSpacingUpper: "2px",
 };
 
 export const spacing = {

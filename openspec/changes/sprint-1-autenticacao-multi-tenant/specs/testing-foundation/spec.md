@@ -16,4 +16,4 @@ The system SHALL have automated tests covering, at minimum, tenant isolation (cr
 
 #### Scenario: Rate limiting test exists and passes
 - **WHEN** the test suite runs
-- **THEN** a test simulating requests above 3 req/s asserts a `429` response is returned
+- **THEN** a test simulating requests above 10 req/s asserts a `429` response is returned

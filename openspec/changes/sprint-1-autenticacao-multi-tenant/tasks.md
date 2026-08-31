@@ -27,14 +27,14 @@
 
 ## 5. Rate limiting
 
-- [x] 5.1 Configurar `DEFAULT_THROTTLE_CLASSES`/`DEFAULT_THROTTLE_RATES` do DRF para 3 req/s, usando o Redis já configurado — validado com burst real (3 requests OK, 4ª+ recebem 429)
+- [x] 5.1 Configurar `DEFAULT_THROTTLE_CLASSES`/`DEFAULT_THROTTLE_RATES` do DRF para 10 req/s, usando o Redis já configurado — atualizado na Sprint 7 e validado com burst real (10 requests OK, 11ª+ recebe 429)
 
 ## 6. Testes automatizados (ao final, cobrindo as tarefas 1–5)
 
 - [x] 6.1 Configurar pytest + pytest-django (`pyproject.toml`)
 - [x] 6.2 Teste: e-mail duplicado é rejeitado na criação de usuário
 - [x] 6.3 Teste: tentativa de acesso cross-tenant (por ID, de outro usuário) é bloqueada
-- [x] 6.4 Teste: requests acima de 3 req/s recebem 429
+- [x] 6.4 Teste: requests acima de 10 req/s recebem 429
 - [x] 6.5 Teste: `created_by`/`updated_by` são preenchidos automaticamente e ignoram valor enviado pelo cliente
 - [x] 6.6 Teste: logout revoga o refresh token (tentativa de uso após logout falha)
 - [x] 6.7 (adicional) Teste: `Permission`/`Group` nativos funcionam com o `User` customizado

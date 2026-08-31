@@ -18,10 +18,10 @@ from genanki import Deck, Model, Note, Package
 from gtts import gTTS
 
 CARD_MODEL_FIELDS = [
-    {"name": "Term"},
-    {"name": "Translation"},
-    {"name": "Example"},
-    {"name": "ExampleTranslation"},
+    {"name": "Front"},
+    {"name": "Back"},
+    {"name": "FrontDescription"},
+    {"name": "BackDescription"},
     {"name": "Notes"},
     {"name": "Audio"},
 ]
@@ -29,11 +29,11 @@ CARD_MODEL_FIELDS = [
 CARD_MODEL_TEMPLATE = [
     {
         "name": "Card 1",
-        "qfmt": "{{Term}}<br>{{Audio}}",
+        "qfmt": "{{Front}}<br>{{Audio}}",
         "afmt": """
-            <b>Tradução:</b> {{Translation}}<br><br>
-            <b>Frase:</b> {{Example}}<br>
-            <b>Tradução da frase:</b> {{ExampleTranslation}}<br><br>
+            <b>Verso:</b> {{Back}}<br><br>
+            <b>Descrição da frente:</b> {{FrontDescription}}<br>
+            <b>Descrição do verso:</b> {{BackDescription}}<br><br>
             <b>Observações:</b> {{Notes}}
         """,
     }
@@ -42,10 +42,10 @@ CARD_MODEL_TEMPLATE = [
 
 @dataclass
 class CardInput:
-    term: str
-    translation: str
-    example: str
-    example_translation: str
+    front: str
+    back: str
+    front_description: str
+    back_description: str
     notes: str = ""
 
 
@@ -91,17 +91,17 @@ def generate_deck_package(
         audio_filename = f"{uuid.uuid4().hex}.mp3"
         audio_path = audio_dir / audio_filename
 
-        tts = gTTS(card.term, lang="en", tld="com")
+        tts = gTTS(card.front, lang="en", tld="com")
         tts.save(str(audio_path))
         media_files.append(str(audio_path))
 
         note = Note(
             model=model,
             fields=[
-                card.term,
-                card.translation,
-                card.example,
-                card.example_translation,
+                card.front,
+                card.back,
+                card.front_description,
+                card.back_description,
                 card.notes,
                 f"[sound:{audio_filename}]",
             ],

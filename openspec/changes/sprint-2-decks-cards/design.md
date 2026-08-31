@@ -17,7 +17,7 @@ Esta sprint parte de uma sessão de mentoria via `backend-mentor` que resolveu 5
 - Diagrama Mermaid da arquitetura atual do projeto (abaixo).
 
 **Non-Goals:**
-- Views assíncronas nativas (`adrf`) — views seguem síncronas com `async_to_sync` envolvendo as chamadas ao repositório Motor (ver D3). Revisitar apenas se surgir gargalo real medido.
+- Views assíncronas nativas (`adrf`) — views seguem síncronas com uma ponte de event loop persistente envolvendo as chamadas ao repositório Motor (ver D3/D9 da Sprint 7).
 - Decks/cards compartilhados entre usuários, ou qualquer hierarquia tipo professor/aluno — fora do escopo do produto hoje (mesma razão da Sprint 1, D3: YAGNI).
 - Frontend consumindo esses endpoints (Sprint 3) e estatísticas agregadas na home (também Sprint 3) — esta sprint só produz o dado, não a visualização.
 - Otimização fina dos parâmetros do FSRS (ex.: fitting por usuário) — usa-se a configuração padrão do pacote `fsrs`; tuning fica para uma iteração futura se a qualidade do agendamento se mostrar insatisfatória em uso real.
@@ -33,8 +33,8 @@ Sem `QuerySet`/`Manager` do Django ORM disponível, a disciplina de "todo filtro
 `ModelSerializer` não se aplica (exige um `Model` Django real). Os serializers de `Deck`/`Category`/`Card` são `serializers.Serializer` com `create()`/`update()` escritos à mão delegando ao repositório — o mesmo padrão já usado no `AuditSerializerMixin` da Sprint 1. A paginação do DRF só precisa de algo fatiável/contável (`len()` + `[a:b]`), então `get_queryset()` pode devolver uma lista Python já buscada do Mongo, sem precisar de um `QuerySet` de verdade — os Generic Views (`ListCreateAPIView`, `RetrieveUpdateDestroyAPIView`) funcionam normalmente em cima disso. Onde o recurso não é CRUD (ex.: `POST /cards/{id}/review/`, que dispara o cálculo de agendamento FSRS e grava um `CardReview` — uma ação de domínio, não uma substituição de estado), usa-se `APIView` puro.
 - **Alternativa considerada**: abandonar Generic Views inteiramente, só `APIView`. Rejeitada — mais boilerplate repetido entre `Deck`/`Category`/`Card` sem necessidade, já que o ajuste acima preserva a regra mandatória do projeto sem forçar nada.
 
-### D3 — Views síncronas + `async_to_sync`, sem adoção de views assíncronas nativas
-DRF não tem suporte maduro a `async def` em `APIView.dispatch()` (a implementação do DRF sobrescreve o dispatch do Django com lógica própria — permissions/throttling/content negotiation — escrita antes de async ser levado a sério, e chamar um handler `async def` sem `await` só devolve um objeto coroutine não executado). Views seguem `def` normal, chamando os repositórios Motor via `asgiref.sync.async_to_sync`. A meta de escala do projeto (10k usuários ativos, requests esporádicos, não conexões persistentes/alta concorrência simultânea — decidido na Sprint 0) não justifica o ganho de um worker atender múltiplas requisições concorrentes esperando I/O — que é o único cenário em que async nativo compensaria.
+### D3 — Views síncronas + ponte persistente, sem adoção de views assíncronas nativas
+As views seguem `def` normal. A partir da correção da Sprint 7, `infrastructure/async_bridge.py` envia as corrotinas Motor para um único event loop daemon por processo via `asyncio.run_coroutine_threadsafe`. Isso preserva permissions/throttling/content negotiation do DRF síncrono e mantém o client Motor ligado a um loop estável.
 - **Alternativa considerada**: `adrf` (Async DRF) + views nativamente assíncronas. Rejeitada por ora — dependência de comunidade menor, throttle/permission/pagination do DRF ainda sync-first, e nenhum gargalo real medido que justifique o ganho. Revisitar se/quando a meta de escala mudar de verdade.
 - O repositório em si continua em Motor (não `pymongo`) mesmo com a view fazendo bridge — ver D3.1 abaixo.
 
@@ -65,7 +65,7 @@ flowchart TB
     subgraph DjangoApp["Django + DRF (django/)"]
         Auth["apps.accounts\nJWT + Google OAuth\nTenantOwnedModel (ORM)"]
         Decks["apps.decks\nDeck / Category / Card / CardReview\nGeneric Views + APIView pontual"]
-        Bridge["async_to_sync\n(view sync → repositório Motor)"]
+        Bridge["persistent async bridge\n(view sync → repositório Motor)"]
     end
 
     subgraph Repos["Repositórios Motor (async)"]
@@ -104,7 +104,7 @@ flowchart TB
 ## Risks / Trade-offs
 
 - **[Risco]** Isolamento multi-tenant mal implementado em Mongo é tão crítico quanto o da Sprint 1, mas sem a rede de segurança do ORM (sem `Manager` forçando o filtro). → **Mitigação**: `owner_id` obrigatório na assinatura de todo método do repositório (nunca parâmetro opcional), teste explícito de acesso cross-tenant contra o Mongo real (tarefa equivalente à 1.9).
-- **[Risco, confirmado em implementação]** `AsyncIOMotorClient` fica preso ao event loop ativo no momento em que é criado. `asgiref.sync.async_to_sync`, sem um loop "principal" já rodando na thread (o caso de toda view DRF síncrona), cria um event loop **novo a cada chamada** (`asyncio.run` por baixo — não reaproveita loop entre chamadas, mesmo dentro da mesma request). O singleton `MongoDBConnectionManager` original quebrava com `RuntimeError: Event loop is closed` já na segunda chamada bridged do processo — e cada `Repository` também cacheava sua própria `_collection` por instância, quebrando mesmo depois do primeiro fix, sempre que uma instância era reusada em duas chamadas bridged separadas (ex.: `CardReviewView`, que faz `find_by_id` e depois `update` no mesmo `card_repo`). → **Mitigação (aplicada e validada via requests HTTP reais, não só testes unitários)**: `MongoDBConnectionManager.is_connected()` agora compara o loop atual (`asyncio.get_running_loop()`) com o loop em que o client foi criado, forçando reconexão quando divergem; todos os repositórios pararam de cachear `_collection` na instância, sempre resolvendo via `ensure_mongodb_connection()` (barato quando o loop não mudou). **Trade-off aceito**: cada chamada bridged reconecta ao Mongo se o loop mudou desde a última — em uso real (workers WSGI com múltiplas threads/processos) isso tende a acontecer com frequência, custando uma reconexão TCP extra por chamada. Aceitável na meta de escala atual (10k usuários ativos, requests esporádicos); se isso virar gargalo medido, a alternativa é uma thread dedicada com loop persistente recebendo trabalho via `run_coroutine_threadsafe` — deliberadamente não implementada agora, por ser complexidade sem problema medido ainda.
+- **[Risco, confirmado e corrigido]** `AsyncIOMotorClient` fica preso ao event loop ativo no momento em que é criado. A mitigação inicial reconectava quando o loop mudava, mas requests simultâneos ainda podiam sobrescrever o singleton e produzir `500 MongoDB not connected`. A Sprint 7 implementou a solução definitiva prevista: thread dedicada com loop persistente, `run_coroutine_threadsafe` e lock na conexão inicial. Teste concorrente e HTTP real cobrem a regressão.
 - **[Trade-off]** FSRS via biblioteca externa é uma caixa-preta em termos de fórmula — menos controle fino que uma implementação manual. → **Aceito**: o ganho (qualidade de agendamento, manutenção, paridade com Anki real) supera o controle perdido; parâmetros default do pacote são o ponto de partida.
 - **[Risco]** Seed command mal protegido rodando em produção pode poluir dados reais. → **Mitigação**: checagem explícita de ambiente (`APP_ENV`/`DEBUG`) antes de qualquer escrita, testada explicitamente (tarefa 2.7).
 

@@ -10,13 +10,13 @@
 
 ## 2. Repositórios Mongo e isolamento multi-tenant
 
-- [x] 2.1 Atualizar `CardRepository`/`DeckRepository` — todo método de leitura/escrita exige `owner_id` como parâmetro obrigatório, embutido diretamente no filtro da query (nunca checado depois em Python). **Decisão intermediária**: métodos legados do protótipo antigo (`find_by_word`, `find_similar_cards`, `find_duplicates`, `exists_by_word`, e os serviços `card_quality_service`/`duplicate_detection_service`) — não usados por nenhuma view/URL, não previstos no PRD — foram **mantidos e escopados por `owner_id`** (não removidos), por decisão explícita do usuário, para o caso do agente de IA (Sprint 5) reaproveitar essa lógica de dedup.
+- [x] 2.1 Atualizar `CardRepository`/`DeckRepository` — todo método de leitura/escrita exige `owner_id` no filtro. Métodos auxiliares mantidos para IA foram renomeados na Sprint 7 para `find_by_front`/`find_similar_cards`/`find_duplicates`/`exists_by_front`.
 - [x] 2.2 Criar `CategoryRepository` seguindo o mesmo padrão (owner_id obrigatório desde o primeiro método)
 - [x] 2.3 Criar `CardReviewRepository` (mesmo padrão) — inclui método para listar reviews de um card, escopado por owner
 - [x] 2.4 Criar método de repositório para "cards devidos" (`due_at <= now`), escopado por `owner_id`
 - [x] 2.5 Criar índices Mongo: composto `{owner_id, deck_id}` em `cards`, `{owner_id, category_id}` em `decks`, índice em `tags` (cards), índice em `owner_id` isolado em `categories`/`card_reviews` — `MongoDBConnectionManager.create_indexes()` refatorado para ler de `IndexDefinitions` (fonte única), em vez de manter uma segunda lista hardcoded divergente
 - [x] 2.6 Teste de integração (Mongo real, não mock): tentativa de acesso cross-tenant por ID é bloqueada em `Deck`/`Category`/`Card`/`CardReview` — `apps/decks/tests/test_multi_tenant_isolation.py`
-- [x] 2.7 **(achado durante verificação end-to-end via HTTP real, não previsto originalmente)**: `AsyncIOMotorClient` fica preso ao event loop em que foi criado; `async_to_sync` cria um event loop novo a cada chamada bridged (sem loop "principal" já rodando na thread) — o singleton de conexão Mongo e o cache de `_collection` por instância de repositório quebravam com `RuntimeError: Event loop is closed` já na segunda/terceira chamada. Corrigido em `mongodb_connection.py` (`is_connected()` agora valida o loop atual) e em todos os repositórios (pararam de cachear `_collection` na instância). Ver Risks em `design.md`.
+- [x] 2.7 Corrigir vínculo do Motor ao event loop — solução inicial de reconexão substituída na Sprint 7 por loop persistente e lock de conexão, validada sob requests concorrentes.
 
 ## 3. Repetição espaçada (FSRS)
 
@@ -26,7 +26,7 @@
 ## 4. Endpoints REST versionados (`/api/v1/`)
 
 - [x] 4.1 Criar `DeckSerializer`/`CategorySerializer`/`CardSerializer` como `serializers.Serializer` manuais, com `create()`/`update()` delegando ao repositório correspondente
-- [x] 4.2 Criar Generic Views (`ListCreateAPIView`/`RetrieveUpdateDestroyAPIView`) para `Deck`, `Category` e `Card`, com `get_queryset()` retornando lista já resolvida do repositório via `async_to_sync`
+- [x] 4.2 Criar Generic Views (`ListCreateAPIView`/`RetrieveUpdateDestroyAPIView`) para `Deck`, `Category` e `Card`, com `get_queryset()` retornando lista resolvida pela ponte assíncrona persistente
 - [x] 4.3 Criar `APIView` dedicada para `POST /api/v1/cards/{id}/review/` (dispara o serviço de agendamento FSRS + grava `CardReview`)
 - [x] 4.4 Criar `apps/decks/urls.py` versionado e registrar em `core/urls.py`
 - [x] 4.5 Aplicar isolamento multi-tenant em todas as views (owner sempre vem de `request.user`, nunca aceito como input do cliente) — validado com request HTTP real de um segundo usuário (404, não 403)

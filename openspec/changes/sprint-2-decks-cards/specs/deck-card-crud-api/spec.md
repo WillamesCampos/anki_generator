@@ -32,9 +32,9 @@ Actions that are not a CRUD state replacement (e.g. registering a card review, w
 - **WHEN** a client sends `POST /api/v1/cards/{id}/review/`
 - **THEN** the request is handled by a dedicated `APIView`, not a Generic View update endpoint
 
-### Requirement: Views remain synchronous, bridging to Motor via async_to_sync
-Django views for deck/card/category endpoints SHALL remain synchronous (`def`, not `async def`), calling the underlying Motor-based repositories through `asgiref.sync.async_to_sync`.
+### Requirement: Views remain synchronous, bridging to Motor through a persistent event loop
+Django views for deck/card/category endpoints SHALL remain synchronous (`def`, not `async def`), calling the Motor-based repositories through the process-local persistent async bridge.
 
 #### Scenario: View function is a regular sync function
 - **WHEN** a deck/category/card view is inspected
-- **THEN** its handler methods are defined with `def`, and any repository call is wrapped in `async_to_sync(...)`
+- **THEN** its handler methods are defined with `def`, and repository calls execute on the persistent bridge

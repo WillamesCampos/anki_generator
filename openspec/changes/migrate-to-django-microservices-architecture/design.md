@@ -79,8 +79,8 @@ Resolve `orquestracao-vps`. O usuário considerou Kubernetes para a VPS Hostinge
 - **Alternativa considerada**: k3s na própria VPS Hostinger de produção. Rejeitada — mistura as duas metas (aprender a ferramenta + manter produção estável), mesmo racional do Terraform.
 - **Alternativa considerada**: Coolify/Dokploy como camada leve sobre Docker Compose. Não escolhida nem descartada — o usuário foi direto para a pergunta de Kubernetes; Coolify/Dokploy podem voltar à mesa se o `docker compose` puro se mostrar insuficiente para o fluxo de deploy.
 
-### D12 — Rate limiting: 3 req/s; idempotência marcada para revisão futura
-Resolve `taxa-rate-limiting`: 3 requests/segundo por usuário/cliente no Django. Na mesma resposta, o usuário levantou que idempotência precisa ser revisitada dado que agora há retry exponencial, DLQ e rate limiting todos definidos — registrado como `<ponto_critico id="idempotencia-revisao">` em `PROMPT_REFINADO.md`, não como decisão fechada: ainda falta mapear quais operações (consumo de fila, tasks Celery, envio de WhatsApp, geração de PDF) precisam de proteção contra efeito duplicado em reprocessamento. Fica para uma change futura dedicada, não para esta fundação.
+### D12 — Rate limiting: 10 req/s; idempotência marcada para revisão futura
+Resolve `taxa-rate-limiting`: 10 requests/segundo por usuário/cliente no Django, valor atualizado explicitamente na Sprint 7. Idempotência continua registrada como `<ponto_critico id="idempotencia-revisao">` em `PROMPT_REFINADO.md`.
 
 ## Risks / Trade-offs
 

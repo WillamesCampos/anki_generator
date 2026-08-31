@@ -62,7 +62,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 | Deploy real | VPS (não AWS) |
 | Terraform/AWS | Trilha de estudo separada, desacoplada |
 | Domínio | Cloudflare (registrador), sem pressa |
-| Rate limiting | 3 req/s |
+| Rate limiting | 10 req/s |
 | Meta de escala | 10k usuários ativos (design, não infra) |
 | Observabilidade | logs → métricas → host → fila/DLQ |
 | Ordem microsserviços | Documentos → IA → WhatsApp |
@@ -101,7 +101,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 - [x] 1.3 Lógica de permissões sobre `Permission`/`Group` nativos do Django (sem sistema paralelo) — validado com o `User` customizado
 - [x] 1.4 Mixin/base de queryset que filtra por tenant em toda query (`TenantOwnedModel`/`TenantOwnedQuerySet`) — testado explicitamente contra acesso cross-tenant
 - [x] 1.5 Model/mixin de auditoria (`created_at/by`, `updated_at/by`), preenchido automaticamente pelos serializers a partir da request (`AuditMixin`/`AuditSerializerMixin`)
-- [x] 1.6 Implementar rate limiting (3 req/s por usuário/cliente) — throttle classes do DRF, validado com burst real (3 OK, 4ª+ recebem 429)
+- [x] 1.6 Implementar rate limiting (10 req/s por usuário/cliente, atualizado na Sprint 7) — throttle classes do DRF, validado com burst real (10 OK, 11ª+ recebe 429)
 - [x] 1.7 Cache do token de autenticação (evitar reautenticação enquanto válido) — refresh token com blocklist no Redis, revogação testada de ponta a ponta
 - [x] 1.8 Configurar pytest + pytest-django (primeira infraestrutura de testes automatizados do projeto)
 - [x] 1.9 Testes automatizados cobrindo as tarefas 1.1–1.7 (12 testes, todos passando)
@@ -122,7 +122,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 - [x] 2.6 Django management command de seed: múltiplos usuários/tenants, decks/categorias variadas, cards com históricos de acerto/erro, datas passadas/recentes/futuras — protegido contra execução em produção, idempotente ou com `--reset` — `seed_decks` (validado rodando de verdade contra Mongo/Postgres reais). **Ajustado na Sprint 3**: títulos/descrições de deck passaram de um padrão genérico (`"Categoria — Deck N"`, `description` sempre vazia) para conteúdo real e variado (`DECK_CATALOG` em `seed_decks.py`) — gap encontrado testando a Home de verdade, onde o título genérico não servia como identificador amigável.
 - [x] 2.7 Testar comando de seed e a proteção contra produção explicitamente — `test_seed_command.py`; **28/28 testes passando** (Sprint 1 + 2)
 
-**Nota de implementação**: isolamento multi-tenant em MongoDB precisou de mecanismo próprio (não o `TenantOwnedModel` da Sprint 1, que é ORM/Postgres-only) — `owner_id` obrigatório em toda assinatura de método de repositório. Um bug real de produção foi descoberto e corrigido durante a verificação end-to-end via HTTP: `AsyncIOMotorClient` ficava preso ao event loop em que era criado, e `async_to_sync` cria um loop novo a cada chamada — quebrava a partir da segunda/terceira chamada bridged do processo (ver Risks em `openspec/changes/sprint-2-decks-cards/design.md`).
+**Nota de implementação**: isolamento multi-tenant em MongoDB usa `owner_id` obrigatório em toda assinatura de repositório. A correção inicial para loops Motor da Sprint 2 foi substituída na Sprint 7 por uma ponte com event loop persistente depois que requests simultâneos reproduziram um `500` de conexão.
 
 *Critérios de aceite relevantes: 11.*
 
@@ -202,16 +202,18 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 **Objetivo**: gap encontrado numa auditoria pré-Sprint 6 via `backend-mentor` — a Sprint 2 (e agora a Sprint 6) construíram todo o CRUD de Deck/Card/Category no backend, mas o frontend nunca ganhou uma tela pra usar isso: `/decks` continua `PlaceholderPage` desde a Sprint 3, e não existe nenhuma chamada `POST`/`PATCH`/`DELETE` em todo o frontend — hoje só é possível popular dados via `seed_decks` ou chamada direta à API. Esta sprint fecha o ciclo de gerenciamento (criar/editar/excluir) de Deck, Card e Category pela UI. **Depende da Sprint 6** (soft delete, `PATCH`, `daily_review_goal`). Fora de escopo, registrado como gap separado: a tela de estudo em si (revisar um card e avaliar again/hard/good/easy) — gap ainda maior, acionar o `backend-mentor` de novo quando for a vez de endereçar isso.
 
-- [ ] 7.1 Tela `/decks` real substituindo o `PlaceholderPage` — lista os decks do usuário (`GET /api/v1/decks/`), com estado vazio quando não há nenhum
-- [ ] 7.2 Formulário de criação de deck (título, descrição, categoria, `daily_review_goal`) — `POST /api/v1/decks/`
-- [ ] 7.3 Formulário de edição de deck (mesmos campos) — `PATCH /api/v1/decks/{deck_id}/`
-- [ ] 7.4 Exclusão de deck com confirmação explícita, avisando a janela de retenção de 7 dias (soft delete da Sprint 6) — `DELETE /api/v1/decks/{deck_id}/`
-- [ ] 7.5 Tela/seção de detalhe do deck: lista os cards daquele deck (`GET /api/v1/cards/?deck_id=`), com estado vazio
-- [ ] 7.6 Formulário de criação de card (word/translation/example/tags) dentro do deck — `POST /api/v1/cards/`
-- [ ] 7.7 Formulário de edição de card — `PATCH /api/v1/cards/{card_id}/`
-- [ ] 7.8 Exclusão de card com confirmação, mesmo aviso de retenção — `DELETE /api/v1/cards/{card_id}/`
-- [ ] 7.9 Gerenciamento mínimo de categoria (listar + criar) — necessário pra alimentar o seletor de categoria do formulário de deck, que hoje não tem nenhuma fonte de dado real
-- [ ] 7.10 Testes automatizados (Vitest + React Testing Library) cobrindo os formulários de criação/edição/exclusão de deck e card
+- [x] 7.1 Tela `/decks` real substituindo o `PlaceholderPage` — lista os decks do usuário (`GET /api/v1/decks/`), com estado vazio quando não há nenhum
+- [x] 7.2 Formulário de criação de deck (título, descrição, categoria, `daily_review_goal`) — `POST /api/v1/decks/`
+- [x] 7.3 Formulário de edição de deck (mesmos campos) — `PATCH /api/v1/decks/{deck_id}/`
+- [x] 7.4 Exclusão de deck com confirmação explícita, avisando a janela de retenção de 7 dias (soft delete da Sprint 6) — `DELETE /api/v1/decks/{deck_id}/`
+- [x] 7.5 Tela de detalhe do deck exibe somente a quantidade via `GET /api/v1/cards/count/?deck_id=` e o botão "Ver todos os cards", sem baixar a lista
+- [x] 7.6 Página dedicada `/decks/{deckId}/cards` lista e gerencia os cards; formulário usa internamente `front`/`back`/`front_description`/`back_description`/tags e mantém rótulos em português — `POST /api/v1/cards/`
+- [x] 7.7 Formulário de edição de card — `PATCH /api/v1/cards/{card_id}/`
+- [x] 7.8 Exclusão de card com confirmação, mesmo aviso de retenção — `DELETE /api/v1/cards/{card_id}/`
+- [x] 7.9 Gerenciamento mínimo de categoria (listar + criar) — necessário pra alimentar o seletor de categoria do formulário de deck, que hoje não tem nenhuma fonte de dado real
+- [x] 7.10 Testes automatizados (Vitest + React Testing Library) cobrindo os formulários de criação/edição/exclusão de deck e card
+- [x] 7.11 Contrato de Card renomeado em Django, Mongo, frontend e document-generator; comando idempotente migra os documentos existentes
+- [x] 7.12 Rate limit ampliado para 10 req/s e ponte de event loop persistente elimina o `500` concorrente do Motor
 
 *Critérios de aceite relevantes: 1 (isolamento — já garantido pela API, a tela só precisa não vazar dado de outro tenant), 12 (consistência visual, reaproveitando os tokens já auditados na Sprint 3/4).*
 
@@ -224,7 +226,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 - [ ] 8.1 `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` — ganha filtro opcional por deck
 - [ ] 8.2 `GET /api/v1/cards/?due=true&deck_id=X` — a view hoje trata `due` e `deck_id` como mutuamente exclusivos; passa a aceitar os dois juntos
 - [ ] 8.3 Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`
-- [ ] 8.4 Tela de estudo busca os cards devidos do deck uma vez ao entrar (sem sessão persistida) — mostra a frente (`word`) e revela o verso (`translation` + `example`) sob interação do usuário
+- [ ] 8.4 Tela de estudo busca os cards devidos do deck uma vez ao entrar (sem sessão persistida) — mostra `front` e revela `back` + `front_description` + `back_description` sob interação do usuário, com rótulos em português
 - [ ] 8.5 4 botões de avaliação (`again`/`hard`/`good`/`easy`) — `POST /api/v1/cards/{card_id}/review/`, avança pro próximo card da lista buscada no início da sessão, sem reconsultar `due` em tempo real (cards avaliados como "again" só voltam a aparecer numa sessão futura, não na mesma)
 - [ ] 8.6 Progresso "X de Y" durante a sessão
 - [ ] 8.7 Estado vazio ("nenhum card devido agora") e tela de fim de sessão (resumo + voltar pro deck)

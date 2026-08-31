@@ -93,7 +93,7 @@ class MongoDBSchema:
     def to_string_id(object_id: ObjectId) -> str:
         """
         Converte ObjectId para a string de UUID usada pelas entidades de
-        domínio (`Card.id`, `Deck.id`, `GenerationSession.id`) — o inverso de
+        domínio (`Card.id`, `Deck.id`, `GenerationSession.id`) — o inback de
         `uuid_to_object_id`. NÃO usar `str(object_id)` puro aqui: o hex do
         ObjectId (24 chars) não é um UUID válido (precisa de 32).
 
@@ -115,21 +115,17 @@ class CardSchema(MongoDBSchema):
     Estrutura do documento:
     {
         "_id": ObjectId,
-        "word": {
+        "front": {
             "value": string,
             "normalized": string
         },
-        "translation": {
+        "back": {
             "value": string,
             "normalized": string,
             "translations_list": [string]
         },
-        "example": {
-            "original": string,
-            "translated": string,
-            "original_normalized": string,
-            "translated_normalized": string
-        },
+        "front_description": string,
+        "back_description": string,
         "audio_path": {
             "path": string,
             "filename": string,
@@ -155,21 +151,17 @@ class CardSchema(MongoDBSchema):
         """
         document = {
             "_id": ObjectId(),  # Gera um novo ObjectId
-            "word": {
-                "value": card_data["word"]["value"],
-                "normalized": card_data["word"]["normalized"]
+            "front": {
+                "value": card_data["front"]["value"],
+                "normalized": card_data["front"]["normalized"]
             },
-            "translation": {
-                "value": card_data["translation"]["value"],
-                "normalized": card_data["translation"]["normalized"],
-                "translations_list": card_data["translation"]["translations_list"]
+            "back": {
+                "value": card_data["back"]["value"],
+                "normalized": card_data["back"]["normalized"],
+                "translations_list": card_data["back"]["translations_list"]
             },
-            "example": {
-                "original": card_data["example"]["original"],
-                "translated": card_data["example"]["translated"],
-                "original_normalized": card_data["example"]["original_normalized"],
-                "translated_normalized": card_data["example"]["translated_normalized"]
-            },
+            "front_description": card_data["front_description"],
+            "back_description": card_data["back_description"],
             "owner_id": card_data["owner_id"],
             "context": card_data["context"],
             "deck_id": uuid_to_object_id(card_data["deck_id"]) if card_data["deck_id"] else None,
@@ -216,30 +208,22 @@ class CardSchema(MongoDBSchema):
         """
         card_data = {
             "id": CardSchema.to_string_id(document["_id"]),
-            "word": {
-                "value": document["word"]["value"],
-                "normalized": document["word"]["normalized"],
-                "length": len(document["word"]["value"]),
-                "word_count": len(document["word"]["value"].split())
+            "front": {
+                "value": document["front"]["value"],
+                "normalized": document["front"]["normalized"],
+                "length": len(document["front"]["value"]),
+                "word_count": len(document["front"]["value"].split())
             },
-            "translation": {
-                "value": document["translation"]["value"],
-                "normalized": document["translation"]["normalized"],
-                "translations_list": document["translation"]["translations_list"],
-                "primary_translation": document["translation"]["translations_list"][0] if document["translation"]["translations_list"] else document["translation"]["value"],
-                "alternative_translations": document["translation"]["translations_list"][1:] if len(document["translation"]["translations_list"]) > 1 else [],
-                "translation_count": len(document["translation"]["translations_list"])
+            "back": {
+                "value": document["back"]["value"],
+                "normalized": document["back"]["normalized"],
+                "translations_list": document["back"]["translations_list"],
+                "primary_translation": document["back"]["translations_list"][0] if document["back"]["translations_list"] else document["back"]["value"],
+                "alternative_translations": document["back"]["translations_list"][1:] if len(document["back"]["translations_list"]) > 1 else [],
+                "translation_count": len(document["back"]["translations_list"])
             },
-            "example": {
-                "original": document["example"]["original"],
-                "translated": document["example"]["translated"],
-                "original_normalized": document["example"]["original_normalized"],
-                "translated_normalized": document["example"]["translated_normalized"],
-                "word_count_original": len(document["example"]["original"].split()),
-                "word_count_translated": len(document["example"]["translated"].split()),
-                "length_original": len(document["example"]["original"]),
-                "length_translated": len(document["example"]["translated"])
-            },
+            "front_description": document["front_description"],
+            "back_description": document["back_description"],
             "owner_id": document["owner_id"],
             "context": document["context"],
             "deck_id": CardSchema.to_string_id(document["deck_id"]) if document["deck_id"] else None,
@@ -543,7 +527,7 @@ class IndexDefinitions:
     CARDS_INDEXES = [
         ("owner_id", 1),
         ("deck_id", 1),
-        ("word.normalized", 1),
+        ("front.normalized", 1),
         ("created_at", 1),
         ("updated_at", 1),
         ("context", 1),
@@ -552,7 +536,7 @@ class IndexDefinitions:
         ("deleted_at", 1),
         ([("owner_id", 1), ("deck_id", 1)], {}),
         ([("owner_id", 1), ("due_at", 1)], {}),
-        ([("deck_id", 1), ("word.normalized", 1)], {"unique": True}),
+        ([("deck_id", 1), ("front.normalized", 1)], {"unique": True}),
         ([("deck_id", 1), ("created_at", 1)], {}),
         ([("owner_id", 1), ("deleted_at", 1)], {}),
     ]
@@ -583,6 +567,7 @@ class IndexDefinitions:
         ("card_id", 1),
         ("reviewed_at", 1),
         ([("owner_id", 1), ("card_id", 1)], {}),
+        ([("owner_id", 1), ("deck_id", 1), ("reviewed_at", 1)], {}),
     ]
 
     # Índices para collection generation_sessions

@@ -183,7 +183,7 @@ class AIService:
     ) -> List[Dict[str, str]]:
         """
         Gera palavras baseadas em contexto.
-        Retorna lista de dicionários com: word, translation, example, example_translation
+        Retorna lista de dicionários com: front, back, front_description, back_description
         """
         pass
 ```
@@ -691,4 +691,3 @@ Antes de considerar o projeto completo, verificar:
 **Documento criado por**: Morgan Cursor  
 **Data**: 2024  
 **Versão**: 1.0
-

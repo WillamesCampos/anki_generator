@@ -38,9 +38,8 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         """
         Retorna a collection MongoDB. Nunca cacheia na instância — o
         `AsyncIOMotorClient` fica preso ao event loop em que foi criado, e
-        esta instância pode ser reusada em chamadas separadas via
-        `async_to_sync`, cada uma com o seu próprio event loop novo (ver
-        Sprint 2, mongodb_connection.py `connect()`/`is_connected()`).
+        esta instância também pode ser usada por consumidores standalone
+        fora da ponte persistente (ver Sprint 7, `async_bridge.py`).
 
         Returns:
             Collection MongoDB

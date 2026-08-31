@@ -2,7 +2,7 @@
 
 - [x] 1.1 `deleted_at: Optional[datetime]` em `Deck`, `Card` e `Category` (`apps/decks/domain/entities/`) — `to_dict()`/`from_dict()` atualizados
 - [x] 1.2 Helper único de filtro base (`owner_id` + `deleted_at: None`) usado por todo método de leitura em `DeckRepository`, `CardRepository`, `CategoryRepository` — ver D1 em design.md (`schemas.base_filter`)
-- [x] 1.3 Auditar e atualizar toda query existente (`find_by_owner`, `find_by_deck_id`, busca de cards devidos do FSRS) pra usar o helper, não filtro manual — aplicado a todo método de leitura das 3 entidades, incluindo os métodos legados do protótipo antigo (`find_by_word`/`find_similar_cards`/`find_duplicates`/`exists_by_word`, mantidos por decisão da Sprint 2 pro futuro agente de IA reaproveitar)
+- [x] 1.3 Auditar e atualizar toda query existente para usar o helper — inclui `find_by_front`/`find_similar_cards`/`find_duplicates`/`exists_by_front` (nomes atualizados na Sprint 7)
 
 ## 2. Exclusão e cascade
 
@@ -20,7 +20,7 @@
 
 - [x] 4.1 `daily_review_goal: Optional[int]` em `Deck` — `to_dict()`/`from_dict()` atualizados
 - [x] 4.2 `PATCH /api/v1/decks/{deck_id}/` aceita `title`, `category_id`, `daily_review_goal` — `owner_id`/`created_by`/`updated_by` nunca aceitos do payload
-- [x] 4.3 `PATCH /api/v1/cards/{card_id}/` aceita conteúdo (word/translation/example) e `tags` — já funcionava (Sprint 2), confirmado
+- [x] 4.3 `PATCH /api/v1/cards/{card_id}/` aceita `front`/`back`/`front_description`/`back_description` e `tags` (nomes atualizados na Sprint 7)
 
 ## 5. Limpeza de código morto
 

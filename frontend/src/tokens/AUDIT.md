@@ -15,6 +15,7 @@ inspeção direta de `refs/Ashley_files/style.css` (grep, não memória/suposiç
 | `bgLight` | `rgb(242, 242, 242)` | style.css:836 — fundo de seção clara |
 | `bgDark` | `rgb(0, 0, 0)` | style.css:612,1035,1098 (`.mil-dark-bg`, style.css:812) |
 | `textOnDark` | `rgba(255, 255, 255, 0.9)` | design-system.html:796 (nav sobre fundo escuro) |
+| `overlay` | `rgba(0, 0, 0, 0.5)` | design-system.html:102 (`.ds-swatch-dark-soft`, extraído de style.css:75) |
 
 ## Tipografia
 
@@ -23,6 +24,8 @@ inspeção direta de `refs/Ashley_files/style.css` (grep, não memória/suposiç
 | `fontFamily` | `"Outfit", sans-serif` | style.css:72,163,685,3074+ (repetida em toda regra de texto) |
 | `fontSizeBase` | `16px` | style.css:73 |
 | `lineHeightBase` | `150%` | style.css:76 |
+| `fontSizeUpper` | `12px` | design-system.html:523 (`.mil-upper`) |
+| `letterSpacingUpper` | `2px` | design-system.html:523 (`.mil-upper`) |
 
 Headlines do template original vão de 86px a 34px (style.css:187-210) — escala
 de hero de portfólio, desproporcional para um dashboard. Adaptamos a

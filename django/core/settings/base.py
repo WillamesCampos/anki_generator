@@ -134,7 +134,7 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    # `<regra_obrigatoria id="rate-limiting-circuit-breaker">`: 3 req/s por
+    # `<regra_obrigatoria id="rate-limiting-circuit-breaker">`: 10 req/s por
     # usuário/cliente, usando o backend de cache Redis já configurado
     # (CACHES, mais abaixo neste arquivo).
     "DEFAULT_THROTTLE_CLASSES": [
@@ -142,8 +142,8 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "user": "3/second",
-        "anon": "3/second",
+        "user": "10/second",
+        "anon": "10/second",
     },
     # Generic Views sobre decks/cards (Mongo) devolvem uma lista Python já
     # resolvida em `get_queryset()`, não um QuerySet — PageNumberPagination

@@ -27,7 +27,6 @@ from apps.decks.domain.entities.card_review import CardReview
 from apps.decks.domain.entities.category import Category
 from apps.decks.domain.entities.deck import Deck
 from apps.decks.domain.services import scheduling_service
-from apps.decks.domain.value_objects.example import Example
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
@@ -188,8 +187,8 @@ class Command(BaseCommand):
     ) -> None:
         deck_tag = deck.title.split(" ")[0].lower()
         sampled_words = random.sample(WORD_BANK, k=CARDS_PER_DECK)
-        new_cards = [self._build_card(owner_id, deck.id, deck_tag, word, translation)
-                     for word, translation in sampled_words]
+        new_cards = [self._build_card(owner_id, deck.id, deck_tag, front, back)
+                     for front, back in sampled_words]
 
         save_calls = [card_repo.save(card) for card in new_cards]
         cards = await asyncio.gather(*save_calls)
@@ -199,14 +198,12 @@ class Command(BaseCommand):
             for card in cards
         ])
 
-    def _build_card(self, owner_id: str, deck_id, tag: str, word: str, translation: str) -> Card:
+    def _build_card(self, owner_id: str, deck_id, tag: str, front: str, back: str) -> Card:
         return Card(
-            word=Word(word),
-            translation=Translation(translation),
-            example=Example(
-                original=f"This is an example sentence using {word}.",
-                translated=f"Esta é uma frase de exemplo usando {translation}.",
-            ),
+            front=Word(front),
+            back=Translation(back),
+            front_description=f"This is an example sentence using {front}.",
+            back_description=f"Esta é uma frase de exemplo usando {back}.",
             owner_id=owner_id,
             deck_id=deck_id,
             tags=[tag],
