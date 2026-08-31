@@ -13,7 +13,7 @@
 - [x] 2.3 Configurar `DJANGO_SECRET_KEY` via variável de ambiente, populando `.env`/`config.example.env`
 - [x] 2.4 Configurar versionamento de URLs (`/api/v1/...`) e o banco relacional PostgreSQL (decidido na tarefa 1.3)
 - [x] 2.5 Validar que `python manage.py runserver` sobe sem erros com um endpoint mínimo (ex.: health check) — validado tanto local quanto containerizado, com Postgres real
-- [x] 2.6 Registrar (implementação fica para change futura) a taxa de rate limiting decidida — 3 req/s por usuário/cliente (D12 em `design.md`) — e o lembrete de revisitar idempotência das operações com retry (ver `<ponto_critico id="idempotencia-revisao">` em `PROMPT_REFINADO.md`)
+- [x] 2.6 Registrar a taxa de rate limiting — 10 req/s por usuário/cliente, atualizada na Sprint 7 (D12 em `design.md`) — e o lembrete de revisitar idempotência das operações com retry
 
 ## 3. Consolidação do domínio
 

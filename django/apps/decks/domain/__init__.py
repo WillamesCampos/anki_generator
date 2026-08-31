@@ -12,7 +12,7 @@ Estrutura:
 """
 
 from .entities import Card, Deck, GenerationSession, GenerationStatus
-from .value_objects import Word, Translation, Example, AudioPath
+from .value_objects import Word, Translation, AudioPath
 
 __all__ = [
     # Entidades
@@ -24,6 +24,5 @@ __all__ = [
     # Value Objects
     'Word',
     'Translation',
-    'Example',
     'AudioPath'
 ]

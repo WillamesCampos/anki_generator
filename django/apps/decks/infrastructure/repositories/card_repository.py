@@ -30,11 +30,9 @@ class CardRepository(ICardRepository):
 
     async def _get_collection(self) -> AsyncIOMotorCollection:
         # Nunca cacheia a collection na instância: `AsyncIOMotorClient` fica
-        # preso ao event loop em que foi criado, e uma mesma instância de
-        # repositório pode ser reusada em chamadas separadas via
-        # `async_to_sync` — cada uma com o seu próprio event loop novo (ver
-        # comentário em mongodb_connection.py `connect()`/`is_connected()`).
-        # `ensure_mongodb_connection()` já é barato quando o loop não mudou.
+        # preso ao event loop em que foi criado. Entry points síncronos usam
+        # a ponte persistente; seed e testes standalone podem trocar de loop
+        # sequencialmente, então a collection continua resolvida por chamada.
         try:
             mongodb_manager = await ensure_mongodb_connection()
             return await mongodb_manager.get_collection(self._collection_name)
@@ -92,13 +90,13 @@ class CardRepository(ICardRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find card by ID: {e}")
 
-    async def find_by_word(self, word: str, owner_id: str) -> List[Card]:
+    async def find_by_front(self, front: str, owner_id: str) -> List[Card]:
         try:
             collection = await self._get_collection()
-            word_normalized = word.lower().strip()
+            front_normalized = front.lower().strip()
 
             cursor = collection.find({
-                "word.normalized": word_normalized,
+                "front.normalized": front_normalized,
                 **base_filter(owner_id),
             })
             documents = await cursor.to_list(length=None)
@@ -106,7 +104,7 @@ class CardRepository(ICardRepository):
             return [Card.from_dict(CardSchema.from_document(doc)) for doc in documents]
 
         except Exception as e:
-            raise RepositoryError(f"Failed to find cards by word: {e}")
+            raise RepositoryError(f"Failed to find cards by front: {e}")
 
     async def find_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> List[Card]:
         try:
@@ -133,17 +131,17 @@ class CardRepository(ICardRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find cards by context: {e}")
 
-    async def find_similar_cards(self, word: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
+    async def find_similar_cards(self, front: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
         try:
             collection = await self._get_collection()
-            word_normalized = word.lower().strip()
-            regex_pattern = f".*{word_normalized}.*"
+            front_normalized = front.lower().strip()
+            regex_pattern = f".*{front_normalized}.*"
 
             cursor = collection.find({
                 **base_filter(owner_id),
                 "$or": [
-                    {"word.normalized": {"$regex": regex_pattern, "$options": "i"}},
-                    {"translation.normalized": {"$regex": regex_pattern, "$options": "i"}}
+                    {"front.normalized": {"$regex": regex_pattern, "$options": "i"}},
+                    {"back.normalized": {"$regex": regex_pattern, "$options": "i"}}
                 ]
             })
 
@@ -159,7 +157,7 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
 
             exact_matches = await collection.find({
-                "word.normalized": card.word.normalized,
+                "front.normalized": card.front.normalized,
                 **base_filter(owner_id),
             }).to_list(length=None)
 
@@ -274,12 +272,12 @@ class CardRepository(ICardRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to check if card exists: {e}")
 
-    async def exists_by_word(self, word: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
+    async def exists_by_front(self, front: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
         try:
             collection = await self._get_collection()
-            word_normalized = word.lower().strip()
+            front_normalized = front.lower().strip()
 
-            query = {"word.normalized": word_normalized, **base_filter(owner_id)}
+            query = {"front.normalized": front_normalized, **base_filter(owner_id)}
             if deck_id:
                 query["deck_id"] = uuid_to_object_id(deck_id)
 
@@ -287,7 +285,7 @@ class CardRepository(ICardRepository):
             return count > 0
 
         except Exception as e:
-            raise RepositoryError(f"Failed to check if word exists: {e}")
+            raise RepositoryError(f"Failed to check if front exists: {e}")
 
     async def purge_soft_deleted(self, older_than: datetime) -> int:
         """Remove fisicamente cards com `deleted_at` anterior a `older_than` — não escopado por `owner_id` (job de manutenção varre todos os donos)."""

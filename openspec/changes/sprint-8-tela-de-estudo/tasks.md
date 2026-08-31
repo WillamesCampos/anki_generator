@@ -12,7 +12,7 @@
 
 - [ ] 3.1 Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`
 - [ ] 3.2 Rota `/decks/{deckId}/estudar` — busca os cards devidos do deck uma vez ao montar, guarda em estado local (sem sessão persistida, ver D2 em design.md)
-- [ ] 3.3 Exibe a frente do card (`word`); revela o verso (`translation` + `example`) sob interação do usuário
+- [ ] 3.3 Exibe `front`; revela `back` + `front_description` + `back_description` sob interação do usuário, com rótulos visíveis em português
 - [ ] 3.4 4 botões de avaliação (`again`/`hard`/`good`/`easy`) — `POST /api/v1/cards/{card_id}/review/`, avança pro próximo card da lista local
 - [ ] 3.5 Progresso "X de Y" durante a sessão
 - [ ] 3.6 Estado vazio ("nenhum card devido agora") quando o deck não tem cards devidos

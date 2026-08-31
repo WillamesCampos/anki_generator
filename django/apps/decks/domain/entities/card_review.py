@@ -41,7 +41,7 @@ class CardReview:
     # Denormalizado a partir de Card.deck_id no momento da revisão — evita
     # a SPA precisar de um GET /cards/{id}/ só pra descobrir o deck (Sprint 3:
     # "último deck estudado" virou 2 requests em cadeia, o suficiente pra
-    # estourar o throttle de 3 req/s sob o double-effect do StrictMode em
+    # reduzir chamadas sob o double-effect do StrictMode em
     # dev). deck_id é uma referência estável (nunca muda), diferente de um
     # título/nome de deck — por isso é seguro denormalizar isso e só isso,
     # sem risco de ficar desatualizado se o deck for renomeado depois.

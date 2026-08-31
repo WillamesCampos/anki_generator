@@ -63,10 +63,10 @@ EXPORT_PAYLOAD = {
     "deck_title": "Deck de teste",
     "cards": [
         {
-            "term": "hello",
-            "translation": "olá",
-            "example": "Hello, how are you?",
-            "example_translation": "Olá, como vai você?",
+            "front": "hello",
+            "back": "olá",
+            "front_description": "Hello, how are you?",
+            "back_description": "Olá, como vai você?",
         }
     ],
 }

@@ -1,0 +1,33 @@
+.deck-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.deck-form__new-category {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-sm);
+}
+
+.deck-form__new-category .ui-button {
+  flex-shrink: 0;
+}
+
+.deck-form__error {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.deck-form__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 1024px) {
+  .deck-form__new-category {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

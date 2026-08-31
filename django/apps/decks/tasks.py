@@ -15,9 +15,9 @@ construção pra esse caso específico.
 import logging
 from datetime import datetime, timedelta, timezone
 
-from asgiref.sync import async_to_sync
 from celery import shared_task
 
+from .infrastructure.async_bridge import persistent_async_to_sync as async_to_sync
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
 from .infrastructure.repositories.deck_repository import DeckRepository

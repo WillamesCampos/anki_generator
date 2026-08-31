@@ -12,7 +12,6 @@ from apps.decks.domain.entities.card import Card
 from apps.decks.domain.entities.card_review import CardReview
 from apps.decks.domain.entities.category import Category
 from apps.decks.domain.entities.deck import Deck
-from apps.decks.domain.value_objects.example import Example
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
@@ -25,9 +24,10 @@ from .conftest import run_async
 
 def _build_card(owner_id, deck_id) -> Card:
     return Card(
-        word=Word("network"),
-        translation=Translation("rede"),
-        example=Example(original="The network is down today.", translated="A rede esta fora do ar hoje."),
+        front=Word("network"),
+        back=Translation("rede"),
+        front_description="The network is down today.",
+        back_description="A rede esta fora do ar hoje.",
         owner_id=owner_id,
         deck_id=deck_id,
     )

@@ -15,7 +15,6 @@ import asyncio
 from apps.decks.domain.entities.card import Card
 from apps.decks.domain.entities.deck import Deck
 from apps.decks.domain.entities.generation_session import GenerationSession, GenerationStatus
-from apps.decks.domain.value_objects.example import Example
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
@@ -104,17 +103,14 @@ async def test_card_repository(deck):
     try:
         card_repo = CardRepository()
 
-        word = Word("algorithm")
-        translation = Translation("algoritmo")
-        example = Example(
-            original="I implemented a sorting algorithm in Python.",
-            translated="Eu implementei um algoritmo de ordenação em Python.",
-        )
+        front = Word("algorithm")
+        back = Translation("algoritmo")
 
         card = Card(
-            word=word,
-            translation=translation,
-            example=example,
+            front=front,
+            back=back,
+            front_description="I implemented a sorting algorithm in Python.",
+            back_description="Eu implementei um algoritmo de ordenação em Python.",
             owner_id=OWNER_ID,
             context="programming",
             deck_id=deck.id,
@@ -125,18 +121,18 @@ async def test_card_repository(deck):
 
         found_card = await card_repo.find_by_id(saved_card.id, OWNER_ID)
         if found_card:
-            print(f"✅ Card encontrado: {found_card.word.value}")
+            print(f"✅ Card encontrado: {found_card.front.value}")
         else:
             print("❌ Card não encontrado")
 
-        cards_by_word = await card_repo.find_by_word("algorithm", OWNER_ID)
-        print(f"✅ Cards encontrados por palavra: {len(cards_by_word)}")
+        cards_by_front = await card_repo.find_by_front("algorithm", OWNER_ID)
+        print(f"✅ Cards encontrados por front: {len(cards_by_front)}")
 
         cards_by_deck = await card_repo.find_by_deck_id(deck.id, OWNER_ID)
         print(f"✅ Cards encontrados no deck: {len(cards_by_deck)}")
 
-        word_exists = await card_repo.exists_by_word("algorithm", OWNER_ID, deck.id)
-        print(f"✅ Palavra existe no deck: {word_exists}")
+        front_exists = await card_repo.exists_by_front("algorithm", OWNER_ID, deck.id)
+        print(f"✅ Frente existe no deck: {front_exists}")
 
         card_count = await card_repo.count(OWNER_ID)
         print(f"✅ Total de cards: {card_count}")

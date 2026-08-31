@@ -11,7 +11,6 @@ import pytest
 
 from apps.decks.domain.entities.card import Card
 from apps.decks.domain.entities.deck import Deck
-from apps.decks.domain.value_objects.example import Example
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
@@ -20,11 +19,12 @@ from apps.decks.infrastructure.repositories.deck_repository import DeckRepositor
 from .conftest import run_async
 
 
-def _build_card(owner_id, deck_id, word="cache") -> Card:
+def _build_card(owner_id, deck_id, front="cache") -> Card:
     return Card(
-        word=Word(word),
-        translation=Translation("traducao"),
-        example=Example(original="This is an example sentence here.", translated="Esta eh uma frase de exemplo aqui."),
+        front=Word(front),
+        back=Translation("traducao"),
+        front_description="This is an example sentence here.",
+        back_description="Esta eh uma frase de exemplo aqui.",
         owner_id=owner_id,
         deck_id=deck_id,
     )
@@ -54,7 +54,7 @@ def test_review_action_updates_schedule_and_creates_review(client_a, owner_a):
 def test_review_rejects_invalid_rating(client_a, owner_a):
     owner_id = str(owner_a.id)
     deck = run_async(DeckRepository().save(Deck(title="Deck Review 2", owner_id=owner_id)))
-    card = run_async(CardRepository().save(_build_card(owner_id, deck.id, word="token")))
+    card = run_async(CardRepository().save(_build_card(owner_id, deck.id, front="token")))
 
     response = client_a.post(f"/api/v1/cards/{card.id}/review/", {"rating": "excellent"}, format="json")
     assert response.status_code == 400
@@ -64,7 +64,7 @@ def test_review_rejects_invalid_rating(client_a, owner_a):
 def test_review_on_other_owner_card_returns_404(client_a, client_b, owner_b):
     owner_id_b = str(owner_b.id)
     deck = run_async(DeckRepository().save(Deck(title="Deck B", owner_id=owner_id_b)))
-    card = run_async(CardRepository().save(_build_card(owner_id_b, deck.id, word="secret")))
+    card = run_async(CardRepository().save(_build_card(owner_id_b, deck.id, front="secret")))
 
     response = client_a.post(f"/api/v1/cards/{card.id}/review/", {"rating": "good"}, format="json")
     assert response.status_code == 404
@@ -76,15 +76,15 @@ def test_due_cards_only_returns_owned_and_due(owner_a, owner_b):
     deck_a = run_async(DeckRepository().save(Deck(title="Deck A", owner_id=owner_id_a)))
     deck_b = run_async(DeckRepository().save(Deck(title="Deck B", owner_id=owner_id_b)))
 
-    due_card = _build_card(owner_id_a, deck_a.id, word="duecard")
+    due_card = _build_card(owner_id_a, deck_a.id, front="duecard")
     due_card.due_at = datetime.now(timezone.utc) - timedelta(days=1)
     due_card = run_async(CardRepository().save(due_card))
 
-    future_card = _build_card(owner_id_a, deck_a.id, word="futurecard")
+    future_card = _build_card(owner_id_a, deck_a.id, front="futurecard")
     future_card.due_at = datetime.now(timezone.utc) + timedelta(days=10)
     future_card = run_async(CardRepository().save(future_card))
 
-    other_owner_due_card = _build_card(owner_id_b, deck_b.id, word="otherowner")
+    other_owner_due_card = _build_card(owner_id_b, deck_b.id, front="otherowner")
     other_owner_due_card.due_at = datetime.now(timezone.utc) - timedelta(days=1)
     other_owner_due_card = run_async(CardRepository().save(other_owner_due_card))
 

@@ -9,7 +9,7 @@ O domínio migrado na Sprint 0 (`django/apps/decks/`) ainda reflete o protótipo
 - Introduz a entidade `CardReview` (evento de revisão por card: timestamp, rating, resultado do agendamento) — deliberadamente **não** reaproveita/renomeia `GenerationSession` (que continua representando um job de geração de cards via IA, conceito diferente).
 - Cria a entidade `Category` do zero (não existe hoje no domínio migrado) — `Deck` ganha `category_id`; `Card` ganha `tags: List[str]` — cobrindo o índice de "categoria/tag" exigido pelo PRD (tarefa 2.4).
 - Endpoints REST versionados (`/api/v1/`) de CRUD para `Deck`, `Category` e `Card`, via Generic Views do DRF com `serializers.Serializer` manuais (não `ModelSerializer`) e `get_queryset()` retornando listas já resolvidas pelo repositório — com `APIView` pontual onde o padrão genérico não encaixa (ex.: registrar uma revisão, que é uma ação de domínio, não um CRUD).
-- Views permanecem síncronas, chamando os repositórios Motor via `asgiref.async_to_sync` — sem adoção de `adrf`/views assíncronas nesta sprint.
+- Views permanecem síncronas e chamam os repositórios Motor por uma ponte com event loop persistente — sem adoção de `adrf`/views assíncronas. A implementação inicial por `asgiref.async_to_sync` foi substituída na Sprint 7 após falhar sob concorrência real.
 - Índices Mongo obrigatórios em `owner_id`, `deck_id` e `category`/tags.
 - `management command` de seed (múltiplos usuários, decks/categorias, cards com histórico de revisão em datas variadas), protegido contra execução em produção, com suporte a `--reset`, usando `asyncio.gather` para as inserções concorrentes.
 - Diagrama Mermaid da arquitetura atualizada do projeto (Django + microsserviços + bancos), incluído no `design.md`.

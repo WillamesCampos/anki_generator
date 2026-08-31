@@ -18,7 +18,6 @@ from dataclasses import dataclass, field
 
 from ..value_objects.word import Word
 from ..value_objects.translation import Translation
-from ..value_objects.example import Example
 from ..value_objects.audio_path import AudioPath
 from ..exceptions import DomainValidationError
 
@@ -29,9 +28,10 @@ class Card:
     Entidade Card representa um card individual do Anki.
 
     Atributos:
-    - word: Objeto de valor Word (palavra em inglês)
-    - translation: Objeto de valor Translation (tradução em português)
-    - example: Objeto de valor Example (frase de exemplo)
+    - front: conteúdo principal da front do card
+    - back: conteúdo principal do back do card
+    - front_description: descrição/contexto exibido na front
+    - back_description: descrição/contexto exibido no back
     - owner_id: dono do card (isolamento multi-tenant — ver D1 em
       openspec/changes/sprint-2-decks-cards/design.md)
     - id: Identificador único (UUID)
@@ -47,9 +47,10 @@ class Card:
     """
 
     # Objetos de valor que compõem o card (obrigatórios)
-    word: Word
-    translation: Translation
-    example: Example
+    front: Word
+    back: Translation
+    front_description: str
+    back_description: str
     owner_id: str
 
     # Identidade única da entidade
@@ -96,20 +97,24 @@ class Card:
         Valida se o card está em estado válido.
 
         Regras de negócio:
-        1. Word não pode estar vazia
-        2. Translation não pode estar vazia
-        3. Example deve ter pelo menos 10 caracteres
+        1. Frente não pode estar vazia
+        2. Verso não pode estar vazio
+        3. As descrições devem ter pelo menos 10 caracteres
         4. Context não pode ser None (pode ser string vazia)
         5. owner_id é obrigatório (isolamento multi-tenant)
         """
-        if not self.word or not self.word.value.strip():
-            raise DomainValidationError("Word cannot be empty")
+        if not self.front or not self.front.value.strip():
+            raise DomainValidationError("Front cannot be empty")
 
-        if not self.translation or not self.translation.value.strip():
-            raise DomainValidationError("Translation cannot be empty")
+        if not self.back or not self.back.value.strip():
+            raise DomainValidationError("Back cannot be empty")
 
-        if not self.example or len(self.example.original.strip()) < 10:
-            raise DomainValidationError("Example must have at least 10 characters")
+        self.front_description = " ".join(self.front_description.split())
+        self.back_description = " ".join(self.back_description.split())
+        if len(self.front_description) < 10:
+            raise DomainValidationError("front_description must have at least 10 characters")
+        if len(self.back_description) < 10:
+            raise DomainValidationError("back_description must have at least 10 characters")
 
         if self.context is None:
             self.context = ""
@@ -127,28 +132,31 @@ class Card:
         self.audio_path = audio_path
         self.updated_at = datetime.now(timezone.utc)
 
-    def update_translation(self, new_translation: Translation) -> None:
+    def update_back(self, new_back: Translation) -> None:
         """
-        Atualiza a tradução do card.
+        Atualiza o back do card.
 
-        Regra de negócio: A tradução deve ser diferente da atual.
+        Regra de negócio: O back deve ser diferente do atual.
         """
-        if new_translation.value.strip() == self.translation.value.strip():
-            raise DomainValidationError("New translation must be different from current")
+        if new_back.value.strip() == self.back.value.strip():
+            raise DomainValidationError("New back must be different from current")
 
-        self.translation = new_translation
+        self.back = new_back
         self.updated_at = datetime.now(timezone.utc)
 
-    def update_example(self, new_example: Example) -> None:
+    def update_descriptions(self, front_description: str, back_description: str) -> None:
         """
-        Atualiza o exemplo do card.
+        Atualiza as descrições da front e do back.
 
-        Regra de negócio: O exemplo deve ter pelo menos 10 caracteres.
+        Regra de negócio: cada descrição deve ter pelo menos 10 caracteres.
         """
-        if len(new_example.original.strip()) < 10:
-            raise DomainValidationError("Example must have at least 10 characters")
+        front_description = " ".join(front_description.split())
+        back_description = " ".join(back_description.split())
+        if len(front_description) < 10 or len(back_description) < 10:
+            raise DomainValidationError("Card descriptions must have at least 10 characters")
 
-        self.example = new_example
+        self.front_description = front_description
+        self.back_description = back_description
         self.updated_at = datetime.now(timezone.utc)
 
     def assign_to_deck(self, deck_id: uuid.UUID) -> None:
@@ -185,8 +193,8 @@ class Card:
 
         # Comparação simples por enquanto
         # TODO: Implementar algoritmo de similaridade mais sofisticado
-        word_similarity = self.word.value.lower().strip() == other.word.value.lower().strip()
-        translation_similarity = self.translation.value.lower().strip() == other.translation.value.lower().strip()
+        word_similarity = self.front.value.lower().strip() == other.front.value.lower().strip()
+        translation_similarity = self.back.value.lower().strip() == other.back.value.lower().strip()
 
         return word_similarity and translation_similarity
 
@@ -198,9 +206,10 @@ class Card:
         """
         return {
             "id": str(self.id),
-            "word": self.word.to_dict(),
-            "translation": self.translation.to_dict(),
-            "example": self.example.to_dict(),
+            "front": self.front.to_dict(),
+            "back": self.back.to_dict(),
+            "front_description": self.front_description,
+            "back_description": self.back_description,
             "owner_id": self.owner_id,
             "audio_path": self.audio_path.to_dict() if self.audio_path else None,
             "context": self.context,
@@ -228,14 +237,14 @@ class Card:
         """
         from ..value_objects.word import Word
         from ..value_objects.translation import Translation
-        from ..value_objects.example import Example
         from ..value_objects.audio_path import AudioPath
 
         return cls(
             id=uuid.UUID(data["id"]),
-            word=Word.from_dict(data["word"]),
-            translation=Translation.from_dict(data["translation"]),
-            example=Example.from_dict(data["example"]),
+            front=Word.from_dict(data["front"]),
+            back=Translation.from_dict(data["back"]),
+            front_description=data["front_description"],
+            back_description=data["back_description"],
             owner_id=data["owner_id"],
             audio_path=AudioPath.from_dict(data["audio_path"]) if data.get("audio_path") else None,
             context=data.get("context", ""),
@@ -255,7 +264,7 @@ class Card:
         )
 
     def __str__(self) -> str:
-        return f"Card(id={self.id}, word='{self.word.value}', translation='{self.translation.value}')"
+        return f"Card(id={self.id}, front='{self.front.value}', back='{self.back.value}')"
 
     def __repr__(self) -> str:
-        return f"Card(id={self.id}, word='{self.word.value}', translation='{self.translation.value}', deck_id={self.deck_id})"
+        return f"Card(id={self.id}, front='{self.front.value}', back='{self.back.value}', deck_id={self.deck_id})"

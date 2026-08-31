@@ -1,9 +1,23 @@
 import "./Button.css";
 
-export default function Button({ children, onClick, variant = "primary", type = "button" }) {
+export default function Button({
+  as: Component = "button",
+  children,
+  onClick,
+  variant = "primary",
+  type = "button",
+  ...buttonProps
+}) {
+  const componentProps = Component === "button" ? { type } : {};
+
   return (
-    <button type={type} className={`ui-button ui-button--${variant}`} onClick={onClick}>
+    <Component
+      className={`ui-button ui-button--${variant}`}
+      onClick={onClick}
+      {...componentProps}
+      {...buttonProps}
+    >
       {children}
-    </button>
+    </Component>
   );
 }

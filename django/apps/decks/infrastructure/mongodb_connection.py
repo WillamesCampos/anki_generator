@@ -36,6 +36,8 @@ class MongoDBConnectionManager:
     _database: Optional[AsyncIOMotorDatabase] = None
     _config: Optional[MongoDBConfig] = None
     _loop: Optional[asyncio.AbstractEventLoop] = None
+    _connect_lock: Optional[asyncio.Lock] = None
+    _connect_lock_loop: Optional[asyncio.AbstractEventLoop] = None
 
     def __new__(cls) -> 'MongoDBConnectionManager':
         """
@@ -71,6 +73,9 @@ class MongoDBConnectionManager:
             raise MongoConfigError("MongoDB configuration is required")
 
         try:
+            if self._client is not None:
+                self._client.close()
+
             # Cria cliente MongoDB com configurações otimizadas
             connection_params = self._config.get_connection_params()
             self._client = AsyncIOMotorClient(
@@ -82,16 +87,10 @@ class MongoDBConnectionManager:
             # Obtém referência do banco
             self._database = self._client[self._config.database]
 
-            # AsyncIOMotorClient fica preso ao event loop ativo no momento em
-            # que é criado. Views Django síncronas chamam o repositório via
-            # `asgiref.sync.async_to_sync`, que — sem um loop "principal" já
-            # rodando na thread — cria um event loop NOVO a cada chamada
-            # (`asyncio.run` por baixo, ver asgiref/sync.py `AsyncToSync.__call__`).
-            # Sem rastrear isso, o client global sobreviveria a um loop já
-            # fechado e toda chamada a partir da segunda quebraria com
-            # `RuntimeError: Event loop is closed` — descoberto rodando a API
-            # de verdade (não só os testes unitários), ver Risks em
-            # openspec/changes/sprint-2-decks-cards/design.md.
+            # Motor prende o client ao loop ativo. Entry points síncronos do
+            # Django usam `persistent_async_to_sync`, mantendo esse loop
+            # estável mesmo sob requests concorrentes. Chamadas standalone
+            # (seed/testes) ainda podem trocar de loop de forma sequencial.
             self._loop = asyncio.get_running_loop()
 
             # Testa a conexão
@@ -324,7 +323,13 @@ async def ensure_mongodb_connection() -> MongoDBConnectionManager:
     """
     manager = await get_mongodb_manager()
 
-    if not manager.is_connected():
-        await manager.connect()
+    current_loop = asyncio.get_running_loop()
+    if manager._connect_lock_loop is not current_loop:
+        manager._connect_lock = asyncio.Lock()
+        manager._connect_lock_loop = current_loop
+
+    async with manager._connect_lock:
+        if not manager.is_connected():
+            await manager.connect()
 
     return manager

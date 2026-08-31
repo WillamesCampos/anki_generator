@@ -13,10 +13,10 @@ router = APIRouter(prefix="/decks", tags=["Decks"], dependencies=[Depends(requir
 
 
 class CardPayload(BaseModel):
-    term: str
-    translation: str
-    example: str
-    example_translation: str
+    front: str
+    back: str
+    front_description: str
+    back_description: str
     notes: str = ""
 
 

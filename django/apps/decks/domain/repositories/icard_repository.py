@@ -33,7 +33,7 @@ class ICardRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_word(self, word: str, owner_id: str) -> List[Card]:
+    async def find_by_front(self, front: str, owner_id: str) -> List[Card]:
         pass
 
     @abstractmethod
@@ -45,7 +45,7 @@ class ICardRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_similar_cards(self, word: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
+    async def find_similar_cards(self, front: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
         pass
 
     @abstractmethod
@@ -85,7 +85,7 @@ class ICardRepository(ABC):
         pass
 
     @abstractmethod
-    async def exists_by_word(self, word: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
+    async def exists_by_front(self, front: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
         pass
 
     @abstractmethod

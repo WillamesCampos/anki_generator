@@ -8,7 +8,7 @@ The system SHALL allow the owner of a `Deck` to update its `title`, `category_id
 - **THEN** the deck reflects both changes on subsequent reads
 
 ### Requirement: Owners can edit their card's content and tags
-The system SHALL allow the owner of a `Card` to update its content fields (word/translation/example) and `tags` via `PATCH`.
+The system SHALL allow the owner of a `Card` to update `front`, `back`, `front_description`, `back_description`, and `tags` via `PATCH`.
 
 #### Scenario: Owner edits card tags
 - **WHEN** an authenticated user PATCHes their card with a new set of `tags`

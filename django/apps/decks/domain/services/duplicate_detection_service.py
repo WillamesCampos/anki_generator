@@ -71,27 +71,27 @@ class DuplicateDetectionService:
 
         return duplicates
 
-    async def find_exact_duplicates(self, word: str, owner_id: str, deck_id: str = None) -> List[Card]:
+    async def find_exact_duplicates(self, front: str, owner_id: str, deck_id: str = None) -> List[Card]:
         """
         Busca duplicatas exatas de uma palavra, dentro do owner especificado.
 
         Args:
-            word: Palavra para verificar
+            front: Frente para verificar
             owner_id: dono dos cards (isolamento multi-tenant)
             deck_id: ID do deck (opcional)
 
         Returns:
             Lista de cards com a mesma palavra
         """
-        return await self.card_repository.find_by_word(word, owner_id)
+        return await self.card_repository.find_by_front(front, owner_id)
 
-    async def find_similar_words(self, word: str, owner_id: str, similarity_threshold: float = 0.7) -> List[Tuple[Card, float]]:
+    async def find_similar_fronts(self, front: str, owner_id: str, similarity_threshold: float = 0.7) -> List[Tuple[Card, float]]:
         """
         Busca palavras similares usando algoritmos de similaridade, dentro
         do owner especificado.
 
         Args:
-            word: Palavra para comparar
+            front: Frente para comparar
             owner_id: dono dos cards (isolamento multi-tenant)
             similarity_threshold: Limiar de similaridade
 
@@ -101,13 +101,13 @@ class DuplicateDetectionService:
         all_cards = await self._get_all_cards(owner_id)
         similar_cards = []
 
-        word_normalized = word.lower().strip()
+        front_normalized = front.lower().strip()
 
         for card in all_cards:
-            card_word_normalized = card.word.normalized
+            card_front_normalized = card.front.normalized
 
             # Calcula similaridade usando difflib
-            similarity = SequenceMatcher(None, word_normalized, card_word_normalized).ratio()
+            similarity = SequenceMatcher(None, front_normalized, card_front_normalized).ratio()
 
             if similarity >= similarity_threshold:
                 similar_cards.append((card, similarity))
@@ -134,31 +134,31 @@ class DuplicateDetectionService:
             Score de similaridade (0.0 a 1.0)
         """
         # Similaridade da palavra
-        word_similarity = SequenceMatcher(
+        front_similarity = SequenceMatcher(
             None,
-            card1.word.normalized,
-            card2.word.normalized
+            card1.front.normalized,
+            card2.front.normalized
         ).ratio()
 
         # Similaridade da tradução
-        translation_similarity = SequenceMatcher(
+        back_similarity = SequenceMatcher(
             None,
-            card1.translation.normalized,
-            card2.translation.normalized
+            card1.back.normalized,
+            card2.back.normalized
         ).ratio()
 
         # Similaridade do exemplo
-        example_similarity = SequenceMatcher(
+        description_similarity = SequenceMatcher(
             None,
-            card1.example.original_normalized,
-            card2.example.original_normalized
+            self._normalize_text(card1.front_description),
+            self._normalize_text(card2.front_description),
         ).ratio()
 
         # Calcula score ponderado
         weighted_score = (
-            word_similarity * 0.6 +
-            translation_similarity * 0.3 +
-            example_similarity * 0.1
+            front_similarity * 0.6 +
+            back_similarity * 0.3 +
+            description_similarity * 0.1
         )
 
         return weighted_score
@@ -187,31 +187,31 @@ class DuplicateDetectionService:
 
         return normalized.strip()
 
-    def are_translations_similar(self, translation1: str, translation2: str, threshold: float = 0.8) -> bool:
+    def are_backs_similar(self, back1: str, back2: str, threshold: float = 0.8) -> bool:
         """
         Verifica se duas traduções são similares.
 
         Args:
-            translation1: Primeira tradução
-            translation2: Segunda tradução
+            back1: Primeiro back
+            back2: Segundo back
             threshold: Limiar de similaridade
 
         Returns:
             True se as traduções são similares
         """
-        norm1 = self._normalize_text(translation1)
-        norm2 = self._normalize_text(translation2)
+        norm1 = self._normalize_text(back1)
+        norm2 = self._normalize_text(back2)
 
         similarity = SequenceMatcher(None, norm1, norm2).ratio()
 
         return similarity >= threshold
 
-    def suggest_alternatives(self, word: str, existing_cards: List[Card]) -> List[str]:
+    def suggest_alternatives(self, front: str, existing_cards: List[Card]) -> List[str]:
         """
         Sugere alternativas para uma palavra que pode ser duplicada.
 
         Args:
-            word: Palavra original
+            front: Frente original
             existing_cards: Cards existentes similares
 
         Returns:
@@ -220,26 +220,26 @@ class DuplicateDetectionService:
         suggestions = []
 
         # Se é uma palavra simples, sugere variações
-        if len(word.split()) == 1:
+        if len(front.split()) == 1:
             # Adiciona sufixos comuns
             suffixes = ['ing', 'ed', 's', 'ly']
             for suffix in suffixes:
-                if not word.endswith(suffix):
-                    suggestions.append(f"{word}{suffix}")
+                if not front.endswith(suffix):
+                    suggestions.append(f"{front}{suffix}")
 
             # Adiciona prefixos comuns
             prefixes = ['un', 're', 'pre', 'mis']
             for prefix in prefixes:
-                if not word.startswith(prefix):
-                    suggestions.append(f"{prefix}{word}")
+                if not front.startswith(prefix):
+                    suggestions.append(f"{prefix}{front}")
 
         # Sugere frases relacionadas baseadas nos cards existentes
         for card in existing_cards:
-            if card.example.word_count > 1:
+            if len(card.front_description.split()) > 1:
                 # Extrai outras palavras do exemplo
-                example_words = card.example.original.split()
+                example_words = card.front_description.split()
                 for example_word in example_words:
-                    if example_word.lower() != word.lower() and len(example_word) > 3:
+                    if example_word.lower() != front.lower() and len(example_word) > 3:
                         suggestions.append(example_word)
 
         # Remove duplicatas e limita a 5 sugestões
@@ -275,8 +275,8 @@ class DuplicateDetectionService:
 
         for existing_card in existing_cards:
             # Verifica duplicata exata
-            if card.word.normalized == existing_card.word.normalized:
-                problems.append(f"Palavra '{card.word.value}' já existe no card {existing_card.id}")
+            if card.front.normalized == existing_card.front.normalized:
+                problems.append(f"Frente '{card.front.value}' já existe no card {existing_card.id}")
                 continue
 
             # Verifica similaridade alta
@@ -285,8 +285,8 @@ class DuplicateDetectionService:
                 problems.append(f"Card muito similar (similaridade: {similarity:.2f}) ao card {existing_card.id}")
 
             # Verifica traduções muito similares
-            if self.are_translations_similar(card.translation.value, existing_card.translation.value):
-                problems.append(f"Tradução muito similar ao card {existing_card.id}")
+            if self.are_backs_similar(card.back.value, existing_card.back.value):
+                problems.append(f"Verso muito similar ao card {existing_card.id}")
 
         is_unique = len(problems) == 0
 

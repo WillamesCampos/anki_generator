@@ -11,6 +11,7 @@
   --color-bg-light: rgb(242, 242, 242);
   --color-bg-dark: rgb(0, 0, 0);
   --color-white: rgb(255, 255, 255);
+  --color-overlay: rgba(0, 0, 0, 0.5);
 
   --font-family: "Outfit", sans-serif;
   --font-size-base: 16px;
@@ -19,6 +20,8 @@
   --font-size-lg: 22px;
   --font-size-md: 18px;
   --font-size-sm: 14px;
+  --font-size-upper: 12px;
+  --letter-spacing-upper: 2px;
 
   --space-xs: 10px;
   --space-sm: 15px;

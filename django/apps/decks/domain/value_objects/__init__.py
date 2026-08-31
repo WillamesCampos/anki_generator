@@ -13,12 +13,10 @@ Características dos Value Objects:
 
 from .word import Word
 from .translation import Translation
-from .example import Example
 from .audio_path import AudioPath
 
 __all__ = [
     'Word',
     'Translation',
-    'Example',
     'AudioPath'
 ]

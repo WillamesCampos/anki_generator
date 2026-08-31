@@ -3,7 +3,7 @@ Serializers do domínio de decks/cards — todos `serializers.Serializer`
 puros, nunca `ModelSerializer` (que exige um Django Model real): o dado
 vive em MongoDB via repositórios Motor, não no ORM (ver D2 em
 openspec/changes/sprint-2-decks-cards/design.md). `create()`/`update()`
-delegam ao repositório correspondente, chamado via `async_to_sync` (D3).
+delegam ao repositório correspondente pela ponte assíncrona persistente (D3/D9).
 
 `owner_id` nunca é aceito como input do cliente — sempre vem de
 `self.context["request"].user`, no mesmo espírito do `AuditSerializerMixin`
@@ -12,16 +12,15 @@ da Sprint 1 (apps/accounts/audit.py).
 
 from datetime import datetime, timezone
 
-from asgiref.sync import async_to_sync
 from rest_framework import serializers
 
 from .domain.entities.card import Card
 from .domain.entities.card_review import VALID_RATINGS
 from .domain.entities.category import Category
 from .domain.entities.deck import Deck
-from .domain.value_objects.example import Example
 from .domain.value_objects.translation import Translation
 from .domain.value_objects.word import Word
+from .infrastructure.async_bridge import persistent_async_to_sync as async_to_sync
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
 from .infrastructure.repositories.deck_repository import DeckRepository
@@ -92,18 +91,18 @@ class DeckSerializer(serializers.Serializer):
 
 class CardSerializer(serializers.Serializer):
     """
-    `word`/`translation`/`example_original`/`example_translated` são campos
+    `front`/`back`/`front_description`/`back_description` são campos
     de entrada planos — o Card real guarda objetos de valor (`Word`,
-    `Translation`, `Example`), por isso a representação de saída é montada
+    `Translation`), por isso a representação de saída é montada
     manualmente em `to_representation`, em vez de depender do mapeamento
     automático de atributo do DRF.
     """
 
     id = serializers.UUIDField(read_only=True)
-    word = serializers.CharField(max_length=200)
-    translation = serializers.CharField(max_length=200)
-    example_original = serializers.CharField()
-    example_translated = serializers.CharField()
+    front = serializers.CharField(max_length=200)
+    back = serializers.CharField(max_length=200)
+    front_description = serializers.CharField()
+    back_description = serializers.CharField()
     context = serializers.CharField(allow_blank=True, required=False, default="")
     deck_id = serializers.UUIDField()
     tags = serializers.ListField(child=serializers.CharField(max_length=50), required=False, default=list)
@@ -111,10 +110,10 @@ class CardSerializer(serializers.Serializer):
     def to_representation(self, instance: Card) -> dict:
         return {
             "id": str(instance.id),
-            "word": instance.word.value,
-            "translation": instance.translation.value,
-            "example_original": instance.example.original,
-            "example_translated": instance.example.translated,
+            "front": instance.front.value,
+            "back": instance.back.value,
+            "front_description": instance.front_description,
+            "back_description": instance.back_description,
             "context": instance.context,
             "deck_id": str(instance.deck_id) if instance.deck_id else None,
             "tags": list(instance.tags),
@@ -130,12 +129,10 @@ class CardSerializer(serializers.Serializer):
     def create(self, validated_data):
         owner_id = str(self.context["request"].user.id)
         card = Card(
-            word=Word(validated_data["word"]),
-            translation=Translation(validated_data["translation"]),
-            example=Example(
-                original=validated_data["example_original"],
-                translated=validated_data["example_translated"],
-            ),
+            front=Word(validated_data["front"]),
+            back=Translation(validated_data["back"]),
+            front_description=validated_data["front_description"],
+            back_description=validated_data["back_description"],
             owner_id=owner_id,
             context=validated_data.get("context", ""),
             deck_id=validated_data["deck_id"],
@@ -146,17 +143,17 @@ class CardSerializer(serializers.Serializer):
         return async_to_sync(CardRepository().save)(card)
 
     def update(self, instance: Card, validated_data):
-        if "word" in validated_data:
-            instance.word = Word(validated_data["word"])
-        if "translation" in validated_data:
-            new_translation = Translation(validated_data["translation"])
-            if new_translation != instance.translation:
-                instance.update_translation(new_translation)
-        if "example_original" in validated_data or "example_translated" in validated_data:
-            instance.update_example(Example(
-                original=validated_data.get("example_original", instance.example.original),
-                translated=validated_data.get("example_translated", instance.example.translated),
-            ))
+        if "front" in validated_data:
+            instance.front = Word(validated_data["front"])
+        if "back" in validated_data:
+            new_back = Translation(validated_data["back"])
+            if new_back != instance.back:
+                instance.update_back(new_back)
+        if "front_description" in validated_data or "back_description" in validated_data:
+            instance.update_descriptions(
+                validated_data.get("front_description", instance.front_description),
+                validated_data.get("back_description", instance.back_description),
+            )
         if "context" in validated_data:
             instance.context = validated_data["context"]
         if "tags" in validated_data:

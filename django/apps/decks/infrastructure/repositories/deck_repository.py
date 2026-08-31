@@ -64,13 +64,7 @@ class DeckRepository(IDeckRepository):
                 return None
 
             deck_data = DeckSchema.from_document(document)
-            deck = Deck.from_dict(deck_data)
-
-            from apps.decks.infrastructure.repositories.card_repository import CardRepository
-            card_repository = CardRepository()
-            deck.cards = await card_repository.find_by_deck_id(deck_id, owner_id)
-
-            return deck
+            return Deck.from_dict(deck_data)
 
         except Exception as e:
             raise RepositoryError(f"Failed to find deck by ID: {e}")

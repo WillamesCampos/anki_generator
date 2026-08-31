@@ -13,7 +13,7 @@ O frontend (Sprint 3) será uma SPA React buildada estaticamente e hospedada em 
 - Isolamento multi-tenant = isolamento por usuário (não uma entidade `Organization`/`Tenant` separada — ver D3), aplicado via mixin de queryset reutilizável.
 - Autorização via `Permission`/`Group` nativos do Django.
 - Model/mixin de auditoria preenchido automaticamente pelos serializers.
-- Rate limiting (3 req/s) via throttle classes do DRF, usando o Redis já configurado como backend de cache.
+- Rate limiting (10 req/s, atualizado na Sprint 7) via throttle classes do DRF, usando o Redis já configurado como backend de cache.
 - Primeira infraestrutura de testes automatizados do projeto (pytest + pytest-django), escrita ao final, cobrindo os itens acima.
 
 **Non-Goals:**
@@ -39,7 +39,7 @@ Nada em `PROMPT_REFINADO.md` ou `PRD.md` descreve organizações, times, ou hier
 - **Alternativa considerada**: modelar `Tenant`/`Organization` desde já, pensando em expansão futura (decks compartilhados, professor/aluno). Rejeitada — abstração prematura (YAGNI): nenhum desses cenários está no roadmap (`PRD.md`, Sprints 1–10); adicionar a camada intermediária agora custaria um JOIN extra em toda query sem benefício presente. Se esse requisito aparecer de verdade no futuro, é modelado então, com o requisito real na mão.
 
 ### D4 — Rate limiting via throttle classes do DRF
-3 req/s (já decidido) implementado via `DEFAULT_THROTTLE_CLASSES`/`DEFAULT_THROTTLE_RATES` do DRF, usando o backend de cache Redis já configurado (`django/core/settings/base.py`, `CACHES["default"]`) — não uma solução customizada. É a via idiomática do framework e não introduz componente novo.
+10 req/s (decisão atualizada na Sprint 7) implementado via `DEFAULT_THROTTLE_CLASSES`/`DEFAULT_THROTTLE_RATES` do DRF, usando o backend de cache Redis já configurado (`django/core/settings/base.py`, `CACHES["default"]`) — não uma solução customizada. É a via idiomática do framework e não introduz componente novo.
 
 ### D5 — Auditoria: mixin de model abstrato + preenchimento automático no serializer
 Um `AuditMixin` abstrato (`created_at`, `created_by`, `updated_at`, `updated_by`) herdado pelos models que precisam de auditoria (a partir da Sprint 2, quando os primeiros models Django reais de produto existirem). `created_by`/`updated_by` são preenchidos no serializer a partir de `self.context["request"].user`, nunca aceitos como input do cliente.
@@ -58,7 +58,7 @@ Um `AuditMixin` abstrato (`created_at`, `created_by`, `updated_at`, `updated_by`
 3. Instalar e configurar `django-allauth` + `dj-rest-auth` + `simplejwt`, com explicação didática de cada peça durante a implementação.
 4. Configurar `simplejwt` (tempos de expiração) + blocklist de refresh token no Redis.
 5. Implementar o mixin de queryset multi-tenant (`apps/accounts` ou um app `core`/`common` compartilhado) — pronto para ser herdado pelos models reais da Sprint 2.
-6. Configurar throttle classes do DRF (3 req/s).
+6. Configurar throttle classes do DRF (10 req/s).
 7. Criar `AuditMixin` abstrato.
 8. Configurar pytest + pytest-django; escrever os testes cobrindo os itens acima.
 - **Rollback**: sem dados reais em produção ainda — rollback é `git revert`/descartar a branch, sem risco de perda de dados.

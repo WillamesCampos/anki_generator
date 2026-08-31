@@ -2,13 +2,46 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 7] Gerenciamento de Decks & Cards (Frontend) — 2026-08-29
+
+Fecha o ciclo de gerenciamento que até agora só existia na API: usuários autenticados passam a listar, criar, editar e excluir decks e cards pela SPA. Ver `openspec/changes/sprint-7-gerenciamento-deck-card-frontend/`.
+
+### Adicionado
+- Tela `/decks` com listagem dos decks do usuário, cards de acesso ao detalhe e estado vazio com CTA de criação.
+- Tela `/decks/novo` com formulário de título, descrição, categoria e `daily_review_goal`; após a criação, navega para o detalhe do novo deck.
+- Tela `/decks/:deckId` com dados e edição inline do deck, contagem mínima de cards e botão "Ver todos os cards", sem baixar a coleção completa.
+- Tela dedicada `/decks/:deckId/cards` com lista, estado vazio e criação/edição/exclusão de cards.
+- `GET /api/v1/cards/count/?deck_id=...`, que executa `count_documents` escopado por `owner_id`/soft delete e retorna somente `{ "count": N }`.
+- Ponte assíncrona persistente por processo para as chamadas DRF síncrono → Motor, com inicialização da conexão protegida contra concorrência.
+- Comando idempotente `migrate_card_fields` para migrar documentos Mongo existentes e substituir índices baseados nos paths antigos.
+- Criação inline de categoria a partir do seletor nativo do formulário de deck; a categoria recém-criada é selecionada automaticamente.
+- `ConfirmDialog` compartilhado para deck e card, composto com `Card`/`Button` e aviso explícito da janela de retenção de 7 dias.
+- Mutations dos clientes de API: `create`/`update`/`delete` para decks e cards, mais `fetchCategories`/`createCategory`.
+- Testes Vitest + React Testing Library para contratos de API, contagem no detalhe, navegação dedicada, confirmação de exclusão, estados vazios, CRUD de deck/card, categoria inline e estatísticas do último deck na Home.
+
+### Alterado
+- `App.jsx`: o placeholder de `/decks` foi substituído por quatro rotas reais de gerenciamento, incluindo `/decks/:deckId/cards`.
+- O contrato de Card foi renomeado em todo o monorepo para `front`, `back`, `front_description` e `back_description`, incluindo domínio, Mongo, API Django, SPA, seed e document-generator; os rótulos visíveis permanecem em português.
+- O gráfico da Home deixou de somar a página recente de revisões de todos os decks e agora consome `rating_distribution` do último deck estudado pelo mesmo endpoint usado no detalhe.
+- Rate limit global de usuário/anônimo ampliado de 3 para 10 req/s por decisão explícita do usuário; a 11ª chamada dentro da janela continua recebendo `429`.
+- `Button` aceita um componente de renderização alternativo para que links mantenham o mesmo padrão visual sem aninhar elementos interativos; `Input` também atende `textarea` com o mesmo estilo auditado.
+- Tokens visuais ganharam `overlay` e `letterSpacingUpper`, ambos rastreados diretamente ao `design_system/design-system.html` em `tokens/AUDIT.md`.
+
+### Validado
+- `pytest apps/`: 68 testes, 0 falhas — inclui contagem mínima, soft delete, isolamento, migração idempotente, limite 10/11, estatísticas por deck e detalhe+contagem concorrentes.
+- `npm test`: 10 arquivos, 35 testes, 0 falhas.
+- `npm run lint`: 0 erros e 0 warnings.
+- `npm run build`: build de produção concluído.
+- `document-generator`: 10 testes, 0 falhas com o payload e o modelo Anki renomeados.
+- HTTP real: duas leituras de detalhe + duas contagens simultâneas retornaram `200`; burst retornou 10× `200` e a 11ª `429`; resposta de contagem confirmada como apenas `{ "count": 4 }`.
+
 ## [Sprint 6] Ciclo de Vida de Deck/Card — 2026-08-27
 
 Fecha o gap de "só existe create/read completo" — Deck/Card/Category ganham exclusão com retenção de 7 dias (soft delete, não delete físico direto), edição completa via PATCH e meta de estudo persistida por deck. Resolve de vez o gap de cascade delete de `CardReview`, aberto desde a Sprint 3 (`PRD.md` §7.1). Ver `openspec/changes/sprint-6-ciclo-de-vida-deck-card/`.
 
 ### Adicionado
 - `deleted_at: Optional[datetime]` em `Deck`, `Card` e `Category` — soft delete via timestamp, não um booleano, permite calcular a janela de retenção de 7 dias diretamente.
-- Helper único de filtro (`schemas.base_filter`) usado por todo método de leitura das três entidades — inclui os métodos legados do protótipo antigo (`find_by_word`/`find_similar_cards`/`find_duplicates`/`exists_by_word`, mantidos desde a Sprint 2 pro futuro agente de IA).
+- Helper único de filtro (`schemas.base_filter`) usado por todo método de leitura das três entidades — inclui `find_by_front`/`find_similar_cards`/`find_duplicates`/`exists_by_front` (nomes atualizados na Sprint 7).
 - `DELETE /api/v1/decks/{deck_id}/` cascateia soft delete pros cards do deck; `DELETE /api/v1/cards/{card_id}/` soft-deleta individualmente; `DELETE /api/v1/categories/{category_id}/` soft-deleta a categoria e **desvincula** (não cascateia) os decks que a referenciam (`category_id → None`) — categoria é rótulo organizacional opcional, diferente da relação obrigatória Card→Deck.
 - `apps/decks/tasks.py` (`purge_soft_deleted`) — primeira task Celery real do projeto, registrada em `CELERY_BEAT_SCHEDULE`, remove fisicamente registros soft-deletados há mais de 7 dias nas três entidades.
 - Serviço `celery-beat` no `docker-compose.yml` — gap encontrado depois do primeiro "pronto": `CELERY_BEAT_SCHEDULE` sozinho não agenda nada, precisa de um processo `celery beat` rodando pra disparar a task na hora certa (só existia `celery-worker`, que apenas consome fila). Volume nomeado `celery_beat_data:/var/lib/celery` (mesmo padrão do `document_generator_audio`) — `--schedule` fora de `/app` porque o bind mount de dev sobrescreve o `chown` da imagem, e o usuário não-root não conseguia escrever o arquivo de estado do scheduler ali.

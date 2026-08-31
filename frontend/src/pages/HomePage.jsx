@@ -3,17 +3,20 @@ import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from "chart.js";
 
 import { fetchReviews } from "../api/reviews";
-import { fetchDeck } from "../api/decks";
+import { fetchDeck, fetchDeckStatistics } from "../api/decks";
 import { useApiResource } from "../api/hooks";
 import { computeGoalProgress, getDailyGoal } from "../lib/goal";
 import { exportChartToPdf } from "../lib/exportPdf";
-import { computeRatingDistribution, mostRecentReview } from "../lib/stats";
+import { mostRecentReview } from "../lib/stats";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
 import { colors } from "../tokens/tokens";
 import "./HomePage.css";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
+
+const RATING_KEYS = ["again", "hard", "good", "easy"];
+const RATING_LABELS = ["Errou", "Difícil", "Bom", "Fácil"];
 
 function useLastStudiedDeck(mostRecent) {
   const [deck, setDeck] = useState(null);
@@ -25,7 +28,7 @@ function useLastStudiedDeck(mostRecent) {
     // apps/decks/domain/entities/card_review.py) — evita um GET
     // /cards/{id}/ só pra descobrir o deck. Antes disso, "último deck
     // estudado" era uma cadeia de 2 requests, o suficiente pra estourar o
-    // throttle de 3 req/s sob o double-effect do StrictMode em dev.
+    // throttle sob o double-effect do StrictMode em dev.
     if (!mostRecent?.deck_id) return;
 
     let cancelled = false;
@@ -60,10 +63,24 @@ export default function HomePage() {
 
   const recentReview = reviews ? mostRecentReview(reviews.results ?? reviews) : null;
   const { deck: lastDeck, loading: lastDeckLoading, error: lastDeckError } = useLastStudiedDeck(recentReview);
+  const lastDeckId = recentReview?.deck_id;
+  const {
+    data: deckStatistics,
+    loading: statisticsLoading,
+    error: statisticsError,
+  } = useApiResource(
+    () => lastDeckId ? fetchDeckStatistics(lastDeckId) : Promise.resolve(null),
+    [lastDeckId],
+  );
 
   const allReviews = reviews ? (reviews.results ?? reviews) : [];
   const goalProgress = computeGoalProgress(allReviews, getDailyGoal());
-  const distribution = computeRatingDistribution(allReviews);
+  const ratingDistribution = deckStatistics?.rating_distribution ?? {};
+  const distribution = {
+    labels: RATING_LABELS,
+    values: RATING_KEYS.map((rating) => ratingDistribution[rating] ?? 0),
+  };
+  const chartLoading = reviewsLoading || (Boolean(recentReview) && statisticsLoading);
 
   const chartData = {
     labels: distribution.labels,
@@ -114,12 +131,25 @@ export default function HomePage() {
 
       <div className="home-page__statistics">
         <Card title="Estatísticas">
-          <div className="home-page__chart">
-            <Bar ref={chartRef} data={chartData} options={{ maintainAspectRatio: false, responsive: true }} />
-          </div>
-          <div className="home-page__actions">
-            <Button onClick={handleExportPdf}>Exportar PDF</Button>
-          </div>
+          {chartLoading && <p>Carregando estatísticas…</p>}
+          {!chartLoading && recentReview && statisticsError && (
+            <p role="alert">Não foi possível carregar as estatísticas do último deck.</p>
+          )}
+          {!chartLoading && (!recentReview || !statisticsError) && (
+            <>
+              <div className="home-page__chart">
+                <Bar
+                  ref={chartRef}
+                  aria-label="Distribuição das classificações da Home"
+                  data={chartData}
+                  options={{ maintainAspectRatio: false, responsive: true }}
+                />
+              </div>
+              <div className="home-page__actions">
+                <Button onClick={handleExportPdf}>Exportar PDF</Button>
+              </div>
+            </>
+          )}
         </Card>
       </div>
     </section>
