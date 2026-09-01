@@ -26,5 +26,5 @@
 
 ## 5. Documentação
 
-- [ ] 5.1 Atualizar `PRD.md` (Sprint 8) marcando as tarefas concluídas
-- [ ] 5.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 8]`
+- [ ] 5.1 Atualizar `PRD.md` (Sprint 9) marcando as tarefas concluídas
+- [ ] 5.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 9]`

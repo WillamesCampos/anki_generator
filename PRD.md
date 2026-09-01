@@ -180,10 +180,10 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 6 — Ciclo de Vida de Deck/Card
 
-**Objetivo**: hoje só existe create/read completo — falta edição real de Deck/Card, exclusão com retenção (soft delete, não delete físico direto) e uma meta de estudo por deck persistida no backend (substitui o "meta de estudo" client-side provisório da Sprint 3, decisão `meta-de-estudo-client-side`). Depende da Sprint 5 (audit fields/permissões) já estar pronta. Decisões fechadas via `backend-mentor`: soft delete por timestamp (não booleano), sem relação N:N entre Card e Deck (mantém 1 card = 1 deck), meta por deck alimenta a Sprint 9. Escopo ampliado numa auditoria pré-sprint (`backend-mentor`): `Category` também vira soft delete — estava fora do desenho original apesar de ser a mesma sprint de "política de exclusão", e hoje excluir uma categoria com decks vinculados deixa `category_id` apontando pra um registro inexistente.
+**Objetivo**: hoje só existe create/read completo — falta edição real de Deck/Card, exclusão com retenção (soft delete, não delete físico direto) e uma meta de estudo por deck persistida no backend (substitui o "meta de estudo" client-side provisório da Sprint 3, decisão `meta-de-estudo-client-side`). Depende da Sprint 5 (audit fields/permissões) já estar pronta. Decisões fechadas via `backend-mentor`: soft delete por timestamp (não booleano), sem relação N:N entre Card e Deck (mantém 1 card = 1 deck), meta por deck alimenta a Sprint 10. Escopo ampliado numa auditoria pré-sprint (`backend-mentor`): `Category` também vira soft delete — estava fora do desenho original apesar de ser a mesma sprint de "política de exclusão", e hoje excluir uma categoria com decks vinculados deixa `category_id` apontando pra um registro inexistente.
 
 - [x] 6.1 `deleted_at: Optional[datetime]` em `Deck`, `Card` e `Category` — soft delete por timestamp, permite calcular a janela de 7 dias diretamente (não um booleano)
-- [x] 6.2 Todo método de repositório existente (`find_by_owner`, `find_by_deck_id`, busca de cards devidos do FSRS, a agregação da Sprint 9, etc.) passa a filtrar `deleted_at: None` por padrão, via um helper único de query — não repetido manualmente em cada método (`schemas.base_filter`, aplicado a todo método de leitura das 3 entidades, incluindo os métodos legados do protótipo antigo)
+- [x] 6.2 Todo método de repositório existente (`find_by_owner`, `find_by_deck_id`, busca de cards devidos do FSRS, a agregação da Sprint 10, etc.) passa a filtrar `deleted_at: None` por padrão, via um helper único de query — não repetido manualmente em cada método (`schemas.base_filter`, aplicado a todo método de leitura das 3 entidades, incluindo os métodos legados do protótipo antigo)
 - [x] 6.3 `DELETE /api/v1/decks/{deck_id}/` faz cascade: marca `deleted_at` em todos os cards do deck junto — sem caso de "desvincular", porque não existe relação N:N (card sempre pertence a exatamente um deck)
 - [x] 6.4 `DELETE /api/v1/cards/{card_id}/` — soft delete individual de card
 - [x] 6.5 `DELETE /api/v1/categories/{category_id}/` — soft delete de categoria; decks que a referenciam são **desvinculados** (`category_id` volta a `None`), não cascateiam junto — categoria é rótulo organizacional opcional (`category_id` sempre foi `Optional`), diferente da relação obrigatória Card→Deck, então não faz sentido destruir os decks do usuário só porque a categoria deles sumiu
@@ -219,50 +219,52 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ---
 
-### Sprint 8 — Tela de Estudo
+### Sprint 8 — Pipeline de Testes & CI/CD
+
+**Objetivo**: nenhuma sprint até aqui (0-7) foi mesclada na `main` com gate automatizado — os testes existentes (`pytest` desde a Sprint 1, Vitest desde a Sprint 4) só rodam se alguém lembrar de rodar localmente antes do merge. Antecipada pra cá — lugar originalmente da antiga "Sprint 10 — Testes & CI/CD" — por decisão explícita do usuário: quanto antes o pipeline existir, menos sprints ficam sem essa proteção (empurra a antiga Sprint 8, Tela de Estudo, pra 9, e a antiga Sprint 9, Estatísticas por Deck, pra 10; ver reordenação completa em `PRD.md` §9). Também fecha uma regra mandatória de `PROMPT_REFINADO.md` (`ferramentas-lint`) declarada desde o início do projeto mas nunca implementada: o backend não tem `black` nem `pre-commit` configurados. As duas etapas (PR e merge na `main`) rodam a mesma suíte — lint, testes de backend e testes de frontend, cada um como job independente.
+
+- [ ] 8.1 `black` como dependência de dev do Django (`django/pyproject.toml`) + `[tool.black]` configurado
+- [ ] 8.2 Reformatação única do código existente via `black .`, commitada antes de ativar o gate no CI
+- [ ] 8.3 `.pre-commit-config.yaml` na raiz do repo, com o hook oficial do `black`
+- [ ] 8.4 `.github/workflows/ci.yml` — gatilhos `pull_request` (visando `main`) e `push` (`branches: [main]`), mesma suíte rodando nos dois
+- [ ] 8.5 Job `lint`: `black --check .` no backend + `npm run lint` no frontend
+- [ ] 8.6 Job `backend-test`: `pytest apps/`, com Postgres/MongoDB/Redis como service containers do job
+- [ ] 8.7 Job `frontend-test`: `npm test` (Vitest) — os 3 jobs rodam em paralelo, cada um como status check independente no PR
+- [ ] 8.8 Badge de status do CI no `README.md`
+
+*Critérios de aceite relevantes: 8 (lint/PEP-8 já cobre backend; aqui vira gate automatizado de CI, não só `pre-commit` local).*
+
+---
+
+### Sprint 9 — Tela de Estudo
 
 **Objetivo**: o gap mais fundamental do produto — nenhuma sprint do roadmap jamais construiu a tela que mostra um card e permite avaliá-lo (`again`/`hard`/`good`/`easy`). Registrado em `PRD.md` §7.1 desde a auditoria pré-Sprint 6, formalizado agora via `backend-mentor`. O backend já tem quase tudo: `POST /api/v1/cards/{card_id}/review/` (FSRS, Sprint 2) e `GET /api/v1/cards/?due=true` (Sprint 2) — só falta a UI, mais um ajuste pontual de backend (a busca de cards devidos hoje não filtra por deck). **Depende da Sprint 7** (tela de detalhe do deck, de onde "Estudar" é acionado). Decisões fechadas via `backend-mentor`: estudo é sempre por deck específico (não global); sessão não é persistida — sempre recomeça buscando os cards ainda devidos, sem conceito de "retomar de onde parou".
 
-- [ ] 8.1 `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` — ganha filtro opcional por deck
-- [ ] 8.2 `GET /api/v1/cards/?due=true&deck_id=X` — a view hoje trata `due` e `deck_id` como mutuamente exclusivos; passa a aceitar os dois juntos
-- [ ] 8.3 Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`
-- [ ] 8.4 Tela de estudo busca os cards devidos do deck uma vez ao entrar (sem sessão persistida) — mostra `front` e revela `back` + `front_description` + `back_description` sob interação do usuário, com rótulos em português
-- [ ] 8.5 4 botões de avaliação (`again`/`hard`/`good`/`easy`) — `POST /api/v1/cards/{card_id}/review/`, avança pro próximo card da lista buscada no início da sessão, sem reconsultar `due` em tempo real (cards avaliados como "again" só voltam a aparecer numa sessão futura, não na mesma)
-- [ ] 8.6 Progresso "X de Y" durante a sessão
-- [ ] 8.7 Estado vazio ("nenhum card devido agora") e tela de fim de sessão (resumo + voltar pro deck)
-- [ ] 8.8 Testes automatizados: backend (filtro `due`+`deck_id`) e frontend (fluxo de revisão, avanço entre cards, estado vazio, fim de sessão)
+- [ ] 9.1 `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` — ganha filtro opcional por deck
+- [ ] 9.2 `GET /api/v1/cards/?due=true&deck_id=X` — a view hoje trata `due` e `deck_id` como mutuamente exclusivos; passa a aceitar os dois juntos
+- [ ] 9.3 Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`
+- [ ] 9.4 Tela de estudo busca os cards devidos do deck uma vez ao entrar (sem sessão persistida) — mostra `front` e revela `back` + `front_description` + `back_description` sob interação do usuário, com rótulos em português
+- [ ] 9.5 4 botões de avaliação (`again`/`hard`/`good`/`easy`) — `POST /api/v1/cards/{card_id}/review/`, avança pro próximo card da lista buscada no início da sessão, sem reconsultar `due` em tempo real (cards avaliados como "again" só voltam a aparecer numa sessão futura, não na mesma)
+- [ ] 9.6 Progresso "X de Y" durante a sessão
+- [ ] 9.7 Estado vazio ("nenhum card devido agora") e tela de fim de sessão (resumo + voltar pro deck)
+- [ ] 9.8 Testes automatizados: backend (filtro `due`+`deck_id`) e frontend (fluxo de revisão, avanço entre cards, estado vazio, fim de sessão)
 
 *Critérios de aceite relevantes: 1 (isolamento — já garantido pela API), 12 (consistência visual).*
 
 ---
 
-### Sprint 9 — Estatísticas por Deck
+### Sprint 10 — Estatísticas por Deck
 
 **Objetivo**: gap encontrado testando a Home da Sprint 3 — o gráfico de estatísticas mistura todos os decks do usuário, sem forma de filtrar por um deck específico, e "cards revisados hoje" é calculado inteiro no cliente a partir de `GET /api/v1/reviews/`, o que não escala. Decisões já fechadas em `PROMPT_REFINADO.md` (`estatisticas-por-deck-endpoint`, `dropdown-deck-home`, `cards-revisados-hoje-sem-campo-novo`). **Depende da Sprint 6**: a agregação precisa excluir registros com `deleted_at` (soft delete) e a resposta passa a incluir progresso contra `daily_review_goal`, ambos campos que só existem a partir dali.
 
-- [ ] 9.1 `GET /api/v1/decks/{deck_id}/statistics/` — distribuição de revisões por rating (again/hard/good/easy), quantidade revisada hoje e progresso contra `daily_review_goal`, tudo escopado a `deck_id` e `owner_id`, excluindo cards/decks com `deleted_at` preenchido; calculado via agregação Mongo (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python
-- [ ] 9.2 Dropdown na Home, acima do gráfico de Estatísticas, listando os decks do usuário (`GET /api/v1/decks/`) e disparando o novo endpoint ao selecionar
-- [ ] 9.3 Sem seleção manual no dropdown, o deck exibido (card + gráfico) é o mais recentemente estudado — mesmo comportamento hoje existente em "Último deck estudado", reaproveitado como default
-- [ ] 9.4 Título do card muda de "Último deck estudado" para "Deck estudado" quando o usuário seleciona manualmente um deck no dropdown (deixa de ser necessariamente o mais recente)
-- [ ] 9.5 Separação visual entre o grid superior (último deck estudado/meta de estudo) e o card de Estatísticas — padding entre as bordas, bordas mais grossas
-- [ ] 9.6 Testes automatizados (pytest) cobrindo a agregação/endpoint de estatísticas por deck, incluindo isolamento multi-tenant e exclusão de registros soft-deletados
+- [ ] 10.1 `GET /api/v1/decks/{deck_id}/statistics/` — distribuição de revisões por rating (again/hard/good/easy), quantidade revisada hoje e progresso contra `daily_review_goal`, tudo escopado a `deck_id` e `owner_id`, excluindo cards/decks com `deleted_at` preenchido; calculado via agregação Mongo (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python
+- [ ] 10.2 Dropdown na Home, acima do gráfico de Estatísticas, listando os decks do usuário (`GET /api/v1/decks/`) e disparando o novo endpoint ao selecionar
+- [ ] 10.3 Sem seleção manual no dropdown, o deck exibido (card + gráfico) é o mais recentemente estudado — mesmo comportamento hoje existente em "Último deck estudado", reaproveitado como default
+- [ ] 10.4 Título do card muda de "Último deck estudado" para "Deck estudado" quando o usuário seleciona manualmente um deck no dropdown (deixa de ser necessariamente o mais recente)
+- [ ] 10.5 Separação visual entre o grid superior (último deck estudado/meta de estudo) e o card de Estatísticas — padding entre as bordas, bordas mais grossas
+- [ ] 10.6 Testes automatizados (pytest) cobrindo a agregação/endpoint de estatísticas por deck, incluindo isolamento multi-tenant e exclusão de registros soft-deletados
 
 *Critérios de aceite relevantes: 1 (isolamento multi-tenant), 12 (consistência visual).*
-
----
-
-### Sprint 10 — Testes & CI/CD
-
-**Objetivo**: ampliar a fundação mínima de testes frontend criada na Sprint 4 para uma cobertura abrangente dos dois lados (backend já tem pytest desde a Sprint 1) + pipeline de integração contínua no GitHub Actions, rodando ambos antes de qualquer merge. Inserida aqui de propósito — depois que as Sprints 4–9 consolidam novos comportamentos, antes das integrações externas das sprints seguintes.
-
-- [ ] 10.1 Evoluir a configuração de Vitest + React Testing Library iniciada na Sprint 4 — adicionar relatório de cobertura, limites mínimos e utilitários compartilhados necessários para a suíte abrangente
-- [ ] 10.2 Testes automatizados para a camada de API client (`apiFetch`, refresh de token, tratamento de 401/403) e hooks (`useApiResource`, `useLastStudiedDeck`)
-- [ ] 10.3 Testes automatizados para os componentes/telas críticos (Home, login, navegação, gerenciamento de decks/cards da Sprint 7, estudo da Sprint 8)
-- [ ] 10.4 Pipeline GitHub Actions — job de backend: `pytest` com Postgres/MongoDB/Redis como service containers, rodando em cada PR
-- [ ] 10.5 Pipeline GitHub Actions — job de frontend: lint + testes + build, rodando em cada PR
-- [ ] 10.6 Badge de status do CI no `README.md`
-
-*Critérios de aceite relevantes: 8 (lint/PEP-8 já cobre backend; aqui vira gate automatizado de CI, não só `pre-commit` local).*
 
 ---
 
@@ -312,7 +314,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 14 — Relatório Semanal por E-mail
 
-**Objetivo**: fecha o loop de feedback do produto, reaproveitando o gerador de documentos (Sprint 11) e as estatísticas (Sprint 2/Sprint 9).
+**Objetivo**: fecha o loop de feedback do produto, reaproveitando o gerador de documentos (Sprint 11) e as estatísticas (Sprint 2/Sprint 10).
 
 - [ ] 14.1 Task Celery Beat semanal que coleta estatísticas de estudo do período
 - [ ] 14.2 Geração do PDF do relatório via microsserviço de documentos
@@ -328,7 +330,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 **Objetivo**: tirar o sistema do "só roda local" e colocá-lo no ar de verdade.
 
 - [ ] 15.1 `docker-compose.yml` de produção + processo de deploy (SSH + compose) na VPS Hostinger
-- [ ] 15.2 Bucket S3 de hospedagem estática do frontend + pipeline de build/upload (GitHub Actions — reaproveita o job de frontend da Sprint 10)
+- [ ] 15.2 Bucket S3 de hospedagem estática do frontend + pipeline de build/upload (GitHub Actions — reaproveita o job de frontend da Sprint 8)
 - [ ] 15.3 Compra do domínio via Cloudflare (sem pressa — só quando o usuário decidir) + configuração de DNS
 - [ ] 15.4 Fluxo de deploy baseado em tags via GitHub Actions
 - [ ] 15.5 Confirmar preço de renovação da Hostinger antes de qualquer contratação anual
@@ -373,12 +375,12 @@ Gaps reais encontrados durante a implementação, deliberadamente adiados — n�
 
 **Nota**: login por e-mail/senha em si já está resolvido (ver tarefa 3.7) — os itens abaixo sobre e-mail/vínculo de conta são sobre **cadastro de conta nova** e **vínculo entre Google e senha no mesmo e-mail**, não sobre login de usuário já existente.
 
-- [x] ~~Cascade delete de `CardReview`~~ **Resolvido na Sprint 6** (encontrado na Sprint 3): decidido via `backend-mentor` — soft delete cascateia de `Deck` pra `Card` (`deleted_at` em ambos), `CardReview` nunca é apagada (mantida como histórico "congelado"), só passa a ser excluída das estatísticas (Sprint 9) quando o `card_id`/`deck_id` associado está soft ou permanentemente deletado.
+- [x] ~~Cascade delete de `CardReview`~~ **Resolvido na Sprint 6** (encontrado na Sprint 3): decidido via `backend-mentor` — soft delete cascateia de `Deck` pra `Card` (`deleted_at` em ambos), `CardReview` nunca é apagada (mantida como histórico "congelado"), só passa a ser excluída das estatísticas (Sprint 10) quando o `card_id`/`deck_id` associado está soft ou permanentemente deletado.
 - [ ] **`EMAIL_BACKEND`/SMTP não configurado em lugar nenhum** (encontrado na Sprint 3, ao levantar requisitos de login por e-mail/senha): nem verificação de e-mail, nem "esqueci minha senha" funcionam sem isso. Hoje só é requisito explícito na Sprint 14 (Relatório Semanal por E-mail) — decidir se adianta pra quando o cadastro por e-mail/senha for implementado, ou se esses fluxos ficam bloqueados até lá.
 - [ ] **Vínculo de conta quando Google e e-mail/senha usam o mesmo e-mail** (encontrado na Sprint 3): decidir entre vínculo automático sem verificação (simples, risco de sequestro de conta), vínculo automático só com e-mail verificado (mais seguro, depende do item de e-mail acima), ou nenhum vínculo automático (contas separadas ou colisão recusada). Ver levantamento de requisitos completo na conversa da Sprint 3.
 - [ ] **`ACCOUNT_EMAIL_VERIFICATION`: `"none"` vs `"mandatory"`** (encontrado na Sprint 3): hoje desligado (`"none"`). Ativar depende do item de e-mail acima e trava a decisão de vínculo de conta.
 - [ ] **Fluxo de "esqueci minha senha"** (encontrado na Sprint 3): endpoints prontos no `dj-rest-auth`, mas dependem de e-mail configurado (mesmo bloqueador acima) — decidir se entra junto com o login por e-mail/senha ou fica pra depois.
-- [x] ~~Tela de estudo (revisar card e avaliar)~~ **Resolvido na Sprint 8** (encontrado numa auditoria pré-Sprint 6 via `backend-mentor`): levantamento de requisitos feito via `backend-mentor` — estudo por deck específico (não global), sessão sem persistência (sempre recomeça buscando os cards ainda devidos). Backend ganha filtro `due`+`deck_id` combinado em `GET /api/v1/cards/`; o resto é UI nova consumindo `POST /api/v1/cards/{id}/review/`, que já existia desde a Sprint 2.
+- [x] ~~Tela de estudo (revisar card e avaliar)~~ **Resolvido na Sprint 9** (encontrado numa auditoria pré-Sprint 6 via `backend-mentor`): levantamento de requisitos feito via `backend-mentor` — estudo por deck específico (não global), sessão sem persistência (sempre recomeça buscando os cards ainda devidos). Backend ganha filtro `due`+`deck_id` combinado em `GET /api/v1/cards/`; o resto é UI nova consumindo `POST /api/v1/cards/{id}/review/`, que já existia desde a Sprint 2.
 
 ---
 
@@ -399,10 +401,10 @@ Sprint 0 (fundação) → Sprint 1 (auth/multi-tenant) → Sprint 2 (decks/cards
    → Sprint 5 (fundações transversais: auditoria & permissões)
    → Sprint 6 (ciclo de vida de deck/card)
    → Sprint 7 (gerenciamento de decks & cards, frontend)
-   → Sprint 8 (tela de estudo) → Sprint 9 (estatísticas por deck)
-   → Sprint 10 (testes & CI/CD) → Sprint 11 (exportação Anki/documentos)
+   → Sprint 8 (pipeline de testes & CI/CD) → Sprint 9 (tela de estudo)
+   → Sprint 10 (estatísticas por deck) → Sprint 11 (exportação Anki/documentos)
    → Sprint 12 (IA) → Sprint 13 (WhatsApp) → Sprint 14 (relatório semanal)
    → Sprint 15 (deploy real) → Sprint 16 (observabilidade) → Sprint 17 (hardening)
 ```
 
-Esta ordem segue `<instrucoes_de_execucao>` item 3 de `PROMPT_REFINADO.md` e a ordem de microsserviços já decidida (`ordem-microservicos`). Cada sprint DEVE ser entregue e validada antes de avançar para a próxima — nunca pular etapas de segurança em nome de velocidade. As Sprints 4-10 foram acrescentadas ao roadmap original conforme gaps reais foram encontrados, todas via `backend-mentor`: 4 fecha pontas reais da Sprint 3 (responsividade zero, sem error boundary, inconsistência de estilo, bundle sem code-splitting, sem favicon) antes que mais UI se acumule sobre esse frontend; 5 e 6 vieram de uma auditoria que achou regras mandatórias (`permissoes-django`, `auditoria`) declaradas desde a Sprint 0/1 mas nunca implementadas, e um ciclo de vida de Deck/Card incompleto (sem edição real, sem exclusão com retenção); 7 veio de uma auditoria pré-Sprint 6 que achou que nenhuma sprint jamais construiu uma tela real pra usar o CRUD de Deck/Card do backend (`/decks` é `PlaceholderPage` desde a Sprint 3) — sem essa sprint, a Sprint 6 entregaria capacidade de backend que ninguém consegue acionar pela UI; 8 fecha o gap mais fundamental do produto — nenhuma sprint jamais construiu a tela que revisa um card e avalia (`again`/`hard`/`good`/`easy`), o motivo do produto existir; 9 é um gap encontrado testando a Home da Sprint 3; 10, para não deixar o frontend crescer sem cobertura de teste nem pipeline de CI.
+Esta ordem segue `<instrucoes_de_execucao>` item 3 de `PROMPT_REFINADO.md` e a ordem de microsserviços já decidida (`ordem-microservicos`). Cada sprint DEVE ser entregue e validada antes de avançar para a próxima — nunca pular etapas de segurança em nome de velocidade. As Sprints 4-10 foram acrescentadas ao roadmap original conforme gaps reais foram encontrados, a maioria via `backend-mentor` (exceto a 8, decidida diretamente com o usuário): 4 fecha pontas reais da Sprint 3 (responsividade zero, sem error boundary, inconsistência de estilo, bundle sem code-splitting, sem favicon) antes que mais UI se acumule sobre esse frontend; 5 e 6 vieram de uma auditoria que achou regras mandatórias (`permissoes-django`, `auditoria`) declaradas desde a Sprint 0/1 mas nunca implementadas, e um ciclo de vida de Deck/Card incompleto (sem edição real, sem exclusão com retenção); 7 veio de uma auditoria pré-Sprint 6 que achou que nenhuma sprint jamais construiu uma tela real pra usar o CRUD de Deck/Card do backend (`/decks` é `PlaceholderPage` desde a Sprint 3) — sem essa sprint, a Sprint 6 entregaria capacidade de backend que ninguém consegue acionar pela UI; 8 (pipeline de testes & CI/CD) foi antecipada pro lugar da antiga Sprint 10 por decisão explícita do usuário — nenhuma sprint até a 7 foi mesclada na `main` com gate automatizado, e fecha também a regra mandatória de lint do backend (`black`/`pre-commit`) nunca implementada; 9 fecha o gap mais fundamental do produto — nenhuma sprint jamais construiu a tela que revisa um card e avalia (`again`/`hard`/`good`/`easy`), o motivo do produto existir; 10 é um gap encontrado testando a Home da Sprint 3.
