@@ -5,6 +5,8 @@
 # 🎴 Anki Generator
 
 [![CI](https://github.com/WillamesCampos/anki_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/WillamesCampos/anki_generator/actions/workflows/ci.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 Plataforma de flashcards inspirada no Anki, com um agente de IA que dá feedback de estudo, sugere novos cards/decks, envia lembretes via WhatsApp e gera relatórios periódicos de desempenho em PDF.
 
