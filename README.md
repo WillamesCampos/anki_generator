@@ -1,10 +1,12 @@
 <div align="center">
-    <img width="680" height="350" alt="Anki Generator Logo" src="https://github.com/user-attachments/assets/560c81d7-849d-41b8-a348-4dc08706628e" />
+    <img width="800" alt="Anki Generator — Flashcards inteligentes. Aprendizado que evolui." src="./docs/assets/anki-generator-banner.png" />
 </div>
 
 # 🎴 Anki Generator
 
 [![CI](https://github.com/WillamesCampos/anki_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/WillamesCampos/anki_generator/actions/workflows/ci.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 
 Plataforma de flashcards inspirada no Anki, com um agente de IA que dá feedback de estudo, sugere novos cards/decks, envia lembretes via WhatsApp e gera relatórios periódicos de desempenho em PDF.
 
