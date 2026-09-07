@@ -120,7 +120,7 @@ git commit -m "docs: refresh Anki Generator mascot artwork"
 - Consumes: `docs/assets/anki-generator-banner.png` produzido na Task 1.
 - Produces: cabeçalho do README sem dependência externa nem distorção de proporção.
 
-- [ ] **Step 1: Atualizar a referência da imagem**
+- [x] **Step 1: Atualizar a referência da imagem**
 
 Substituir o bloco inicial por:
 
@@ -132,7 +132,7 @@ Substituir o bloco inicial por:
 
 Não adicionar `height`; manter o título Markdown e os badges existentes abaixo.
 
-- [ ] **Step 2: Validar caminho, proporção declarada e diff**
+- [x] **Step 2: Validar caminho, proporção declarada e diff**
 
 Executar:
 
@@ -145,20 +145,20 @@ git diff --check
 Esperado: caminho local e `width="800"` presentes no topo; nenhuma ocorrência
 de `height=` no bloco da imagem; `git diff --check` sem saída.
 
-- [ ] **Step 3: Revisar o cabeçalho renderizado**
+- [x] **Step 3: Revisar o cabeçalho renderizado**
 
 Visualizar o README ou seu HTML renderizado e confirmar que o banner está
 centralizado, mantém a proporção, permanece legível em largura reduzida e não
 colide com o título ou os badges.
 
-- [ ] **Step 4: Commitar a integração**
+- [x] **Step 4: Commitar a integração**
 
 ```bash
 git add README.md
 git commit -m "docs: use local mascot banner in readme"
 ```
 
-- [ ] **Step 5: Executar a verificação final do escopo**
+- [x] **Step 5: Executar a verificação final do escopo**
 
 ```bash
 file docs/assets/anki-generator-banner.png frontend/public/favicon.png
