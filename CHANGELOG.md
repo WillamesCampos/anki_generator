@@ -2,6 +2,32 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 8] Pipeline de Testes & CI/CD — 2026-09-07
+
+Nenhuma sprint até aqui (0-7) foi mesclada na `main` com gate automatizado — os testes existentes só rodavam se alguém lembrasse de rodar localmente antes do merge. Antecipada pro lugar da antiga Sprint 10 por decisão explícita do usuário. Fecha também a regra mandatória `ferramentas-lint` (`PROMPT_REFINADO.md`), nunca implementada: o backend não tinha `black` nem `pre-commit` configurados. Ver `openspec/changes/sprint-8-pipeline-ci-cd/`.
+
+### Adicionado
+- `.github/workflows/ci.yml`: workflow único do GitHub Actions com 3 jobs independentes (`lint`, `backend-test`, `frontend-test`), disparado tanto em `pull_request` (visando `main`) quanto em `push` (`main`, pós-merge) — mesma suíte nos dois gatilhos.
+- Job `backend-test` roda `pytest apps/` contra Postgres, MongoDB e Redis como service containers do próprio job (mesmas imagens do `docker-compose.yml`), não mocks.
+- `black` como dependência de dev do Django (`django/pyproject.toml`), com `[tool.black]` configurado.
+- `.pre-commit-config.yaml` na raiz do repo, com o hook oficial do `black` restrito a `django/`.
+- Badge de status do CI no `README.md`.
+
+### Alterado
+- Reformatação única de 54 arquivos Python existentes via `black .`, aplicada antes de ativar o gate `black --check` no CI (comportamento e testes inalterados — só formatação).
+- `[tool.black]` (`django/pyproject.toml`) usa `force-exclude` pra nunca tocar `manage.py` nem `**/migrations/*.py` — arquivos gerados pelo próprio Django, não código de aplicação escrito à mão. `force-exclude` (não `exclude`) é necessário pra a exclusão valer também quando o `pre-commit` chama o `black` com a lista explícita de arquivos alterados, não só no `black --check .` do CI.
+
+### Fora de escopo (decisão explícita)
+- Ampliar a cobertura de testes existente (a pipeline roda o que já existe; cobertura cresce organicamente a cada sprint futura).
+- CD de verdade (deploy automatizado a partir do merge em `main`) — decisão de como o deploy pra VPS acontece fica pra Sprint 15.
+- `ruff`/`flake8` além do `black` — não pedido pela regra mandatória.
+
+### Validado
+- `pytest apps/`: 68 testes, 0 falhas, após a reformatação via `black`.
+- `black --check .`: 92 arquivos verificados (`manage.py` e `**/migrations/*.py` fora do escopo do formatador), 0 divergências.
+- `npm test`: 10 arquivos, 35 testes, 0 falhas (frontend não foi alterado nesta sprint).
+- `npm run lint`: 0 erros e 0 warnings.
+
 ## [Sprint 7] Gerenciamento de Decks & Cards (Frontend) — 2026-08-29
 
 Fecha o ciclo de gerenciamento que até agora só existia na API: usuários autenticados passam a listar, criar, editar e excluir decks e cards pela SPA. Ver `openspec/changes/sprint-7-gerenciamento-deck-card-frontend/`.

@@ -65,20 +65,23 @@ def test_card_count_requires_a_valid_deck_id(client_a, query):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("superseded_payload", [
-    {
-        "word": "network",
-        "translation": "rede",
-        "example_original": "The network is stable today.",
-        "example_translated": "A rede está estável hoje.",
-    },
-    {
-        "frente": "network",
-        "verso": "rede",
-        "descricao_frente": "The network is stable today.",
-        "descricao_verso": "A rede está estável hoje.",
-    },
-])
+@pytest.mark.parametrize(
+    "superseded_payload",
+    [
+        {
+            "word": "network",
+            "translation": "rede",
+            "example_original": "The network is stable today.",
+            "example_translated": "A rede está estável hoje.",
+        },
+        {
+            "frente": "network",
+            "verso": "rede",
+            "descricao_frente": "The network is stable today.",
+            "descricao_verso": "A rede está estável hoje.",
+        },
+    ],
+)
 def test_card_contract_rejects_superseded_field_names(client_a, superseded_payload):
     deck = client_a.post("/api/v1/decks/", {"title": "Deck"}, format="json").data
     cache.clear()

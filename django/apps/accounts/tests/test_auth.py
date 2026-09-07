@@ -20,7 +20,9 @@ def test_refresh_token_works_before_revocation():
     refresh = RefreshToken.for_user(user)
 
     client = APIClient()
-    response = client.post("/api/v1/auth/token/refresh/", {"refresh": str(refresh)}, format="json")
+    response = client.post(
+        "/api/v1/auth/token/refresh/", {"refresh": str(refresh)}, format="json"
+    )
 
     assert response.status_code == 200
     assert "access" in response.data
@@ -35,7 +37,9 @@ def test_logout_revokes_refresh_token_and_blocks_future_refresh():
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
 
-    logout_response = client.post("/api/v1/auth/logout/", {"refresh": str(refresh)}, format="json")
+    logout_response = client.post(
+        "/api/v1/auth/logout/", {"refresh": str(refresh)}, format="json"
+    )
     assert logout_response.status_code == 200
     assert is_refresh_token_revoked(refresh["jti"]) is True
 

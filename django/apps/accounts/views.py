@@ -26,7 +26,8 @@ class GoogleLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = OAuth2Client
     callback_url = os.environ.get(
-        "GOOGLE_OAUTH_CALLBACK_URL", "http://localhost:8000/api/v1/auth/google/callback/"
+        "GOOGLE_OAUTH_CALLBACK_URL",
+        "http://localhost:8000/api/v1/auth/google/callback/",
     )
 
 

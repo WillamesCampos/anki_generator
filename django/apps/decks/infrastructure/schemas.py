@@ -153,18 +153,22 @@ class CardSchema(MongoDBSchema):
             "_id": ObjectId(),  # Gera um novo ObjectId
             "front": {
                 "value": card_data["front"]["value"],
-                "normalized": card_data["front"]["normalized"]
+                "normalized": card_data["front"]["normalized"],
             },
             "back": {
                 "value": card_data["back"]["value"],
                 "normalized": card_data["back"]["normalized"],
-                "translations_list": card_data["back"]["translations_list"]
+                "translations_list": card_data["back"]["translations_list"],
             },
             "front_description": card_data["front_description"],
             "back_description": card_data["back_description"],
             "owner_id": card_data["owner_id"],
             "context": card_data["context"],
-            "deck_id": uuid_to_object_id(card_data["deck_id"]) if card_data["deck_id"] else None,
+            "deck_id": (
+                uuid_to_object_id(card_data["deck_id"])
+                if card_data["deck_id"]
+                else None
+            ),
             "tags": list(card_data.get("tags", [])),
             "fsrs_state": card_data.get("fsrs_state", 1),
             "fsrs_step": card_data.get("fsrs_step"),
@@ -173,7 +177,8 @@ class CardSchema(MongoDBSchema):
             "due_at": datetime.fromisoformat(card_data["due_at"]),
             "last_reviewed_at": (
                 datetime.fromisoformat(card_data["last_reviewed_at"])
-                if card_data.get("last_reviewed_at") else None
+                if card_data.get("last_reviewed_at")
+                else None
             ),
             "created_at": datetime.fromisoformat(card_data["created_at"]),
             "updated_at": datetime.fromisoformat(card_data["updated_at"]),
@@ -181,8 +186,9 @@ class CardSchema(MongoDBSchema):
             "updated_by": card_data.get("updated_by"),
             "deleted_at": (
                 datetime.fromisoformat(card_data["deleted_at"])
-                if card_data.get("deleted_at") else None
-            )
+                if card_data.get("deleted_at")
+                else None
+            ),
         }
 
         # Adiciona audio_path se existir
@@ -190,7 +196,7 @@ class CardSchema(MongoDBSchema):
             document["audio_path"] = {
                 "path": card_data["audio_path"]["path"],
                 "filename": card_data["audio_path"]["filename"],
-                "exists": card_data["audio_path"]["exists"]
+                "exists": card_data["audio_path"]["exists"],
             }
 
         return document
@@ -212,33 +218,53 @@ class CardSchema(MongoDBSchema):
                 "value": document["front"]["value"],
                 "normalized": document["front"]["normalized"],
                 "length": len(document["front"]["value"]),
-                "word_count": len(document["front"]["value"].split())
+                "word_count": len(document["front"]["value"].split()),
             },
             "back": {
                 "value": document["back"]["value"],
                 "normalized": document["back"]["normalized"],
                 "translations_list": document["back"]["translations_list"],
-                "primary_translation": document["back"]["translations_list"][0] if document["back"]["translations_list"] else document["back"]["value"],
-                "alternative_translations": document["back"]["translations_list"][1:] if len(document["back"]["translations_list"]) > 1 else [],
-                "translation_count": len(document["back"]["translations_list"])
+                "primary_translation": (
+                    document["back"]["translations_list"][0]
+                    if document["back"]["translations_list"]
+                    else document["back"]["value"]
+                ),
+                "alternative_translations": (
+                    document["back"]["translations_list"][1:]
+                    if len(document["back"]["translations_list"]) > 1
+                    else []
+                ),
+                "translation_count": len(document["back"]["translations_list"]),
             },
             "front_description": document["front_description"],
             "back_description": document["back_description"],
             "owner_id": document["owner_id"],
             "context": document["context"],
-            "deck_id": CardSchema.to_string_id(document["deck_id"]) if document["deck_id"] else None,
+            "deck_id": (
+                CardSchema.to_string_id(document["deck_id"])
+                if document["deck_id"]
+                else None
+            ),
             "tags": list(document.get("tags", [])),
             "fsrs_state": document.get("fsrs_state", 1),
             "fsrs_step": document.get("fsrs_step"),
             "stability": document.get("stability"),
             "difficulty": document.get("difficulty"),
             "due_at": datetime_from_mongo(document["due_at"]),
-            "last_reviewed_at": datetime_from_mongo(document["last_reviewed_at"]) if document.get("last_reviewed_at") else None,
+            "last_reviewed_at": (
+                datetime_from_mongo(document["last_reviewed_at"])
+                if document.get("last_reviewed_at")
+                else None
+            ),
             "created_at": datetime_from_mongo(document["created_at"]),
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "created_by": document.get("created_by"),
             "updated_by": document.get("updated_by"),
-            "deleted_at": datetime_from_mongo(document["deleted_at"]) if document.get("deleted_at") else None
+            "deleted_at": (
+                datetime_from_mongo(document["deleted_at"])
+                if document.get("deleted_at")
+                else None
+            ),
         }
 
         # Adiciona audio_path se existir
@@ -246,11 +272,23 @@ class CardSchema(MongoDBSchema):
             card_data["audio_path"] = {
                 "path": document["audio_path"]["path"],
                 "filename": document["audio_path"]["filename"],
-                "directory": document["audio_path"]["path"].rsplit('/', 1)[0] if '/' in document["audio_path"]["path"] else "",
-                "extension": document["audio_path"]["path"].split('.')[-1] if '.' in document["audio_path"]["path"] else "",
-                "stem": document["audio_path"]["filename"].rsplit('.', 1)[0] if '.' in document["audio_path"]["filename"] else document["audio_path"]["filename"],
+                "directory": (
+                    document["audio_path"]["path"].rsplit("/", 1)[0]
+                    if "/" in document["audio_path"]["path"]
+                    else ""
+                ),
+                "extension": (
+                    document["audio_path"]["path"].split(".")[-1]
+                    if "." in document["audio_path"]["path"]
+                    else ""
+                ),
+                "stem": (
+                    document["audio_path"]["filename"].rsplit(".", 1)[0]
+                    if "." in document["audio_path"]["filename"]
+                    else document["audio_path"]["filename"]
+                ),
                 "exists": document["audio_path"]["exists"],
-                "size_bytes": None  # Seria necessário verificar o arquivo
+                "size_bytes": None,  # Seria necessário verificar o arquivo
             }
 
         return card_data
@@ -289,7 +327,11 @@ class DeckSchema(MongoDBSchema):
             "title": deck_data["title"],
             "owner_id": deck_data["owner_id"],
             "description": deck_data["description"],
-            "category_id": uuid_to_object_id(deck_data["category_id"]) if deck_data.get("category_id") else None,
+            "category_id": (
+                uuid_to_object_id(deck_data["category_id"])
+                if deck_data.get("category_id")
+                else None
+            ),
             "max_cards_per_generation": deck_data["max_cards_per_generation"],
             "created_at": datetime.fromisoformat(deck_data["created_at"]),
             "updated_at": datetime.fromisoformat(deck_data["updated_at"]),
@@ -297,11 +339,12 @@ class DeckSchema(MongoDBSchema):
             "updated_by": deck_data.get("updated_by"),
             "deleted_at": (
                 datetime.fromisoformat(deck_data["deleted_at"])
-                if deck_data.get("deleted_at") else None
+                if deck_data.get("deleted_at")
+                else None
             ),
             "daily_review_goal": deck_data.get("daily_review_goal"),
             "card_count": deck_data["card_count"],
-            "is_empty": deck_data["is_empty"]
+            "is_empty": deck_data["is_empty"],
         }
 
     @staticmethod
@@ -320,17 +363,25 @@ class DeckSchema(MongoDBSchema):
             "title": document["title"],
             "owner_id": document["owner_id"],
             "description": document["description"],
-            "category_id": DeckSchema.to_string_id(document["category_id"]) if document.get("category_id") else None,
+            "category_id": (
+                DeckSchema.to_string_id(document["category_id"])
+                if document.get("category_id")
+                else None
+            ),
             "cards": [],  # Cards são carregados separadamente
             "max_cards_per_generation": document["max_cards_per_generation"],
             "created_at": datetime_from_mongo(document["created_at"]),
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "created_by": document.get("created_by"),
             "updated_by": document.get("updated_by"),
-            "deleted_at": datetime_from_mongo(document["deleted_at"]) if document.get("deleted_at") else None,
+            "deleted_at": (
+                datetime_from_mongo(document["deleted_at"])
+                if document.get("deleted_at")
+                else None
+            ),
             "daily_review_goal": document.get("daily_review_goal"),
             "card_count": document["card_count"],
-            "is_empty": document["is_empty"]
+            "is_empty": document["is_empty"],
         }
 
 
@@ -359,7 +410,8 @@ class CategorySchema(MongoDBSchema):
             "updated_by": category_data.get("updated_by"),
             "deleted_at": (
                 datetime.fromisoformat(category_data["deleted_at"])
-                if category_data.get("deleted_at") else None
+                if category_data.get("deleted_at")
+                else None
             ),
         }
 
@@ -373,7 +425,11 @@ class CategorySchema(MongoDBSchema):
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "created_by": document.get("created_by"),
             "updated_by": document.get("updated_by"),
-            "deleted_at": datetime_from_mongo(document["deleted_at"]) if document.get("deleted_at") else None,
+            "deleted_at": (
+                datetime_from_mongo(document["deleted_at"])
+                if document.get("deleted_at")
+                else None
+            ),
         }
 
 
@@ -405,13 +461,19 @@ class CardReviewSchema(MongoDBSchema):
             "reviewed_at": datetime.fromisoformat(review_data["reviewed_at"]),
             "stability_after": review_data.get("stability_after"),
             "difficulty_after": review_data.get("difficulty_after"),
-            "deck_id": uuid_to_object_id(review_data["deck_id"]) if review_data.get("deck_id") else None,
+            "deck_id": (
+                uuid_to_object_id(review_data["deck_id"])
+                if review_data.get("deck_id")
+                else None
+            ),
             "created_by": review_data.get("created_by"),
             "updated_by": review_data.get("updated_by"),
         }
 
         if review_data.get("due_at_after"):
-            document["due_at_after"] = datetime.fromisoformat(review_data["due_at_after"])
+            document["due_at_after"] = datetime.fromisoformat(
+                review_data["due_at_after"]
+            )
 
         return document
 
@@ -425,8 +487,16 @@ class CardReviewSchema(MongoDBSchema):
             "reviewed_at": datetime_from_mongo(document["reviewed_at"]),
             "stability_after": document.get("stability_after"),
             "difficulty_after": document.get("difficulty_after"),
-            "due_at_after": datetime_from_mongo(document["due_at_after"]) if document.get("due_at_after") else None,
-            "deck_id": CardReviewSchema.to_string_id(document["deck_id"]) if document.get("deck_id") else None,
+            "due_at_after": (
+                datetime_from_mongo(document["due_at_after"])
+                if document.get("due_at_after")
+                else None
+            ),
+            "deck_id": (
+                CardReviewSchema.to_string_id(document["deck_id"])
+                if document.get("deck_id")
+                else None
+            ),
             "created_by": document.get("created_by"),
             "updated_by": document.get("updated_by"),
         }
@@ -466,18 +536,24 @@ class GenerationSessionSchema(MongoDBSchema):
         document = {
             "_id": ObjectId(),  # Gera um novo ObjectId
             "context": session_data["context"],
-            "deck_id": uuid_to_object_id(session_data["deck_id"]) if session_data["deck_id"] else None,
+            "deck_id": (
+                uuid_to_object_id(session_data["deck_id"])
+                if session_data["deck_id"]
+                else None
+            ),
             "status": session_data["status"],
             "max_cards": session_data["max_cards"],
             "created_at": datetime.fromisoformat(session_data["created_at"]),
             "updated_at": datetime.fromisoformat(session_data["updated_at"]),
             "cards_generated_count": session_data["cards_generated_count"],
-            "is_finished": session_data["is_finished"]
+            "is_finished": session_data["is_finished"],
         }
 
         # Adiciona campos opcionais
         if session_data.get("completed_at"):
-            document["completed_at"] = datetime.fromisoformat(session_data["completed_at"])
+            document["completed_at"] = datetime.fromisoformat(
+                session_data["completed_at"]
+            )
 
         if session_data.get("error_message"):
             document["error_message"] = session_data["error_message"]
@@ -505,7 +581,7 @@ class GenerationSessionSchema(MongoDBSchema):
             "created_at": datetime_from_mongo(document["created_at"]),
             "updated_at": datetime_from_mongo(document["updated_at"]),
             "cards_generated_count": document["cards_generated_count"],
-            "is_finished": document["is_finished"]
+            "is_finished": document["is_finished"],
         }
 
         # Adiciona campos opcionais
@@ -594,5 +670,5 @@ class IndexDefinitions:
             "decks": IndexDefinitions.DECKS_INDEXES,
             "categories": IndexDefinitions.CATEGORIES_INDEXES,
             "card_reviews": IndexDefinitions.CARD_REVIEWS_INDEXES,
-            "generation_sessions": IndexDefinitions.SESSIONS_INDEXES
+            "generation_sessions": IndexDefinitions.SESSIONS_INDEXES,
         }

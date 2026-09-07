@@ -55,7 +55,9 @@ class DeckSerializer(serializers.Serializer):
     description = serializers.CharField(allow_blank=True, required=False, default="")
     category_id = serializers.UUIDField(required=False, allow_null=True)
     max_cards_per_generation = serializers.IntegerField(required=False, default=10)
-    daily_review_goal = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    daily_review_goal = serializers.IntegerField(
+        required=False, allow_null=True, min_value=1
+    )
     card_count = serializers.IntegerField(read_only=True)
     is_empty = serializers.BooleanField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
@@ -105,7 +107,9 @@ class CardSerializer(serializers.Serializer):
     back_description = serializers.CharField()
     context = serializers.CharField(allow_blank=True, required=False, default="")
     deck_id = serializers.UUIDField()
-    tags = serializers.ListField(child=serializers.CharField(max_length=50), required=False, default=list)
+    tags = serializers.ListField(
+        child=serializers.CharField(max_length=50), required=False, default=list
+    )
 
     def to_representation(self, instance: Card) -> dict:
         return {
@@ -121,7 +125,11 @@ class CardSerializer(serializers.Serializer):
             "stability": instance.stability,
             "difficulty": instance.difficulty,
             "due_at": instance.due_at.isoformat(),
-            "last_reviewed_at": instance.last_reviewed_at.isoformat() if instance.last_reviewed_at else None,
+            "last_reviewed_at": (
+                instance.last_reviewed_at.isoformat()
+                if instance.last_reviewed_at
+                else None
+            ),
             "created_at": instance.created_at.isoformat(),
             "updated_at": instance.updated_at.isoformat(),
         }
@@ -149,7 +157,10 @@ class CardSerializer(serializers.Serializer):
             new_back = Translation(validated_data["back"])
             if new_back != instance.back:
                 instance.update_back(new_back)
-        if "front_description" in validated_data or "back_description" in validated_data:
+        if (
+            "front_description" in validated_data
+            or "back_description" in validated_data
+        ):
             instance.update_descriptions(
                 validated_data.get("front_description", instance.front_description),
                 validated_data.get("back_description", instance.back_description),

@@ -31,8 +31,12 @@ from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
-from apps.decks.infrastructure.repositories.card_review_repository import CardReviewRepository
-from apps.decks.infrastructure.repositories.category_repository import CategoryRepository
+from apps.decks.infrastructure.repositories.card_review_repository import (
+    CardReviewRepository,
+)
+from apps.decks.infrastructure.repositories.category_repository import (
+    CategoryRepository,
+)
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 
 SEED_USERNAMES = ["seed_ana", "seed_bruno", "seed_carla"]
@@ -48,12 +52,24 @@ SEED_PASSWORD = "anki12345"
 # não serve pra isso (gap encontrado testando a Home de verdade).
 DECK_CATALOG = {
     "Programação": [
-        ("Estruturas de Dados", "Vocabulário essencial sobre arrays, listas encadeadas, pilhas e filas."),
-        ("Padrões de Projeto", "Termos e conceitos de design patterns usados no dia a dia de desenvolvimento."),
+        (
+            "Estruturas de Dados",
+            "Vocabulário essencial sobre arrays, listas encadeadas, pilhas e filas.",
+        ),
+        (
+            "Padrões de Projeto",
+            "Termos e conceitos de design patterns usados no dia a dia de desenvolvimento.",
+        ),
     ],
     "Viagem": [
-        ("Aeroporto e Check-in", "Frases e vocabulário para embarque, bagagem e check-in em viagens internacionais."),
-        ("Hospedagem e Transporte", "Vocabulário para reservar hotéis, pedir direções e usar transporte público."),
+        (
+            "Aeroporto e Check-in",
+            "Frases e vocabulário para embarque, bagagem e check-in em viagens internacionais.",
+        ),
+        (
+            "Hospedagem e Transporte",
+            "Vocabulário para reservar hotéis, pedir direções e usar transporte público.",
+        ),
     ],
 }
 
@@ -159,19 +175,32 @@ class Command(BaseCommand):
         categories = await self._create_categories(category_repo, owner_id)
         decks = await self._create_decks(deck_repo, owner_id, categories)
 
-        await asyncio.gather(*[
-            self._seed_deck_cards(card_repo, review_repo, deck, owner_id)
-            for deck in decks
-        ])
+        await asyncio.gather(
+            *[
+                self._seed_deck_cards(card_repo, review_repo, deck, owner_id)
+                for deck in decks
+            ]
+        )
 
-    async def _create_categories(self, category_repo: CategoryRepository, owner_id: str) -> List[Category]:
-        new_categories = [Category(name=name, owner_id=owner_id) for name in CATEGORY_NAMES]
+    async def _create_categories(
+        self, category_repo: CategoryRepository, owner_id: str
+    ) -> List[Category]:
+        new_categories = [
+            Category(name=name, owner_id=owner_id) for name in CATEGORY_NAMES
+        ]
         save_calls = [category_repo.save(category) for category in new_categories]
         return list(await asyncio.gather(*save_calls))
 
-    async def _create_decks(self, deck_repo: DeckRepository, owner_id: str, categories: List[Category]) -> List[Deck]:
+    async def _create_decks(
+        self, deck_repo: DeckRepository, owner_id: str, categories: List[Category]
+    ) -> List[Deck]:
         new_decks = [
-            Deck(title=title, description=description, owner_id=owner_id, category_id=category.id)
+            Deck(
+                title=title,
+                description=description,
+                owner_id=owner_id,
+                category_id=category.id,
+            )
             for category in categories
             for title, description in DECK_CATALOG[category.name]
         ]
@@ -187,18 +216,24 @@ class Command(BaseCommand):
     ) -> None:
         deck_tag = deck.title.split(" ")[0].lower()
         sampled_words = random.sample(WORD_BANK, k=CARDS_PER_DECK)
-        new_cards = [self._build_card(owner_id, deck.id, deck_tag, front, back)
-                     for front, back in sampled_words]
+        new_cards = [
+            self._build_card(owner_id, deck.id, deck_tag, front, back)
+            for front, back in sampled_words
+        ]
 
         save_calls = [card_repo.save(card) for card in new_cards]
         cards = await asyncio.gather(*save_calls)
 
-        await asyncio.gather(*[
-            self._seed_reviews_for_card(card_repo, review_repo, card, owner_id)
-            for card in cards
-        ])
+        await asyncio.gather(
+            *[
+                self._seed_reviews_for_card(card_repo, review_repo, card, owner_id)
+                for card in cards
+            ]
+        )
 
-    def _build_card(self, owner_id: str, deck_id, tag: str, front: str, back: str) -> Card:
+    def _build_card(
+        self, owner_id: str, deck_id, tag: str, front: str, back: str
+    ) -> Card:
         return Card(
             front=Word(front),
             back=Translation(back),
@@ -223,11 +258,15 @@ class Command(BaseCommand):
             rating = random.choice(RATINGS)
 
             scheduling_service.review_card(card, rating, reviewed_at=reviewed_at)
-            await review_repo.save(self._build_review(card, owner_id, rating, reviewed_at))
+            await review_repo.save(
+                self._build_review(card, owner_id, rating, reviewed_at)
+            )
 
         await card_repo.update(card)
 
-    def _build_review(self, card: Card, owner_id: str, rating: str, reviewed_at: datetime) -> CardReview:
+    def _build_review(
+        self, card: Card, owner_id: str, rating: str, reviewed_at: datetime
+    ) -> CardReview:
         return CardReview(
             card_id=card.id,
             owner_id=owner_id,

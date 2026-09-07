@@ -8,7 +8,9 @@ from apps.decks.domain.entities.deck import Deck
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
-from apps.decks.infrastructure.repositories.card_review_repository import CardReviewRepository
+from apps.decks.infrastructure.repositories.card_review_repository import (
+    CardReviewRepository,
+)
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 from apps.decks.infrastructure.schemas import IndexDefinitions
 
@@ -16,36 +18,50 @@ from .conftest import run_async
 
 
 def _save_card(owner_id, deck_id, front="network"):
-    return run_async(CardRepository().save(Card(
-        front=Word(front),
-        back=Translation("rede"),
-        front_description="The network is stable today.",
-        back_description="A rede está estável durante o dia.",
-        owner_id=owner_id,
-        deck_id=deck_id,
-    )))
+    return run_async(
+        CardRepository().save(
+            Card(
+                front=Word(front),
+                back=Translation("rede"),
+                front_description="The network is stable today.",
+                back_description="A rede está estável durante o dia.",
+                owner_id=owner_id,
+                deck_id=deck_id,
+            )
+        )
+    )
 
 
 def _save_review(card, owner_id, rating, reviewed_at=None):
-    return run_async(CardReviewRepository().save(CardReview(
-        card_id=card.id,
-        deck_id=card.deck_id,
-        owner_id=owner_id,
-        rating=rating,
-        reviewed_at=reviewed_at or datetime.now(timezone.utc),
-    )))
+    return run_async(
+        CardReviewRepository().save(
+            CardReview(
+                card_id=card.id,
+                deck_id=card.deck_id,
+                owner_id=owner_id,
+                rating=rating,
+                reviewed_at=reviewed_at or datetime.now(timezone.utc),
+            )
+        )
+    )
 
 
 @pytest.mark.django_db
 def test_deck_statistics_return_all_time_rating_distribution(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(DeckRepository().save(Deck(
-        title="Deck com histórico",
-        owner_id=owner_id,
-        daily_review_goal=8,
-    )))
+    deck = run_async(
+        DeckRepository().save(
+            Deck(
+                title="Deck com histórico",
+                owner_id=owner_id,
+                daily_review_goal=8,
+            )
+        )
+    )
     card = _save_card(owner_id, deck.id)
-    _save_review(card, owner_id, "again", datetime.now(timezone.utc) - timedelta(days=20))
+    _save_review(
+        card, owner_id, "again", datetime.now(timezone.utc) - timedelta(days=20)
+    )
     _save_review(card, owner_id, "hard")
     _save_review(card, owner_id, "good")
     _save_review(card, owner_id, "good")
@@ -64,10 +80,14 @@ def test_deck_statistics_return_all_time_rating_distribution(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_deck_statistics_are_zeroed_without_reviews(client_a, owner_a):
-    deck = run_async(DeckRepository().save(Deck(
-        title="Deck sem histórico",
-        owner_id=str(owner_a.id),
-    )))
+    deck = run_async(
+        DeckRepository().save(
+            Deck(
+                title="Deck sem histórico",
+                owner_id=str(owner_a.id),
+            )
+        )
+    )
 
     response = client_a.get(f"/api/v1/decks/{deck.id}/statistics/")
 
@@ -82,10 +102,14 @@ def test_deck_statistics_are_zeroed_without_reviews(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_deck_statistics_hide_another_tenants_deck(client_a, owner_b):
-    deck = run_async(DeckRepository().save(Deck(
-        title="Deck privado",
-        owner_id=str(owner_b.id),
-    )))
+    deck = run_async(
+        DeckRepository().save(
+            Deck(
+                title="Deck privado",
+                owner_id=str(owner_b.id),
+            )
+        )
+    )
 
     response = client_a.get(f"/api/v1/decks/{deck.id}/statistics/")
 
@@ -114,8 +138,11 @@ def test_deck_statistics_exclude_reviews_from_soft_deleted_cards(client_a, owner
 
 
 def test_card_review_indexes_cover_deck_statistics_query():
-    assert ([
-        ("owner_id", 1),
-        ("deck_id", 1),
-        ("reviewed_at", 1),
-    ], {}) in IndexDefinitions.CARD_REVIEWS_INDEXES
+    assert (
+        [
+            ("owner_id", 1),
+            ("deck_id", 1),
+            ("reviewed_at", 1),
+        ],
+        {},
+    ) in IndexDefinitions.CARD_REVIEWS_INDEXES

@@ -112,9 +112,13 @@ class Card:
         self.front_description = " ".join(self.front_description.split())
         self.back_description = " ".join(self.back_description.split())
         if len(self.front_description) < 10:
-            raise DomainValidationError("front_description must have at least 10 characters")
+            raise DomainValidationError(
+                "front_description must have at least 10 characters"
+            )
         if len(self.back_description) < 10:
-            raise DomainValidationError("back_description must have at least 10 characters")
+            raise DomainValidationError(
+                "back_description must have at least 10 characters"
+            )
 
         if self.context is None:
             self.context = ""
@@ -144,7 +148,9 @@ class Card:
         self.back = new_back
         self.updated_at = datetime.now(timezone.utc)
 
-    def update_descriptions(self, front_description: str, back_description: str) -> None:
+    def update_descriptions(
+        self, front_description: str, back_description: str
+    ) -> None:
         """
         Atualiza as descrições da front e do back.
 
@@ -153,7 +159,9 @@ class Card:
         front_description = " ".join(front_description.split())
         back_description = " ".join(back_description.split())
         if len(front_description) < 10 or len(back_description) < 10:
-            raise DomainValidationError("Card descriptions must have at least 10 characters")
+            raise DomainValidationError(
+                "Card descriptions must have at least 10 characters"
+            )
 
         self.front_description = front_description
         self.back_description = back_description
@@ -173,7 +181,7 @@ class Card:
         self.deleted_at = datetime.now(timezone.utc)
         self.updated_at = self.deleted_at
 
-    def is_similar_to(self, other: 'Card', similarity_threshold: float = 0.8) -> bool:
+    def is_similar_to(self, other: "Card", similarity_threshold: float = 0.8) -> bool:
         """
         Verifica se este card é similar a outro card.
 
@@ -193,8 +201,12 @@ class Card:
 
         # Comparação simples por enquanto
         # TODO: Implementar algoritmo de similaridade mais sofisticado
-        word_similarity = self.front.value.lower().strip() == other.front.value.lower().strip()
-        translation_similarity = self.back.value.lower().strip() == other.back.value.lower().strip()
+        word_similarity = (
+            self.front.value.lower().strip() == other.front.value.lower().strip()
+        )
+        translation_similarity = (
+            self.back.value.lower().strip() == other.back.value.lower().strip()
+        )
 
         return word_similarity and translation_similarity
 
@@ -220,16 +232,18 @@ class Card:
             "stability": self.stability,
             "difficulty": self.difficulty,
             "due_at": self.due_at.isoformat(),
-            "last_reviewed_at": self.last_reviewed_at.isoformat() if self.last_reviewed_at else None,
+            "last_reviewed_at": (
+                self.last_reviewed_at.isoformat() if self.last_reviewed_at else None
+            ),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
             "created_by": self.created_by,
             "updated_by": self.updated_by,
-            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None
+            "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Card':
+    def from_dict(cls, data: dict) -> "Card":
         """
         Cria um card a partir de um dicionário.
 
@@ -246,25 +260,43 @@ class Card:
             front_description=data["front_description"],
             back_description=data["back_description"],
             owner_id=data["owner_id"],
-            audio_path=AudioPath.from_dict(data["audio_path"]) if data.get("audio_path") else None,
+            audio_path=(
+                AudioPath.from_dict(data["audio_path"])
+                if data.get("audio_path")
+                else None
+            ),
             context=data.get("context", ""),
             tags=list(data.get("tags", [])),
             fsrs_state=data.get("fsrs_state", 1),
             fsrs_step=data.get("fsrs_step", 0),
             stability=data.get("stability"),
             difficulty=data.get("difficulty"),
-            due_at=datetime.fromisoformat(data["due_at"]) if data.get("due_at") else datetime.now(timezone.utc),
-            last_reviewed_at=datetime.fromisoformat(data["last_reviewed_at"]) if data.get("last_reviewed_at") else None,
+            due_at=(
+                datetime.fromisoformat(data["due_at"])
+                if data.get("due_at")
+                else datetime.now(timezone.utc)
+            ),
+            last_reviewed_at=(
+                datetime.fromisoformat(data["last_reviewed_at"])
+                if data.get("last_reviewed_at")
+                else None
+            ),
             deck_id=uuid.UUID(data["deck_id"]) if data.get("deck_id") else None,
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
             created_by=data.get("created_by"),
             updated_by=data.get("updated_by"),
-            deleted_at=datetime.fromisoformat(data["deleted_at"]) if data.get("deleted_at") else None
+            deleted_at=(
+                datetime.fromisoformat(data["deleted_at"])
+                if data.get("deleted_at")
+                else None
+            ),
         )
 
     def __str__(self) -> str:
-        return f"Card(id={self.id}, front='{self.front.value}', back='{self.back.value}')"
+        return (
+            f"Card(id={self.id}, front='{self.front.value}', back='{self.back.value}')"
+        )
 
     def __repr__(self) -> str:
         return f"Card(id={self.id}, front='{self.front.value}', back='{self.back.value}', deck_id={self.deck_id})"

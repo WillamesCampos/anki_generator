@@ -38,10 +38,10 @@ class Translation:
         normalized_value = self.value.strip()
 
         # Remove espaços múltiplos
-        normalized_value = re.sub(r'\s+', ' ', normalized_value)
+        normalized_value = re.sub(r"\s+", " ", normalized_value)
 
         # Define o valor normalizado
-        object.__setattr__(self, 'value', normalized_value)
+        object.__setattr__(self, "value", normalized_value)
 
     @property
     def normalized(self) -> str:
@@ -56,7 +56,7 @@ class Translation:
         Retorna uma lista das traduções individuais.
         Separa por vírgula e remove espaços extras.
         """
-        return [t.strip() for t in self.value.split(',') if t.strip()]
+        return [t.strip() for t in self.value.split(",") if t.strip()]
 
     @property
     def primary_translation(self) -> str:
@@ -114,11 +114,11 @@ class Translation:
             "translations_list": self.translations_list,
             "primary_translation": self.primary_translation,
             "alternative_translations": self.alternative_translations,
-            "translation_count": self.translation_count
+            "translation_count": self.translation_count,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Translation':
+    def from_dict(cls, data: dict) -> "Translation":
         """
         Cria um Translation a partir de um dicionário.
         """

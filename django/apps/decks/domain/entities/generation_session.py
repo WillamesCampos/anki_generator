@@ -23,11 +23,12 @@ class GenerationStatus(Enum):
     """
     Status possíveis de uma sessão de geração.
     """
-    PENDING = "pending"           # Sessão criada, aguardando processamento
-    IN_PROGRESS = "in_progress"   # Sessão sendo processada
-    COMPLETED = "completed"       # Sessão concluída com sucesso
-    FAILED = "failed"            # Sessão falhou
-    CANCELLED = "cancelled"       # Sessão cancelada
+
+    PENDING = "pending"  # Sessão criada, aguardando processamento
+    IN_PROGRESS = "in_progress"  # Sessão sendo processada
+    COMPLETED = "completed"  # Sessão concluída com sucesso
+    FAILED = "failed"  # Sessão falhou
+    CANCELLED = "cancelled"  # Sessão cancelada
 
 
 @dataclass
@@ -140,7 +141,11 @@ class GenerationSession:
         """
         Verifica se a sessão foi finalizada (concluída, falhou ou cancelada).
         """
-        return self.status in [GenerationStatus.COMPLETED, GenerationStatus.FAILED, GenerationStatus.CANCELLED]
+        return self.status in [
+            GenerationStatus.COMPLETED,
+            GenerationStatus.FAILED,
+            GenerationStatus.CANCELLED,
+        ]
 
     @property
     def can_add_cards(self) -> bool:
@@ -148,8 +153,8 @@ class GenerationSession:
         Verifica se ainda pode adicionar cards à sessão.
         """
         return (
-            self.status in [GenerationStatus.PENDING, GenerationStatus.IN_PROGRESS] and
-            self.cards_generated_count < self.max_cards
+            self.status in [GenerationStatus.PENDING, GenerationStatus.IN_PROGRESS]
+            and self.cards_generated_count < self.max_cards
         )
 
     def start_generation(self) -> None:
@@ -161,7 +166,9 @@ class GenerationSession:
         2. Atualiza status para IN_PROGRESS
         """
         if not self.is_pending:
-            raise DomainValidationError(f"Cannot start generation. Current status: {self.status.value}")
+            raise DomainValidationError(
+                f"Cannot start generation. Current status: {self.status.value}"
+            )
 
         self.status = GenerationStatus.IN_PROGRESS
         self.updated_at = datetime.now(timezone.utc)
@@ -176,7 +183,9 @@ class GenerationSession:
         3. Não pode exceder o máximo de cards
         """
         if not self.can_add_cards:
-            raise DomainValidationError(f"Cannot add card. Status: {self.status.value}, Cards: {self.cards_generated_count}/{self.max_cards}")
+            raise DomainValidationError(
+                f"Cannot add card. Status: {self.status.value}, Cards: {self.cards_generated_count}/{self.max_cards}"
+            )
 
         if card is None:
             raise DomainValidationError("Card cannot be None")
@@ -200,7 +209,9 @@ class GenerationSession:
         3. Atualiza timestamp de conclusão
         """
         if not self.is_in_progress:
-            raise DomainValidationError(f"Cannot complete generation. Current status: {self.status.value}")
+            raise DomainValidationError(
+                f"Cannot complete generation. Current status: {self.status.value}"
+            )
 
         if self.cards_generated_count == 0:
             raise DomainValidationError("Cannot complete generation without any cards")
@@ -217,7 +228,9 @@ class GenerationSession:
             error_message: Mensagem descritiva do erro
         """
         if self.is_finished:
-            raise DomainValidationError(f"Cannot fail generation. Current status: {self.status.value}")
+            raise DomainValidationError(
+                f"Cannot fail generation. Current status: {self.status.value}"
+            )
 
         self.status = GenerationStatus.FAILED
         self.error_message = error_message
@@ -229,7 +242,9 @@ class GenerationSession:
         Cancela a sessão de geração.
         """
         if self.is_finished:
-            raise DomainValidationError(f"Cannot cancel generation. Current status: {self.status.value}")
+            raise DomainValidationError(
+                f"Cannot cancel generation. Current status: {self.status.value}"
+            )
 
         self.status = GenerationStatus.CANCELLED
         self.completed_at = datetime.now(timezone.utc)
@@ -247,7 +262,8 @@ class GenerationSession:
         """
         front_normalized = front.lower().strip()
         return [
-            card for card in self.generated_cards
+            card
+            for card in self.generated_cards
             if card.front.normalized == front_normalized
         ]
 
@@ -282,14 +298,16 @@ class GenerationSession:
             "max_cards": self.max_cards,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "error_message": self.error_message,
             "cards_generated_count": self.cards_generated_count,
-            "is_finished": self.is_finished
+            "is_finished": self.is_finished,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'GenerationSession':
+    def from_dict(cls, data: dict) -> "GenerationSession":
         """
         Cria uma sessão a partir de um dicionário.
         """
@@ -301,8 +319,12 @@ class GenerationSession:
             max_cards=data.get("max_cards", 10),
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
-            completed_at=datetime.fromisoformat(data["completed_at"]) if data.get("completed_at") else None,
-            error_message=data.get("error_message")
+            completed_at=(
+                datetime.fromisoformat(data["completed_at"])
+                if data.get("completed_at")
+                else None
+            ),
+            error_message=data.get("error_message"),
         )
 
         # Adiciona os cards gerados

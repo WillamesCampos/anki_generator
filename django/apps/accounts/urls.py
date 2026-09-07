@@ -13,6 +13,8 @@ urlpatterns = [
     # segurança (verificação de e-mail, EMAIL_BACKEND) serem tomadas.
     path("login/", LoginView.as_view(), name="login"),
     path("google/", GoogleLoginView.as_view(), name="google-login"),
-    path("token/refresh/", TokenRefreshWithBlocklistView.as_view(), name="token-refresh"),
+    path(
+        "token/refresh/", TokenRefreshWithBlocklistView.as_view(), name="token-refresh"
+    ),
     path("logout/", LogoutView.as_view(), name="logout"),
 ]

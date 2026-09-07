@@ -26,6 +26,8 @@ def test_permission_via_group_works_with_custom_user():
 
 @pytest.mark.django_db
 def test_user_without_permission_is_denied():
-    user = User.objects.create_user(username="no_perm_user", email="no_perm_user@example.com")
+    user = User.objects.create_user(
+        username="no_perm_user", email="no_perm_user@example.com"
+    )
 
     assert not user.has_perm("auth.add_group")

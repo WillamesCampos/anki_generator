@@ -20,7 +20,9 @@ class ICategoryRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_id(self, category_id: uuid.UUID, owner_id: str) -> Optional[Category]:
+    async def find_by_id(
+        self, category_id: uuid.UUID, owner_id: str
+    ) -> Optional[Category]:
         pass
 
     @abstractmethod

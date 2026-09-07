@@ -55,10 +55,12 @@ class DeckRepository(IDeckRepository):
     async def find_by_id(self, deck_id: uuid.UUID, owner_id: str) -> Optional[Deck]:
         try:
             collection = await self._get_collection()
-            document = await collection.find_one({
-                "_id": uuid_to_object_id(deck_id),
-                **base_filter(owner_id),
-            })
+            document = await collection.find_one(
+                {
+                    "_id": uuid_to_object_id(deck_id),
+                    **base_filter(owner_id),
+                }
+            )
 
             if document is None:
                 return None
@@ -73,10 +75,12 @@ class DeckRepository(IDeckRepository):
         try:
             collection = await self._get_collection()
 
-            cursor = collection.find({
-                "title": {"$regex": title, "$options": "i"},
-                **base_filter(owner_id),
-            })
+            cursor = collection.find(
+                {
+                    "title": {"$regex": title, "$options": "i"},
+                    **base_filter(owner_id),
+                }
+            )
             documents = await cursor.to_list(length=None)
 
             return [Deck.from_dict(DeckSchema.from_document(doc)) for doc in documents]
@@ -84,7 +88,9 @@ class DeckRepository(IDeckRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find decks by title: {e}")
 
-    async def find_all(self, owner_id: str, skip: int = 0, limit: int = 100) -> List[Deck]:
+    async def find_all(
+        self, owner_id: str, skip: int = 0, limit: int = 100
+    ) -> List[Deck]:
         try:
             collection = await self._get_collection()
             cursor = (
@@ -109,7 +115,7 @@ class DeckRepository(IDeckRepository):
 
             result = await collection.replace_one(
                 {"_id": uuid_to_object_id(deck.id), **base_filter(deck.owner_id)},
-                document
+                document,
             )
 
             if result.matched_count == 0:
@@ -134,7 +140,10 @@ class DeckRepository(IDeckRepository):
             )
 
             if result.matched_count > 0:
-                from apps.decks.infrastructure.repositories.card_repository import CardRepository
+                from apps.decks.infrastructure.repositories.card_repository import (
+                    CardRepository,
+                )
+
                 card_repository = CardRepository()
                 await card_repository.delete_by_deck_id(deck_id, owner_id)
 
@@ -172,10 +181,12 @@ class DeckRepository(IDeckRepository):
     async def exists(self, deck_id: uuid.UUID, owner_id: str) -> bool:
         try:
             collection = await self._get_collection()
-            count = await collection.count_documents({
-                "_id": uuid_to_object_id(deck_id),
-                **base_filter(owner_id),
-            })
+            count = await collection.count_documents(
+                {
+                    "_id": uuid_to_object_id(deck_id),
+                    **base_filter(owner_id),
+                }
+            )
             return count > 0
 
         except Exception as e:
@@ -200,7 +211,9 @@ class DeckRepository(IDeckRepository):
         """Remove fisicamente decks com `deleted_at` anterior a `older_than` — não escopado por `owner_id` (job de manutenção varre todos os donos)."""
         try:
             collection = await self._get_collection()
-            result = await collection.delete_many({"deleted_at": {"$ne": None, "$lt": older_than}})
+            result = await collection.delete_many(
+                {"deleted_at": {"$ne": None, "$lt": older_than}}
+            )
             return result.deleted_count
 
         except Exception as e:

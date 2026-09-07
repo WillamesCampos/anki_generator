@@ -15,8 +15,12 @@ from apps.decks.domain.entities.deck import Deck
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
-from apps.decks.infrastructure.repositories.card_review_repository import CardReviewRepository
-from apps.decks.infrastructure.repositories.category_repository import CategoryRepository
+from apps.decks.infrastructure.repositories.card_review_repository import (
+    CardReviewRepository,
+)
+from apps.decks.infrastructure.repositories.category_repository import (
+    CategoryRepository,
+)
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 
 from .conftest import run_async
@@ -47,9 +51,13 @@ def test_deck_cross_tenant_access_is_blocked(owner_a, owner_b):
 def test_category_cross_tenant_access_is_blocked(owner_a, owner_b):
     owner_id_a, owner_id_b = str(owner_a.id), str(owner_b.id)
 
-    category = run_async(CategoryRepository().save(Category(name="Trabalho", owner_id=owner_id_a)))
+    category = run_async(
+        CategoryRepository().save(Category(name="Trabalho", owner_id=owner_id_a))
+    )
 
-    assert run_async(CategoryRepository().find_by_id(category.id, owner_id_a)) is not None
+    assert (
+        run_async(CategoryRepository().find_by_id(category.id, owner_id_a)) is not None
+    )
     assert run_async(CategoryRepository().find_by_id(category.id, owner_id_b)) is None
 
 
@@ -71,10 +79,16 @@ def test_card_review_cross_tenant_access_is_blocked(owner_a, owner_b):
 
     deck = run_async(DeckRepository().save(Deck(title="Deck A", owner_id=owner_id_a)))
     card = run_async(CardRepository().save(_build_card(owner_id_a, deck.id)))
-    run_async(CardReviewRepository().save(CardReview(card_id=card.id, owner_id=owner_id_a, rating="good")))
+    run_async(
+        CardReviewRepository().save(
+            CardReview(card_id=card.id, owner_id=owner_id_a, rating="good")
+        )
+    )
 
     own_reviews = run_async(CardReviewRepository().find_by_card_id(card.id, owner_id_a))
-    other_reviews = run_async(CardReviewRepository().find_by_card_id(card.id, owner_id_b))
+    other_reviews = run_async(
+        CardReviewRepository().find_by_card_id(card.id, owner_id_b)
+    )
 
     assert len(own_reviews) == 1
     assert other_reviews == []

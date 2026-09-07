@@ -87,7 +87,9 @@ class Deck:
             raise DomainValidationError("Deck title cannot be empty")
 
         if not (1 <= self.max_cards_per_generation <= 20):
-            raise DomainValidationError("Max cards per generation must be between 1 and 20")
+            raise DomainValidationError(
+                "Max cards per generation must be between 1 and 20"
+            )
 
         if self.description is None:
             self.description = ""
@@ -258,7 +260,9 @@ class Deck:
         Returns:
             True se pode adicionar, False caso contrário
         """
-        return self.card_count + count <= self.max_cards_per_generation * 10  # Limite razoável
+        return (
+            self.card_count + count <= self.max_cards_per_generation * 10
+        )  # Limite razoável
 
     def get_generation_batches(self) -> List[List[Card]]:
         """
@@ -269,7 +273,7 @@ class Deck:
         """
         batches = []
         for i in range(0, len(self.cards), self.max_cards_per_generation):
-            batch = self.cards[i:i + self.max_cards_per_generation]
+            batch = self.cards[i : i + self.max_cards_per_generation]
             batches.append(batch)
 
         return batches
@@ -345,11 +349,11 @@ class Deck:
             "deleted_at": self.deleted_at.isoformat() if self.deleted_at else None,
             "daily_review_goal": self.daily_review_goal,
             "card_count": self.card_count,
-            "is_empty": self.is_empty
+            "is_empty": self.is_empty,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Deck':
+    def from_dict(cls, data: dict) -> "Deck":
         """
         Cria um deck a partir de um dicionário.
         """
@@ -358,14 +362,20 @@ class Deck:
             title=data["title"],
             owner_id=data["owner_id"],
             description=data.get("description", ""),
-            category_id=uuid.UUID(data["category_id"]) if data.get("category_id") else None,
+            category_id=(
+                uuid.UUID(data["category_id"]) if data.get("category_id") else None
+            ),
             max_cards_per_generation=data.get("max_cards_per_generation", 10),
             created_at=datetime.fromisoformat(data["created_at"]),
             updated_at=datetime.fromisoformat(data["updated_at"]),
             created_by=data.get("created_by"),
             updated_by=data.get("updated_by"),
-            deleted_at=datetime.fromisoformat(data["deleted_at"]) if data.get("deleted_at") else None,
-            daily_review_goal=data.get("daily_review_goal")
+            deleted_at=(
+                datetime.fromisoformat(data["deleted_at"])
+                if data.get("deleted_at")
+                else None
+            ),
+            daily_review_goal=data.get("daily_review_goal"),
         )
 
         # Adiciona os cards

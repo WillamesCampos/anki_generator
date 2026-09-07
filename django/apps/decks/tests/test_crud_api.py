@@ -35,11 +35,15 @@ def test_deck_create_and_list(client_a):
 
 @pytest.mark.django_db
 def test_deck_update_and_delete(client_a):
-    response = client_a.post("/api/v1/decks/", {"title": "Deck Original"}, format="json")
+    response = client_a.post(
+        "/api/v1/decks/", {"title": "Deck Original"}, format="json"
+    )
     deck_id = response.data["id"]
 
     cache.clear()
-    response = client_a.patch(f"/api/v1/decks/{deck_id}/", {"title": "Deck Renomeado"}, format="json")
+    response = client_a.patch(
+        f"/api/v1/decks/{deck_id}/", {"title": "Deck Renomeado"}, format="json"
+    )
     assert response.status_code == 200
     assert response.data["title"] == "Deck Renomeado"
 
@@ -54,7 +58,9 @@ def test_deck_update_and_delete(client_a):
 
 @pytest.mark.django_db
 def test_category_create_and_delete(client_a):
-    response = client_a.post("/api/v1/categories/", {"name": "Programação"}, format="json")
+    response = client_a.post(
+        "/api/v1/categories/", {"name": "Programação"}, format="json"
+    )
     assert response.status_code == 201
     category_id = response.data["id"]
 
@@ -65,23 +71,31 @@ def test_category_create_and_delete(client_a):
 
 @pytest.mark.django_db
 def test_card_create_and_update(client_a):
-    response = client_a.post("/api/v1/decks/", {"title": "Deck de Cards"}, format="json")
+    response = client_a.post(
+        "/api/v1/decks/", {"title": "Deck de Cards"}, format="json"
+    )
     deck_id = response.data["id"]
 
     cache.clear()
-    response = client_a.post("/api/v1/cards/", {
-        "front": "server",
-        "back": "servidor",
-        "front_description": "The server crashed twice today.",
-        "back_description": "O servidor caiu duas vezes hoje.",
-        "deck_id": deck_id,
-    }, format="json")
+    response = client_a.post(
+        "/api/v1/cards/",
+        {
+            "front": "server",
+            "back": "servidor",
+            "front_description": "The server crashed twice today.",
+            "back_description": "O servidor caiu duas vezes hoje.",
+            "deck_id": deck_id,
+        },
+        format="json",
+    )
     assert response.status_code == 201
     assert response.data["front"] == "server"
     card_id = response.data["id"]
 
     cache.clear()
-    response = client_a.patch(f"/api/v1/cards/{card_id}/", {"context": "infra"}, format="json")
+    response = client_a.patch(
+        f"/api/v1/cards/{card_id}/", {"context": "infra"}, format="json"
+    )
     assert response.status_code == 200
     assert response.data["context"] == "infra"
 
@@ -92,13 +106,17 @@ def test_card_list_filtered_by_deck(client_a):
     deck_id = response.data["id"]
 
     cache.clear()
-    client_a.post("/api/v1/cards/", {
-        "front": "database",
-        "back": "banco de dados",
-        "front_description": "The database needs a backup soon.",
-        "back_description": "O banco de dados precisa de um backup em breve.",
-        "deck_id": deck_id,
-    }, format="json")
+    client_a.post(
+        "/api/v1/cards/",
+        {
+            "front": "database",
+            "back": "banco de dados",
+            "front_description": "The database needs a backup soon.",
+            "back_description": "O banco de dados precisa de um backup em breve.",
+            "deck_id": deck_id,
+        },
+        format="json",
+    )
 
     cache.clear()
     response = client_a.get(f"/api/v1/cards/?deck_id={deck_id}")
@@ -109,21 +127,36 @@ def test_card_list_filtered_by_deck(client_a):
 @pytest.mark.django_db
 def test_card_list_is_paginated_ten_at_a_time(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(DeckRepository().save(Deck(title="Deck paginado", owner_id=owner_id)))
+    deck = run_async(
+        DeckRepository().save(Deck(title="Deck paginado", owner_id=owner_id))
+    )
     fronts = [
-        "alpha", "bravo", "charlie", "delta", "echo", "foxtrot",
-        "golf", "hotel", "india", "juliet", "kilo",
+        "alpha",
+        "bravo",
+        "charlie",
+        "delta",
+        "echo",
+        "foxtrot",
+        "golf",
+        "hotel",
+        "india",
+        "juliet",
+        "kilo",
     ]
 
     for front in fronts:
-        run_async(CardRepository().save(Card(
-            front=Word(front),
-            back=Translation(f"tradução de {front}"),
-            front_description=f"Description for {front} card.",
-            back_description=f"Descrição suficientemente longa de {front}.",
-            owner_id=owner_id,
-            deck_id=deck.id,
-        )))
+        run_async(
+            CardRepository().save(
+                Card(
+                    front=Word(front),
+                    back=Translation(f"tradução de {front}"),
+                    front_description=f"Description for {front} card.",
+                    back_description=f"Descrição suficientemente longa de {front}.",
+                    owner_id=owner_id,
+                    deck_id=deck.id,
+                )
+            )
+        )
 
     first_page = client_a.get(f"/api/v1/cards/?deck_id={deck.id}&page=1")
     second_page = client_a.get(f"/api/v1/cards/?deck_id={deck.id}&page=2")

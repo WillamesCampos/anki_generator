@@ -15,8 +15,4 @@ from .word import Word
 from .translation import Translation
 from .audio_path import AudioPath
 
-__all__ = [
-    'Word',
-    'Translation',
-    'AudioPath'
-]
+__all__ = ["Word", "Translation", "AudioPath"]

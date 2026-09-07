@@ -14,7 +14,10 @@ import asyncio
 
 from apps.decks.domain.entities.card import Card
 from apps.decks.domain.entities.deck import Deck
-from apps.decks.domain.entities.generation_session import GenerationSession, GenerationStatus
+from apps.decks.domain.entities.generation_session import (
+    GenerationSession,
+    GenerationStatus,
+)
 from apps.decks.domain.value_objects.translation import Translation
 from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection

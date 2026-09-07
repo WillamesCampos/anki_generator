@@ -27,6 +27,7 @@ django-cors-headers = "^4.9.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.1.1"
 pytest-django = "^4.12.0"
+black = "^26.5.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -35,4 +36,13 @@ build-backend = "poetry.core.masonry.api"
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "core.settings.local"
 python_files = ["test_*.py", "*_test.py", "tests.py"]
+
+[tool.black]
+target-version = ["py313"]
+force-exclude = '''
+(
+    (^|/)manage\.py$
+    | /migrations/
+)
+'''
 

@@ -18,8 +18,12 @@ def test_for_user_returns_only_owned_records(widget_table):
     Widget.objects.create(owner=owner_a, name="a-widget")
     Widget.objects.create(owner=owner_b, name="b-widget")
 
-    assert list(Widget.objects.for_user(owner_a).values_list("name", flat=True)) == ["a-widget"]
-    assert list(Widget.objects.for_user(owner_b).values_list("name", flat=True)) == ["b-widget"]
+    assert list(Widget.objects.for_user(owner_a).values_list("name", flat=True)) == [
+        "a-widget"
+    ]
+    assert list(Widget.objects.for_user(owner_b).values_list("name", flat=True)) == [
+        "b-widget"
+    ]
 
 
 @pytest.mark.django_db(transaction=True)
