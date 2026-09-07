@@ -24,14 +24,14 @@ from ..exceptions import (
 )
 
 __all__ = [
-    'CardRepository',
-    'DeckRepository',
-    'CategoryRepository',
-    'CardReviewRepository',
-    'GenerationSessionRepository',
-    'RepositoryError',
-    'CardNotFoundError',
-    'DeckNotFoundError',
-    'CategoryNotFoundError',
-    'SessionNotFoundError'
+    "CardRepository",
+    "DeckRepository",
+    "CategoryRepository",
+    "CardReviewRepository",
+    "GenerationSessionRepository",
+    "RepositoryError",
+    "CardNotFoundError",
+    "DeckNotFoundError",
+    "CategoryNotFoundError",
+    "SessionNotFoundError",
 ]

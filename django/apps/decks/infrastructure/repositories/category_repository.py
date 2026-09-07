@@ -13,7 +13,11 @@ from apps.decks.domain.entities.category import Category
 from apps.decks.domain.repositories.icategory_repository import ICategoryRepository
 from apps.decks.infrastructure.exceptions import CategoryNotFoundError, RepositoryError
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
-from apps.decks.infrastructure.schemas import CategorySchema, base_filter, uuid_to_object_id
+from apps.decks.infrastructure.schemas import (
+    CategorySchema,
+    base_filter,
+    uuid_to_object_id,
+)
 
 
 class CategoryRepository(ICategoryRepository):
@@ -44,13 +48,17 @@ class CategoryRepository(ICategoryRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to save category: {e}")
 
-    async def find_by_id(self, category_id: uuid.UUID, owner_id: str) -> Optional[Category]:
+    async def find_by_id(
+        self, category_id: uuid.UUID, owner_id: str
+    ) -> Optional[Category]:
         try:
             collection = await self._get_collection()
-            document = await collection.find_one({
-                "_id": uuid_to_object_id(category_id),
-                **base_filter(owner_id),
-            })
+            document = await collection.find_one(
+                {
+                    "_id": uuid_to_object_id(category_id),
+                    **base_filter(owner_id),
+                }
+            )
 
             if document is None:
                 return None
@@ -66,7 +74,10 @@ class CategoryRepository(ICategoryRepository):
             cursor = collection.find(base_filter(owner_id)).sort("name", 1)
             documents = await cursor.to_list(length=None)
 
-            return [Category.from_dict(CategorySchema.from_document(doc)) for doc in documents]
+            return [
+                Category.from_dict(CategorySchema.from_document(doc))
+                for doc in documents
+            ]
 
         except Exception as e:
             raise RepositoryError(f"Failed to find categories: {e}")
@@ -78,8 +89,11 @@ class CategoryRepository(ICategoryRepository):
             document.pop("_id", None)
 
             result = await collection.replace_one(
-                {"_id": uuid_to_object_id(category.id), **base_filter(category.owner_id)},
-                document
+                {
+                    "_id": uuid_to_object_id(category.id),
+                    **base_filter(category.owner_id),
+                },
+                document,
             )
 
             if result.matched_count == 0:
@@ -104,7 +118,10 @@ class CategoryRepository(ICategoryRepository):
             )
 
             if result.matched_count > 0:
-                from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
+                from apps.decks.infrastructure.repositories.deck_repository import (
+                    DeckRepository,
+                )
+
                 deck_repository = DeckRepository()
                 await deck_repository.unlink_category(category_id, owner_id)
 
@@ -118,10 +135,12 @@ class CategoryRepository(ICategoryRepository):
     async def exists(self, category_id: uuid.UUID, owner_id: str) -> bool:
         try:
             collection = await self._get_collection()
-            count = await collection.count_documents({
-                "_id": uuid_to_object_id(category_id),
-                **base_filter(owner_id),
-            })
+            count = await collection.count_documents(
+                {
+                    "_id": uuid_to_object_id(category_id),
+                    **base_filter(owner_id),
+                }
+            )
             return count > 0
 
         except Exception as e:
@@ -131,7 +150,9 @@ class CategoryRepository(ICategoryRepository):
         """Remove fisicamente categorias com `deleted_at` anterior a `older_than` — não escopado por `owner_id` (job de manutenção varre todos os donos)."""
         try:
             collection = await self._get_collection()
-            result = await collection.delete_many({"deleted_at": {"$ne": None, "$lt": older_than}})
+            result = await collection.delete_many(
+                {"deleted_at": {"$ne": None, "$lt": older_than}}
+            )
             return result.deleted_count
 
         except Exception as e:

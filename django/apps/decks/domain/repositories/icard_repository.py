@@ -45,7 +45,9 @@ class ICardRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_similar_cards(self, front: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
+    async def find_similar_cards(
+        self, front: str, owner_id: str, similarity_threshold: float = 0.8
+    ) -> List[Card]:
         pass
 
     @abstractmethod
@@ -53,7 +55,9 @@ class ICardRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_due(self, owner_id: str, due_before: Optional[datetime] = None) -> List[Card]:
+    async def find_due(
+        self, owner_id: str, due_before: Optional[datetime] = None
+    ) -> List[Card]:
         """Cards devidos (`due_at <= due_before`, default agora) para um owner."""
         pass
 
@@ -85,7 +89,9 @@ class ICardRepository(ABC):
         pass
 
     @abstractmethod
-    async def exists_by_front(self, front: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
+    async def exists_by_front(
+        self, front: str, owner_id: str, deck_id: Optional[uuid.UUID] = None
+    ) -> bool:
         pass
 
     @abstractmethod

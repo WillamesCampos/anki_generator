@@ -63,7 +63,9 @@ class CardReview:
             raise DomainValidationError("card_id cannot be None")
 
         if self.rating not in VALID_RATINGS:
-            raise DomainValidationError(f"rating must be one of {sorted(VALID_RATINGS)}, got {self.rating!r}")
+            raise DomainValidationError(
+                f"rating must be one of {sorted(VALID_RATINGS)}, got {self.rating!r}"
+            )
 
     def to_dict(self) -> dict:
         return {
@@ -74,7 +76,9 @@ class CardReview:
             "reviewed_at": self.reviewed_at.isoformat(),
             "stability_after": self.stability_after,
             "difficulty_after": self.difficulty_after,
-            "due_at_after": self.due_at_after.isoformat() if self.due_at_after else None,
+            "due_at_after": (
+                self.due_at_after.isoformat() if self.due_at_after else None
+            ),
             "deck_id": str(self.deck_id) if self.deck_id else None,
             "created_by": self.created_by,
             "updated_by": self.updated_by,
@@ -90,7 +94,11 @@ class CardReview:
             reviewed_at=datetime.fromisoformat(data["reviewed_at"]),
             stability_after=data.get("stability_after"),
             difficulty_after=data.get("difficulty_after"),
-            due_at_after=datetime.fromisoformat(data["due_at_after"]) if data.get("due_at_after") else None,
+            due_at_after=(
+                datetime.fromisoformat(data["due_at_after"])
+                if data.get("due_at_after")
+                else None
+            ),
             deck_id=uuid.UUID(data["deck_id"]) if data.get("deck_id") else None,
             created_by=data.get("created_by"),
             updated_by=data.get("updated_by"),

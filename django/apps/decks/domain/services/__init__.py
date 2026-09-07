@@ -17,9 +17,9 @@ from .card_quality_service import CardQualityService, QualityReport, QualityLeve
 from . import scheduling_service
 
 __all__ = [
-    'DuplicateDetectionService',
-    'CardQualityService',
-    'QualityReport',
-    'QualityLevel',
-    'scheduling_service',
+    "DuplicateDetectionService",
+    "CardQualityService",
+    "QualityReport",
+    "QualityLevel",
+    "scheduling_service",
 ]

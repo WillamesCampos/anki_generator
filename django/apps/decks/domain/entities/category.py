@@ -86,7 +86,11 @@ class Category:
             updated_at=datetime.fromisoformat(data["updated_at"]),
             created_by=data.get("created_by"),
             updated_by=data.get("updated_by"),
-            deleted_at=datetime.fromisoformat(data["deleted_at"]) if data.get("deleted_at") else None,
+            deleted_at=(
+                datetime.fromisoformat(data["deleted_at"])
+                if data.get("deleted_at")
+                else None
+            ),
         )
 
     def __str__(self) -> str:

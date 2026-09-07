@@ -18,7 +18,10 @@ from typing import Optional, Dict, Any
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
-from apps.decks.infrastructure.exceptions import MongoConfigError, MongoNotConnectedError
+from apps.decks.infrastructure.exceptions import (
+    MongoConfigError,
+    MongoNotConnectedError,
+)
 from apps.decks.infrastructure.mongodb_config import get_mongodb_config, MongoDBConfig
 from apps.decks.infrastructure.schemas import IndexDefinitions
 
@@ -31,7 +34,7 @@ class MongoDBConnectionManager:
     de conexão em toda a aplicação.
     """
 
-    _instance: Optional['MongoDBConnectionManager'] = None
+    _instance: Optional["MongoDBConnectionManager"] = None
     _client: Optional[AsyncIOMotorClient] = None
     _database: Optional[AsyncIOMotorDatabase] = None
     _config: Optional[MongoDBConfig] = None
@@ -39,7 +42,7 @@ class MongoDBConnectionManager:
     _connect_lock: Optional[asyncio.Lock] = None
     _connect_lock_loop: Optional[asyncio.AbstractEventLoop] = None
 
-    def __new__(cls) -> 'MongoDBConnectionManager':
+    def __new__(cls) -> "MongoDBConnectionManager":
         """
         Implementa o padrão Singleton.
         """
@@ -51,7 +54,7 @@ class MongoDBConnectionManager:
         """
         Inicializa o gerenciador de conexão.
         """
-        if not hasattr(self, '_initialized'):
+        if not hasattr(self, "_initialized"):
             self._initialized = True
             self._config = get_mongodb_config()
 
@@ -81,7 +84,7 @@ class MongoDBConnectionManager:
             self._client = AsyncIOMotorClient(
                 host=connection_params.pop("host"),
                 port=connection_params.pop("port"),
-                **connection_params
+                **connection_params,
             )
 
             # Obtém referência do banco
@@ -96,7 +99,9 @@ class MongoDBConnectionManager:
             # Testa a conexão
             await self._test_connection()
 
-            print(f"✅ MongoDB conectado: {self._config.host}:{self._config.port}/{self._config.database}")
+            print(
+                f"✅ MongoDB conectado: {self._config.host}:{self._config.port}/{self._config.database}"
+            )
 
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             print(f"❌ Erro ao conectar MongoDB: {e}")
@@ -122,7 +127,7 @@ class MongoDBConnectionManager:
         """
         try:
             # Ping no servidor para testar conexão
-            await self._client.admin.command('ping')
+            await self._client.admin.command("ping")
         except Exception as e:
             raise ConnectionFailure(f"Failed to ping MongoDB server: {e}")
 
@@ -134,20 +139,17 @@ class MongoDBConnectionManager:
             Dicionário com informações de saúde
         """
         if not self.is_connected():
-            return {
-                "status": "disconnected",
-                "error": "Not connected to MongoDB"
-            }
+            return {"status": "disconnected", "error": "Not connected to MongoDB"}
 
         try:
             # Ping no servidor
-            ping_result = await self._client.admin.command('ping')
+            ping_result = await self._client.admin.command("ping")
 
             # Informações do servidor
             server_info = await self._client.server_info()
 
             # Estatísticas do banco
-            db_stats = await self._database.command('dbStats')
+            db_stats = await self._database.command("dbStats")
 
             return {
                 "status": "connected",
@@ -156,14 +158,11 @@ class MongoDBConnectionManager:
                 "database_name": self._config.database,
                 "collections_count": db_stats.get("collections", 0),
                 "data_size": db_stats.get("dataSize", 0),
-                "storage_size": db_stats.get("storageSize", 0)
+                "storage_size": db_stats.get("storageSize", 0),
             }
 
         except Exception as e:
-            return {
-                "status": "error",
-                "error": str(e)
-            }
+            return {"status": "error", "error": str(e)}
 
     def is_connected(self) -> bool:
         """
@@ -281,7 +280,7 @@ class MongoDBConnectionManager:
         if not self.is_connected():
             raise MongoNotConnectedError("MongoDB not connected. Call connect() first.")
 
-        db_stats = await self._database.command('dbStats')
+        db_stats = await self._database.command("dbStats")
 
         # Lista collections
         collections = await self._database.list_collection_names()
@@ -293,7 +292,7 @@ class MongoDBConnectionManager:
             "data_size_bytes": db_stats.get("dataSize", 0),
             "storage_size_bytes": db_stats.get("storageSize", 0),
             "indexes_count": db_stats.get("indexes", 0),
-            "objects_count": db_stats.get("objects", 0)
+            "objects_count": db_stats.get("objects", 0),
         }
 
 

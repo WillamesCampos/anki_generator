@@ -8,7 +8,9 @@ openspec/changes/sprint-5-fundacoes-transversais/specs/mongo-entity-audit-trail/
 import pytest
 
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
-from apps.decks.infrastructure.repositories.category_repository import CategoryRepository
+from apps.decks.infrastructure.repositories.category_repository import (
+    CategoryRepository,
+)
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 
 from .conftest import run_async
@@ -16,7 +18,9 @@ from .conftest import run_async
 
 @pytest.mark.django_db
 def test_deck_create_sets_created_by_and_updated_by(client_a, owner_a):
-    response = client_a.post("/api/v1/decks/", {"title": "Deck Auditado"}, format="json")
+    response = client_a.post(
+        "/api/v1/decks/", {"title": "Deck Auditado"}, format="json"
+    )
     deck_id = response.data["id"]
 
     deck = run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id)))
@@ -42,7 +46,9 @@ def test_deck_create_ignores_client_supplied_audit_fields(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_deck_update_refreshes_updated_by_keeps_created_by(client_a, owner_a):
-    create_response = client_a.post("/api/v1/decks/", {"title": "Original"}, format="json")
+    create_response = client_a.post(
+        "/api/v1/decks/", {"title": "Original"}, format="json"
+    )
     deck_id = create_response.data["id"]
 
     client_a.patch(f"/api/v1/decks/{deck_id}/", {"title": "Renomeado"}, format="json")
@@ -55,7 +61,9 @@ def test_deck_update_refreshes_updated_by_keeps_created_by(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_category_create_sets_created_by(client_a, owner_a):
-    response = client_a.post("/api/v1/categories/", {"name": "Programação"}, format="json")
+    response = client_a.post(
+        "/api/v1/categories/", {"name": "Programação"}, format="json"
+    )
     category_id = response.data["id"]
 
     category = run_async(CategoryRepository().find_by_id(category_id, str(owner_a.id)))
@@ -66,7 +74,9 @@ def test_category_create_sets_created_by(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_card_create_sets_created_by(client_a, owner_a):
-    deck_response = client_a.post("/api/v1/decks/", {"title": "Deck de Cards"}, format="json")
+    deck_response = client_a.post(
+        "/api/v1/decks/", {"title": "Deck de Cards"}, format="json"
+    )
     deck_id = deck_response.data["id"]
 
     card_response = client_a.post(
@@ -90,7 +100,9 @@ def test_card_create_sets_created_by(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_card_update_refreshes_updated_by(client_a, owner_a):
-    deck_response = client_a.post("/api/v1/decks/", {"title": "Deck de Cards"}, format="json")
+    deck_response = client_a.post(
+        "/api/v1/decks/", {"title": "Deck de Cards"}, format="json"
+    )
     deck_id = deck_response.data["id"]
 
     card_response = client_a.post(
@@ -116,7 +128,9 @@ def test_card_update_refreshes_updated_by(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_card_review_sets_created_by_and_updated_by(client_a, owner_a):
-    deck_response = client_a.post("/api/v1/decks/", {"title": "Deck de Revisão"}, format="json")
+    deck_response = client_a.post(
+        "/api/v1/decks/", {"title": "Deck de Revisão"}, format="json"
+    )
     deck_id = deck_response.data["id"]
 
     card_response = client_a.post(

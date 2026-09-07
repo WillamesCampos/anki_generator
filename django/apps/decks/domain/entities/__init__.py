@@ -18,10 +18,10 @@ from .card_review import CardReview
 from .generation_session import GenerationSession, GenerationStatus
 
 __all__ = [
-    'Card',
-    'Deck',
-    'Category',
-    'CardReview',
-    'GenerationSession',
-    'GenerationStatus'
+    "Card",
+    "Deck",
+    "Category",
+    "CardReview",
+    "GenerationSession",
+    "GenerationStatus",
 ]

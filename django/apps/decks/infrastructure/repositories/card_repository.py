@@ -76,10 +76,12 @@ class CardRepository(ICardRepository):
     async def find_by_id(self, card_id: uuid.UUID, owner_id: str) -> Optional[Card]:
         try:
             collection = await self._get_collection()
-            document = await collection.find_one({
-                "_id": uuid_to_object_id(card_id),
-                **base_filter(owner_id),
-            })
+            document = await collection.find_one(
+                {
+                    "_id": uuid_to_object_id(card_id),
+                    **base_filter(owner_id),
+                }
+            )
 
             if document is None:
                 return None
@@ -95,10 +97,12 @@ class CardRepository(ICardRepository):
             collection = await self._get_collection()
             front_normalized = front.lower().strip()
 
-            cursor = collection.find({
-                "front.normalized": front_normalized,
-                **base_filter(owner_id),
-            })
+            cursor = collection.find(
+                {
+                    "front.normalized": front_normalized,
+                    **base_filter(owner_id),
+                }
+            )
             documents = await cursor.to_list(length=None)
 
             return [Card.from_dict(CardSchema.from_document(doc)) for doc in documents]
@@ -109,10 +113,12 @@ class CardRepository(ICardRepository):
     async def find_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> List[Card]:
         try:
             collection = await self._get_collection()
-            cursor = collection.find({
-                "deck_id": uuid_to_object_id(deck_id),
-                **base_filter(owner_id),
-            })
+            cursor = collection.find(
+                {
+                    "deck_id": uuid_to_object_id(deck_id),
+                    **base_filter(owner_id),
+                }
+            )
             documents = await cursor.to_list(length=None)
 
             return [Card.from_dict(CardSchema.from_document(doc)) for doc in documents]
@@ -131,19 +137,28 @@ class CardRepository(ICardRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find cards by context: {e}")
 
-    async def find_similar_cards(self, front: str, owner_id: str, similarity_threshold: float = 0.8) -> List[Card]:
+    async def find_similar_cards(
+        self, front: str, owner_id: str, similarity_threshold: float = 0.8
+    ) -> List[Card]:
         try:
             collection = await self._get_collection()
             front_normalized = front.lower().strip()
             regex_pattern = f".*{front_normalized}.*"
 
-            cursor = collection.find({
-                **base_filter(owner_id),
-                "$or": [
-                    {"front.normalized": {"$regex": regex_pattern, "$options": "i"}},
-                    {"back.normalized": {"$regex": regex_pattern, "$options": "i"}}
-                ]
-            })
+            cursor = collection.find(
+                {
+                    **base_filter(owner_id),
+                    "$or": [
+                        {
+                            "front.normalized": {
+                                "$regex": regex_pattern,
+                                "$options": "i",
+                            }
+                        },
+                        {"back.normalized": {"$regex": regex_pattern, "$options": "i"}},
+                    ],
+                }
+            )
 
             documents = await cursor.to_list(length=None)
 
@@ -156,10 +171,12 @@ class CardRepository(ICardRepository):
         try:
             collection = await self._get_collection()
 
-            exact_matches = await collection.find({
-                "front.normalized": card.front.normalized,
-                **base_filter(owner_id),
-            }).to_list(length=None)
+            exact_matches = await collection.find(
+                {
+                    "front.normalized": card.front.normalized,
+                    **base_filter(owner_id),
+                }
+            ).to_list(length=None)
 
             cards = []
             for document in exact_matches:
@@ -171,15 +188,19 @@ class CardRepository(ICardRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find duplicates: {e}")
 
-    async def find_due(self, owner_id: str, due_before: Optional[datetime] = None) -> List[Card]:
+    async def find_due(
+        self, owner_id: str, due_before: Optional[datetime] = None
+    ) -> List[Card]:
         try:
             collection = await self._get_collection()
             due_before = due_before or datetime.now(timezone.utc)
 
-            cursor = collection.find({
-                **base_filter(owner_id),
-                "due_at": {"$lte": due_before},
-            }).sort("due_at", 1)
+            cursor = collection.find(
+                {
+                    **base_filter(owner_id),
+                    "due_at": {"$lte": due_before},
+                }
+            ).sort("due_at", 1)
             documents = await cursor.to_list(length=None)
 
             return [Card.from_dict(CardSchema.from_document(doc)) for doc in documents]
@@ -196,7 +217,7 @@ class CardRepository(ICardRepository):
 
             result = await collection.replace_one(
                 {"_id": uuid_to_object_id(card.id), **base_filter(card.owner_id)},
-                document
+                document,
             )
 
             if result.matched_count == 0:
@@ -252,10 +273,12 @@ class CardRepository(ICardRepository):
     async def count_by_deck_id(self, deck_id: uuid.UUID, owner_id: str) -> int:
         try:
             collection = await self._get_collection()
-            return await collection.count_documents({
-                "deck_id": uuid_to_object_id(deck_id),
-                **base_filter(owner_id),
-            })
+            return await collection.count_documents(
+                {
+                    "deck_id": uuid_to_object_id(deck_id),
+                    **base_filter(owner_id),
+                }
+            )
 
         except Exception as e:
             raise RepositoryError(f"Failed to count cards by deck ID: {e}")
@@ -263,16 +286,20 @@ class CardRepository(ICardRepository):
     async def exists(self, card_id: uuid.UUID, owner_id: str) -> bool:
         try:
             collection = await self._get_collection()
-            count = await collection.count_documents({
-                "_id": uuid_to_object_id(card_id),
-                **base_filter(owner_id),
-            })
+            count = await collection.count_documents(
+                {
+                    "_id": uuid_to_object_id(card_id),
+                    **base_filter(owner_id),
+                }
+            )
             return count > 0
 
         except Exception as e:
             raise RepositoryError(f"Failed to check if card exists: {e}")
 
-    async def exists_by_front(self, front: str, owner_id: str, deck_id: Optional[uuid.UUID] = None) -> bool:
+    async def exists_by_front(
+        self, front: str, owner_id: str, deck_id: Optional[uuid.UUID] = None
+    ) -> bool:
         try:
             collection = await self._get_collection()
             front_normalized = front.lower().strip()
@@ -291,7 +318,9 @@ class CardRepository(ICardRepository):
         """Remove fisicamente cards com `deleted_at` anterior a `older_than` — não escopado por `owner_id` (job de manutenção varre todos os donos)."""
         try:
             collection = await self._get_collection()
-            result = await collection.delete_many({"deleted_at": {"$ne": None, "$lt": older_than}})
+            result = await collection.delete_many(
+                {"deleted_at": {"$ne": None, "$lt": older_than}}
+            )
             return result.deleted_count
 
         except Exception as e:

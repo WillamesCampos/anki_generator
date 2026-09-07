@@ -31,7 +31,9 @@ class IDeckRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_all(self, owner_id: str, skip: int = 0, limit: int = 100) -> List[Deck]:
+    async def find_all(
+        self, owner_id: str, skip: int = 0, limit: int = 100
+    ) -> List[Deck]:
         pass
 
     @abstractmethod

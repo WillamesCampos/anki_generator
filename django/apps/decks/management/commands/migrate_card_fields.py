@@ -15,7 +15,9 @@ async def migrate_card_fields() -> int:
     indexes = await collection.list_indexes().to_list(length=None)
     for index in indexes:
         indexed_fields = index["key"].keys()
-        if any(field.split(".", 1)[0] in superseded_index_roots for field in indexed_fields):
+        if any(
+            field.split(".", 1)[0] in superseded_index_roots for field in indexed_fields
+        ):
             await collection.drop_index(index["name"])
 
     # A versão intermediária em português tem prioridade sobre o schema

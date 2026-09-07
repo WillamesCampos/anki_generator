@@ -33,7 +33,9 @@ def test_get_or_create_new_user_is_assigned_to_group():
 
 @pytest.mark.django_db
 def test_get_or_create_existing_user_is_not_duplicated_in_group():
-    user = User.objects.create_user(username="existing_user", email="existing_user@example.com")
+    user = User.objects.create_user(
+        username="existing_user", email="existing_user@example.com"
+    )
     assert user.groups.filter(name=STANDARD_USER_GROUP).count() == 1
 
     # Segunda chamada não cria (created=False) — não deve duplicar a

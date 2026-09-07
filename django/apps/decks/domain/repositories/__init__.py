@@ -19,9 +19,9 @@ from .icard_review_repository import ICardReviewRepository
 from .igeneration_session_repository import IGenerationSessionRepository
 
 __all__ = [
-    'ICardRepository',
-    'IDeckRepository',
-    'ICategoryRepository',
-    'ICardReviewRepository',
-    'IGenerationSessionRepository'
+    "ICardRepository",
+    "IDeckRepository",
+    "ICategoryRepository",
+    "ICardReviewRepository",
+    "IGenerationSessionRepository",
 ]

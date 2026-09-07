@@ -10,12 +10,16 @@ def test_email_is_required_and_unique():
 
     with pytest.raises(IntegrityError):
         with transaction.atomic():
-            User.objects.create_user(username="second", email="dup@example.com", password="x")
+            User.objects.create_user(
+                username="second", email="dup@example.com", password="x"
+            )
 
 
 @pytest.mark.django_db
 def test_user_authenticates_via_email():
-    user = User.objects.create_user(username="someone", email="someone@example.com", password="x")
+    user = User.objects.create_user(
+        username="someone", email="someone@example.com", password="x"
+    )
 
     assert User.USERNAME_FIELD == "email"
     assert User.objects.get(email="someone@example.com") == user

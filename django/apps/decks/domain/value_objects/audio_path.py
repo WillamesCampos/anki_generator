@@ -29,7 +29,7 @@ class AudioPath:
     path: str
 
     # Formatos de áudio suportados
-    SUPPORTED_FORMATS = {'.mp3', '.wav', '.ogg', '.m4a'}
+    SUPPORTED_FORMATS = {".mp3", ".wav", ".ogg", ".m4a"}
 
     def __post_init__(self):
         """
@@ -50,10 +50,12 @@ class AudioPath:
 
         # Verifica se a extensão é suportada
         if path_obj.suffix.lower() not in self.SUPPORTED_FORMATS:
-            raise DomainValidationError(f"Audio format {path_obj.suffix} is not supported. Supported formats: {self.SUPPORTED_FORMATS}")
+            raise DomainValidationError(
+                f"Audio format {path_obj.suffix} is not supported. Supported formats: {self.SUPPORTED_FORMATS}"
+            )
 
         # Define o caminho normalizado
-        object.__setattr__(self, 'path', str(path_obj))
+        object.__setattr__(self, "path", str(path_obj))
 
     @property
     def filename(self) -> str:
@@ -103,25 +105,25 @@ class AudioPath:
         """
         Verifica se o arquivo é MP3.
         """
-        return self.extension == '.mp3'
+        return self.extension == ".mp3"
 
     def is_wav(self) -> bool:
         """
         Verifica se o arquivo é WAV.
         """
-        return self.extension == '.wav'
+        return self.extension == ".wav"
 
     def is_ogg(self) -> bool:
         """
         Verifica se o arquivo é OGG.
         """
-        return self.extension == '.ogg'
+        return self.extension == ".ogg"
 
     def is_m4a(self) -> bool:
         """
         Verifica se o arquivo é M4A.
         """
-        return self.extension == '.m4a'
+        return self.extension == ".m4a"
 
     def to_anki_format(self) -> str:
         """
@@ -142,18 +144,18 @@ class AudioPath:
             "extension": self.extension,
             "stem": self.stem,
             "exists": self.exists,
-            "size_bytes": self.size_bytes
+            "size_bytes": self.size_bytes,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'AudioPath':
+    def from_dict(cls, data: dict) -> "AudioPath":
         """
         Cria um AudioPath a partir de um dicionário.
         """
         return cls(path=data["path"])
 
     @classmethod
-    def create_from_filename(cls, filename: str, directory: str = "") -> 'AudioPath':
+    def create_from_filename(cls, filename: str, directory: str = "") -> "AudioPath":
         """
         Cria um AudioPath a partir de um nome de arquivo e diretório.
 

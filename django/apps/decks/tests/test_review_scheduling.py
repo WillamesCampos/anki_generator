@@ -33,12 +33,16 @@ def _build_card(owner_id, deck_id, front="cache") -> Card:
 @pytest.mark.django_db
 def test_review_action_updates_schedule_and_creates_review(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(DeckRepository().save(Deck(title="Deck Review", owner_id=owner_id)))
+    deck = run_async(
+        DeckRepository().save(Deck(title="Deck Review", owner_id=owner_id))
+    )
     card = run_async(CardRepository().save(_build_card(owner_id, deck.id)))
 
     assert card.stability is None
 
-    response = client_a.post(f"/api/v1/cards/{card.id}/review/", {"rating": "good"}, format="json")
+    response = client_a.post(
+        f"/api/v1/cards/{card.id}/review/", {"rating": "good"}, format="json"
+    )
 
     assert response.status_code == 201
     assert response.data["rating"] == "good"
@@ -53,10 +57,16 @@ def test_review_action_updates_schedule_and_creates_review(client_a, owner_a):
 @pytest.mark.django_db
 def test_review_rejects_invalid_rating(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(DeckRepository().save(Deck(title="Deck Review 2", owner_id=owner_id)))
-    card = run_async(CardRepository().save(_build_card(owner_id, deck.id, front="token")))
+    deck = run_async(
+        DeckRepository().save(Deck(title="Deck Review 2", owner_id=owner_id))
+    )
+    card = run_async(
+        CardRepository().save(_build_card(owner_id, deck.id, front="token"))
+    )
 
-    response = client_a.post(f"/api/v1/cards/{card.id}/review/", {"rating": "excellent"}, format="json")
+    response = client_a.post(
+        f"/api/v1/cards/{card.id}/review/", {"rating": "excellent"}, format="json"
+    )
     assert response.status_code == 400
 
 
@@ -64,9 +74,13 @@ def test_review_rejects_invalid_rating(client_a, owner_a):
 def test_review_on_other_owner_card_returns_404(client_a, client_b, owner_b):
     owner_id_b = str(owner_b.id)
     deck = run_async(DeckRepository().save(Deck(title="Deck B", owner_id=owner_id_b)))
-    card = run_async(CardRepository().save(_build_card(owner_id_b, deck.id, front="secret")))
+    card = run_async(
+        CardRepository().save(_build_card(owner_id_b, deck.id, front="secret"))
+    )
 
-    response = client_a.post(f"/api/v1/cards/{card.id}/review/", {"rating": "good"}, format="json")
+    response = client_a.post(
+        f"/api/v1/cards/{card.id}/review/", {"rating": "good"}, format="json"
+    )
     assert response.status_code == 404
 
 

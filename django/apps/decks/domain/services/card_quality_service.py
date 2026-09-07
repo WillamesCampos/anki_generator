@@ -17,11 +17,12 @@ class QualityLevel(Enum):
     """
     Níveis de qualidade para um card.
     """
-    EXCELLENT = "excellent"    # Qualidade excelente
-    GOOD = "good"             # Qualidade boa
-    FAIR = "fair"             # Qualidade razoável
-    POOR = "poor"             # Qualidade ruim
-    INVALID = "invalid"       # Card inválido
+
+    EXCELLENT = "excellent"  # Qualidade excelente
+    GOOD = "good"  # Qualidade boa
+    FAIR = "fair"  # Qualidade razoável
+    POOR = "poor"  # Qualidade ruim
+    INVALID = "invalid"  # Card inválido
 
 
 @dataclass
@@ -29,6 +30,7 @@ class QualityReport:
     """
     Relatório de qualidade de um card.
     """
+
     card: Card
     overall_score: float
     quality_level: QualityLevel
@@ -63,7 +65,9 @@ class CardQualityService:
     EXAMPLE_WEIGHT = 0.4
     DIVERSITY_WEIGHT = 0.1
 
-    def evaluate_card(self, card: Card, context_cards: List[Card] = None) -> QualityReport:
+    def evaluate_card(
+        self, card: Card, context_cards: List[Card] = None
+    ) -> QualityReport:
         """
         Avalia a qualidade de um card.
 
@@ -79,16 +83,20 @@ class CardQualityService:
         metrics = {}
 
         # Avalia a palavra
-        word_score, word_issues, word_suggestions = self._evaluate_word(card.front.value)
+        word_score, word_issues, word_suggestions = self._evaluate_word(
+            card.front.value
+        )
         issues.extend(word_issues)
         suggestions.extend(word_suggestions)
-        metrics['word_score'] = word_score
+        metrics["word_score"] = word_score
 
         # Avalia a tradução
-        translation_score, translation_issues, translation_suggestions = self._evaluate_translation(card.back.value)
+        translation_score, translation_issues, translation_suggestions = (
+            self._evaluate_translation(card.back.value)
+        )
         issues.extend(translation_issues)
         suggestions.extend(translation_suggestions)
-        metrics['translation_score'] = translation_score
+        metrics["translation_score"] = translation_score
 
         # Avalia o exemplo
         example_score, example_issues, example_suggestions = self._evaluate_example(
@@ -97,20 +105,20 @@ class CardQualityService:
         )
         issues.extend(example_issues)
         suggestions.extend(example_suggestions)
-        metrics['example_score'] = example_score
+        metrics["example_score"] = example_score
 
         # Avalia diversidade (se há cards de contexto)
         diversity_score = 1.0
         if context_cards:
             diversity_score = self._evaluate_diversity(card, context_cards)
-        metrics['diversity_score'] = diversity_score
+        metrics["diversity_score"] = diversity_score
 
         # Calcula score geral
         overall_score = (
-            word_score * self.WORD_WEIGHT +
-            translation_score * self.TRANSLATION_WEIGHT +
-            example_score * self.EXAMPLE_WEIGHT +
-            diversity_score * self.DIVERSITY_WEIGHT
+            word_score * self.WORD_WEIGHT
+            + translation_score * self.TRANSLATION_WEIGHT
+            + example_score * self.EXAMPLE_WEIGHT
+            + diversity_score * self.DIVERSITY_WEIGHT
         )
 
         # Determina nível de qualidade
@@ -122,7 +130,7 @@ class CardQualityService:
             quality_level=quality_level,
             issues=issues,
             suggestions=suggestions,
-            metrics=metrics
+            metrics=metrics,
         )
 
     def _evaluate_word(self, word: str) -> Tuple[float, List[str], List[str]]:
@@ -150,12 +158,25 @@ class CardQualityService:
             score -= 0.2
 
         # Verifica se contém apenas letras e espaços
-        if not word.replace(' ', '').isalpha():
+        if not word.replace(" ", "").isalpha():
             issues.append("Palavra contém caracteres inválidos")
             score -= 0.4
 
         # Verifica se é muito comum (palavras muito básicas)
-        common_words = {'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'}
+        common_words = {
+            "the",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+        }
         if word.lower() in common_words:
             issues.append("Palavra muito comum, considere algo mais específico")
             suggestions.append("Use palavras mais específicas e úteis para aprendizado")
@@ -164,13 +185,17 @@ class CardQualityService:
         # Verifica se é uma palavra única (não frase muito longa)
         word_count = len(word.split())
         if word_count > 5:
-            issues.append("Frase muito longa, considere usar uma palavra ou frase mais curta")
+            issues.append(
+                "Frase muito longa, considere usar uma palavra ou frase mais curta"
+            )
             suggestions.append("Mantenha foco em uma palavra ou frase curta")
             score -= 0.3
 
         return max(0.0, min(1.0, score)), issues, suggestions
 
-    def _evaluate_translation(self, translation: str) -> Tuple[float, List[str], List[str]]:
+    def _evaluate_translation(
+        self, translation: str
+    ) -> Tuple[float, List[str], List[str]]:
         """
         Avalia a qualidade da tradução.
 
@@ -195,17 +220,24 @@ class CardQualityService:
             score -= 0.2
 
         # Verifica se contém apenas caracteres válidos
-        if not translation.replace(' ', '').replace(',', '').replace(';', '').replace('(', '').replace(')', '').isalpha():
+        if (
+            not translation.replace(" ", "")
+            .replace(",", "")
+            .replace(";", "")
+            .replace("(", "")
+            .replace(")", "")
+            .isalpha()
+        ):
             issues.append("Tradução contém caracteres inválidos")
             score -= 0.3
 
         # Verifica se tem múltiplas traduções (isso é bom)
-        if ',' in translation or ';' in translation:
+        if "," in translation or ";" in translation:
             score += 0.1
             suggestions.append("Boa! Múltiplas traduções aumentam o valor do card")
 
         # Verifica se é muito genérica
-        generic_translations = {'coisa', 'algo', 'item', 'objeto', 'elemento'}
+        generic_translations = {"coisa", "algo", "item", "objeto", "elemento"}
         if any(gen in translation.lower() for gen in generic_translations):
             issues.append("Tradução muito genérica")
             suggestions.append("Use traduções mais específicas e precisas")
@@ -213,7 +245,9 @@ class CardQualityService:
 
         return max(0.0, min(1.0, score)), issues, suggestions
 
-    def _evaluate_example(self, original: str, translated: str) -> Tuple[float, List[str], List[str]]:
+    def _evaluate_example(
+        self, original: str, translated: str
+    ) -> Tuple[float, List[str], List[str]]:
         """
         Avalia a qualidade do exemplo.
 
@@ -241,12 +275,18 @@ class CardQualityService:
 
         # Verifica comprimento da tradução
         if translated_length < self.MIN_EXAMPLE_LENGTH:
-            issues.append(f"Tradução do exemplo muito curta ({translated_length} caracteres)")
+            issues.append(
+                f"Tradução do exemplo muito curta ({translated_length} caracteres)"
+            )
             score -= 0.3
 
         # Verifica se o exemplo é muito genérico
         generic_examples = [
-            "this is a", "that is a", "it is a", "here is a", "there is a"
+            "this is a",
+            "that is a",
+            "it is a",
+            "here is a",
+            "there is a",
         ]
         if any(gen in original.lower() for gen in generic_examples):
             issues.append("Exemplo muito genérico")
@@ -329,7 +369,7 @@ class CardQualityService:
 
         for i, card in enumerate(cards):
             # Usa os outros cards como contexto
-            context_cards = cards[:i] + cards[i+1:]
+            context_cards = cards[:i] + cards[i + 1 :]
             report = self.evaluate_card(card, context_cards)
             reports.append(report)
 
@@ -353,14 +393,17 @@ class CardQualityService:
 
         quality_levels = {}
         for level in QualityLevel:
-            quality_levels[level.value] = len([r for r in reports if r.quality_level == level])
+            quality_levels[level.value] = len(
+                [r for r in reports if r.quality_level == level]
+            )
 
         return {
-            'total_cards': total_cards,
-            'average_score': sum(scores) / len(scores),
-            'min_score': min(scores),
-            'max_score': max(scores),
-            'quality_distribution': quality_levels,
-            'cards_with_issues': len([r for r in reports if r.issues]),
-            'average_issues_per_card': sum(len(r.issues) for r in reports) / total_cards
+            "total_cards": total_cards,
+            "average_score": sum(scores) / len(scores),
+            "min_score": min(scores),
+            "max_score": max(scores),
+            "quality_distribution": quality_levels,
+            "cards_with_issues": len([r for r in reports if r.issues]),
+            "average_issues_per_card": sum(len(r.issues) for r in reports)
+            / total_cards,
         }

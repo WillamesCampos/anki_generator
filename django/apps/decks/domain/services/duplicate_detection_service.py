@@ -34,7 +34,9 @@ class DuplicateDetectionService:
         """
         self.card_repository = card_repository
 
-    async def find_duplicates_for_card(self, card: Card, similarity_threshold: float = 0.8) -> List[Tuple[Card, float]]:
+    async def find_duplicates_for_card(
+        self, card: Card, similarity_threshold: float = 0.8
+    ) -> List[Tuple[Card, float]]:
         """
         Busca cards duplicados ou similares para um card específico, dentro
         do mesmo owner (isolamento multi-tenant — card.owner_id já identifica
@@ -51,7 +53,9 @@ class DuplicateDetectionService:
 
         # Busca cards existentes no mesmo deck
         if card.deck_id:
-            existing_cards = await self.card_repository.find_by_deck_id(card.deck_id, card.owner_id)
+            existing_cards = await self.card_repository.find_by_deck_id(
+                card.deck_id, card.owner_id
+            )
         else:
             # Se não tem deck_id, busca todos os cards do mesmo owner
             existing_cards = await self._get_all_cards(card.owner_id)
@@ -71,7 +75,9 @@ class DuplicateDetectionService:
 
         return duplicates
 
-    async def find_exact_duplicates(self, front: str, owner_id: str, deck_id: str = None) -> List[Card]:
+    async def find_exact_duplicates(
+        self, front: str, owner_id: str, deck_id: str = None
+    ) -> List[Card]:
         """
         Busca duplicatas exatas de uma palavra, dentro do owner especificado.
 
@@ -85,7 +91,9 @@ class DuplicateDetectionService:
         """
         return await self.card_repository.find_by_front(front, owner_id)
 
-    async def find_similar_fronts(self, front: str, owner_id: str, similarity_threshold: float = 0.7) -> List[Tuple[Card, float]]:
+    async def find_similar_fronts(
+        self, front: str, owner_id: str, similarity_threshold: float = 0.7
+    ) -> List[Tuple[Card, float]]:
         """
         Busca palavras similares usando algoritmos de similaridade, dentro
         do owner especificado.
@@ -107,7 +115,9 @@ class DuplicateDetectionService:
             card_front_normalized = card.front.normalized
 
             # Calcula similaridade usando difflib
-            similarity = SequenceMatcher(None, front_normalized, card_front_normalized).ratio()
+            similarity = SequenceMatcher(
+                None, front_normalized, card_front_normalized
+            ).ratio()
 
             if similarity >= similarity_threshold:
                 similar_cards.append((card, similarity))
@@ -135,16 +145,12 @@ class DuplicateDetectionService:
         """
         # Similaridade da palavra
         front_similarity = SequenceMatcher(
-            None,
-            card1.front.normalized,
-            card2.front.normalized
+            None, card1.front.normalized, card2.front.normalized
         ).ratio()
 
         # Similaridade da tradução
         back_similarity = SequenceMatcher(
-            None,
-            card1.back.normalized,
-            card2.back.normalized
+            None, card1.back.normalized, card2.back.normalized
         ).ratio()
 
         # Similaridade do exemplo
@@ -156,9 +162,9 @@ class DuplicateDetectionService:
 
         # Calcula score ponderado
         weighted_score = (
-            front_similarity * 0.6 +
-            back_similarity * 0.3 +
-            description_similarity * 0.1
+            front_similarity * 0.6
+            + back_similarity * 0.3
+            + description_similarity * 0.1
         )
 
         return weighted_score
@@ -180,10 +186,10 @@ class DuplicateDetectionService:
         normalized = text.lower()
 
         # Remove pontuação
-        normalized = re.sub(r'[^\w\s]', '', normalized)
+        normalized = re.sub(r"[^\w\s]", "", normalized)
 
         # Remove espaços múltiplos
-        normalized = re.sub(r'\s+', ' ', normalized)
+        normalized = re.sub(r"\s+", " ", normalized)
 
         return normalized.strip()
 
@@ -222,13 +228,13 @@ class DuplicateDetectionService:
         # Se é uma palavra simples, sugere variações
         if len(front.split()) == 1:
             # Adiciona sufixos comuns
-            suffixes = ['ing', 'ed', 's', 'ly']
+            suffixes = ["ing", "ed", "s", "ly"]
             for suffix in suffixes:
                 if not front.endswith(suffix):
                     suggestions.append(f"{front}{suffix}")
 
             # Adiciona prefixos comuns
-            prefixes = ['un', 're', 'pre', 'mis']
+            prefixes = ["un", "re", "pre", "mis"]
             for prefix in prefixes:
                 if not front.startswith(prefix):
                     suggestions.append(f"{prefix}{front}")
@@ -260,7 +266,9 @@ class DuplicateDetectionService:
         # sem deck_id hoje.
         return []
 
-    def validate_card_uniqueness(self, card: Card, existing_cards: List[Card]) -> Tuple[bool, List[str]]:
+    def validate_card_uniqueness(
+        self, card: Card, existing_cards: List[Card]
+    ) -> Tuple[bool, List[str]]:
         """
         Valida se um card é único comparado com cards existentes.
 
@@ -276,13 +284,17 @@ class DuplicateDetectionService:
         for existing_card in existing_cards:
             # Verifica duplicata exata
             if card.front.normalized == existing_card.front.normalized:
-                problems.append(f"Frente '{card.front.value}' já existe no card {existing_card.id}")
+                problems.append(
+                    f"Frente '{card.front.value}' já existe no card {existing_card.id}"
+                )
                 continue
 
             # Verifica similaridade alta
             similarity = self._calculate_similarity(card, existing_card)
             if similarity > 0.9:
-                problems.append(f"Card muito similar (similaridade: {similarity:.2f}) ao card {existing_card.id}")
+                problems.append(
+                    f"Card muito similar (similaridade: {similarity:.2f}) ao card {existing_card.id}"
+                )
 
             # Verifica traduções muito similares
             if self.are_backs_similar(card.back.value, existing_card.back.value):

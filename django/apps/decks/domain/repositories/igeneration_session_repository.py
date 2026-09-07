@@ -35,7 +35,9 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_id(self, session_id: uuid.UUID, owner_id: str) -> Optional[GenerationSession]:
+    async def find_by_id(
+        self, session_id: uuid.UUID, owner_id: str
+    ) -> Optional[GenerationSession]:
         """
         Busca uma sessão pelo ID. `owner_id` é repassado ao `CardRepository`
         ao carregar `generated_cards` — desde a Sprint 2, todo acesso a
@@ -104,7 +106,9 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_active_sessions(self, deck_id: Optional[uuid.UUID] = None) -> List[GenerationSession]:
+    async def find_active_sessions(
+        self, deck_id: Optional[uuid.UUID] = None
+    ) -> List[GenerationSession]:
         """
         Busca sessões ativas (não finalizadas).
 
@@ -120,7 +124,9 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_finished_sessions(self, deck_id: Optional[uuid.UUID] = None) -> List[GenerationSession]:
+    async def find_finished_sessions(
+        self, deck_id: Optional[uuid.UUID] = None
+    ) -> List[GenerationSession]:
         """
         Busca sessões finalizadas (concluídas, falhadas ou canceladas).
 
@@ -136,7 +142,9 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_recent_sessions(self, limit: int = 10, deck_id: Optional[uuid.UUID] = None) -> List[GenerationSession]:
+    async def find_recent_sessions(
+        self, limit: int = 10, deck_id: Optional[uuid.UUID] = None
+    ) -> List[GenerationSession]:
         """
         Busca as sessões mais recentes.
 

@@ -13,8 +13,13 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pymongo.errors import DuplicateKeyError, OperationFailure
 from bson import ObjectId
 
-from apps.decks.domain.entities.generation_session import GenerationSession, GenerationStatus
-from apps.decks.domain.repositories.igeneration_session_repository import IGenerationSessionRepository
+from apps.decks.domain.entities.generation_session import (
+    GenerationSession,
+    GenerationStatus,
+)
+from apps.decks.domain.repositories.igeneration_session_repository import (
+    IGenerationSessionRepository,
+)
 from apps.decks.infrastructure.exceptions import RepositoryError, SessionNotFoundError
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
 from apps.decks.infrastructure.schemas import GenerationSessionSchema, uuid_to_object_id
@@ -84,7 +89,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to save session: {e}")
 
-    async def find_by_id(self, session_id: uuid.UUID, owner_id: str) -> Optional[GenerationSession]:
+    async def find_by_id(
+        self, session_id: uuid.UUID, owner_id: str
+    ) -> Optional[GenerationSession]:
         """
         Busca uma sessão pelo ID.
 
@@ -110,7 +117,10 @@ class GenerationSessionRepository(IGenerationSessionRepository):
             session = GenerationSession.from_dict(session_data)
 
             # Carrega os cards gerados da sessão
-            from apps.decks.infrastructure.repositories.card_repository import CardRepository
+            from apps.decks.infrastructure.repositories.card_repository import (
+                CardRepository,
+            )
+
             card_repository = CardRepository()
             cards = await card_repository.find_by_deck_id(session.deck_id, owner_id)
             session.generated_cards = cards
@@ -135,7 +145,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         """
         try:
             collection = await self._get_collection()
-            cursor = collection.find({"deck_id": uuid_to_object_id(deck_id)}).sort("created_at", -1)
+            cursor = collection.find({"deck_id": uuid_to_object_id(deck_id)}).sort(
+                "created_at", -1
+            )
             documents = await cursor.to_list(length=None)
 
             sessions = []
@@ -207,7 +219,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find sessions by context: {e}")
 
-    async def find_active_sessions(self, deck_id: Optional[uuid.UUID] = None) -> List[GenerationSession]:
+    async def find_active_sessions(
+        self, deck_id: Optional[uuid.UUID] = None
+    ) -> List[GenerationSession]:
         """
         Busca sessões ativas (não finalizadas).
 
@@ -225,7 +239,7 @@ class GenerationSessionRepository(IGenerationSessionRepository):
 
             active_statuses = [
                 GenerationStatus.PENDING.value,
-                GenerationStatus.IN_PROGRESS.value
+                GenerationStatus.IN_PROGRESS.value,
             ]
 
             query = {"status": {"$in": active_statuses}}
@@ -246,7 +260,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find active sessions: {e}")
 
-    async def find_finished_sessions(self, deck_id: Optional[uuid.UUID] = None) -> List[GenerationSession]:
+    async def find_finished_sessions(
+        self, deck_id: Optional[uuid.UUID] = None
+    ) -> List[GenerationSession]:
         """
         Busca sessões finalizadas (concluídas, falhadas ou canceladas).
 
@@ -265,7 +281,7 @@ class GenerationSessionRepository(IGenerationSessionRepository):
             finished_statuses = [
                 GenerationStatus.COMPLETED.value,
                 GenerationStatus.FAILED.value,
-                GenerationStatus.CANCELLED.value
+                GenerationStatus.CANCELLED.value,
             ]
 
             query = {"status": {"$in": finished_statuses}}
@@ -286,7 +302,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find finished sessions: {e}")
 
-    async def find_recent_sessions(self, limit: int = 10, deck_id: Optional[uuid.UUID] = None) -> List[GenerationSession]:
+    async def find_recent_sessions(
+        self, limit: int = 10, deck_id: Optional[uuid.UUID] = None
+    ) -> List[GenerationSession]:
         """
         Busca as sessões mais recentes.
 
@@ -344,8 +362,7 @@ class GenerationSessionRepository(IGenerationSessionRepository):
             document.pop("_id", None)
 
             result = await collection.replace_one(
-                {"_id": uuid_to_object_id(session.id)},
-                document
+                {"_id": uuid_to_object_id(session.id)}, document
             )
 
             if result.matched_count == 0:
@@ -395,7 +412,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         """
         try:
             collection = await self._get_collection()
-            result = await collection.delete_many({"deck_id": uuid_to_object_id(deck_id)})
+            result = await collection.delete_many(
+                {"deck_id": uuid_to_object_id(deck_id)}
+            )
 
             return result.deleted_count
 
@@ -434,7 +453,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         """
         try:
             collection = await self._get_collection()
-            return await collection.count_documents({"deck_id": uuid_to_object_id(deck_id)})
+            return await collection.count_documents(
+                {"deck_id": uuid_to_object_id(deck_id)}
+            )
 
         except Exception as e:
             raise RepositoryError(f"Failed to count sessions by deck ID: {e}")
@@ -474,7 +495,9 @@ class GenerationSessionRepository(IGenerationSessionRepository):
         """
         try:
             collection = await self._get_collection()
-            count = await collection.count_documents({"_id": uuid_to_object_id(session_id)})
+            count = await collection.count_documents(
+                {"_id": uuid_to_object_id(session_id)}
+            )
             return count > 0
 
         except Exception as e:
@@ -500,16 +523,18 @@ class GenerationSessionRepository(IGenerationSessionRepository):
             cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_old)
 
             # Remove sessões antigas que estão finalizadas
-            result = await collection.delete_many({
-                "created_at": {"$lt": cutoff_date},
-                "status": {
-                    "$in": [
-                        GenerationStatus.COMPLETED.value,
-                        GenerationStatus.FAILED.value,
-                        GenerationStatus.CANCELLED.value
-                    ]
+            result = await collection.delete_many(
+                {
+                    "created_at": {"$lt": cutoff_date},
+                    "status": {
+                        "$in": [
+                            GenerationStatus.COMPLETED.value,
+                            GenerationStatus.FAILED.value,
+                            GenerationStatus.CANCELLED.value,
+                        ]
+                    },
                 }
-            })
+            )
 
             return result.deleted_count
 

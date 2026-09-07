@@ -23,7 +23,13 @@ from apps.accounts.models import User
 from apps.decks.infrastructure.mongodb_connection import ensure_mongodb_connection
 from apps.decks.infrastructure.schemas import uuid_to_object_id
 
-SEEDED_COLLECTIONS = ("cards", "decks", "categories", "card_reviews", "generation_sessions")
+SEEDED_COLLECTIONS = (
+    "cards",
+    "decks",
+    "categories",
+    "card_reviews",
+    "generation_sessions",
+)
 
 
 def run_async(coro):
@@ -54,7 +60,9 @@ def read_raw_document(collection_name: str, entity_id):
 async def _backdate_deleted_at(collection_name: str, entity_id, when):
     manager = await ensure_mongodb_connection()
     collection = await manager.get_collection(collection_name)
-    await collection.update_one({"_id": uuid_to_object_id(entity_id)}, {"$set": {"deleted_at": when}})
+    await collection.update_one(
+        {"_id": uuid_to_object_id(entity_id)}, {"$set": {"deleted_at": when}}
+    )
 
 
 def backdate_deleted_at(collection_name: str, entity_id, when):
@@ -83,12 +91,16 @@ def _clear_cache():
 
 @pytest.fixture
 def owner_a(db):
-    return User.objects.create_user(username="deck_owner_a", email="deck_owner_a@example.com")
+    return User.objects.create_user(
+        username="deck_owner_a", email="deck_owner_a@example.com"
+    )
 
 
 @pytest.fixture
 def owner_b(db):
-    return User.objects.create_user(username="deck_owner_b", email="deck_owner_b@example.com")
+    return User.objects.create_user(
+        username="deck_owner_b", email="deck_owner_b@example.com"
+    )
 
 
 def api_client_for(user: User) -> APIClient:

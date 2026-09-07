@@ -44,16 +44,23 @@ class CardReviewRepository(ICardReviewRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to save card review: {e}")
 
-    async def find_by_card_id(self, card_id: uuid.UUID, owner_id: str) -> List[CardReview]:
+    async def find_by_card_id(
+        self, card_id: uuid.UUID, owner_id: str
+    ) -> List[CardReview]:
         try:
             collection = await self._get_collection()
-            cursor = collection.find({
-                "card_id": uuid_to_object_id(card_id),
-                "owner_id": owner_id,
-            }).sort("reviewed_at", -1)
+            cursor = collection.find(
+                {
+                    "card_id": uuid_to_object_id(card_id),
+                    "owner_id": owner_id,
+                }
+            ).sort("reviewed_at", -1)
             documents = await cursor.to_list(length=None)
 
-            return [CardReview.from_dict(CardReviewSchema.from_document(doc)) for doc in documents]
+            return [
+                CardReview.from_dict(CardReviewSchema.from_document(doc))
+                for doc in documents
+            ]
 
         except Exception as e:
             raise RepositoryError(f"Failed to find reviews by card ID: {e}")
@@ -61,15 +68,24 @@ class CardReviewRepository(ICardReviewRepository):
     async def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
         try:
             collection = await self._get_collection()
-            cursor = collection.find({"owner_id": owner_id}).sort("reviewed_at", -1).limit(limit)
+            cursor = (
+                collection.find({"owner_id": owner_id})
+                .sort("reviewed_at", -1)
+                .limit(limit)
+            )
             documents = await cursor.to_list(length=None)
 
-            return [CardReview.from_dict(CardReviewSchema.from_document(doc)) for doc in documents]
+            return [
+                CardReview.from_dict(CardReviewSchema.from_document(doc))
+                for doc in documents
+            ]
 
         except Exception as e:
             raise RepositoryError(f"Failed to find reviews by owner: {e}")
 
-    async def get_deck_statistics(self, owner_id: str, deck_id: uuid.UUID) -> Dict[str, Any]:
+    async def get_deck_statistics(
+        self, owner_id: str, deck_id: uuid.UUID
+    ) -> Dict[str, Any]:
         """Agrega avaliações do histórico ativo sem materializar CardReview.
 
         O ``$lookup`` restringe a agregação aos cards ainda ativos do mesmo

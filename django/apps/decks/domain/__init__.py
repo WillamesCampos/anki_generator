@@ -16,13 +16,12 @@ from .value_objects import Word, Translation, AudioPath
 
 __all__ = [
     # Entidades
-    'Card',
-    'Deck',
-    'GenerationSession',
-    'GenerationStatus',
-
+    "Card",
+    "Deck",
+    "GenerationSession",
+    "GenerationStatus",
     # Value Objects
-    'Word',
-    'Translation',
-    'AudioPath'
+    "Word",
+    "Translation",
+    "AudioPath",
 ]

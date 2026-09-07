@@ -49,7 +49,9 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         category_id = uuid.UUID(self.kwargs["category_id"])
-        category = async_to_sync(CategoryRepository().find_by_id)(category_id, _owner_id(self.request))
+        category = async_to_sync(CategoryRepository().find_by_id)(
+            category_id, _owner_id(self.request)
+        )
         if category is None:
             raise NotFound()
         return category
@@ -72,7 +74,9 @@ class DeckDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         deck_id = uuid.UUID(self.kwargs["deck_id"])
-        deck = async_to_sync(DeckRepository().find_by_id)(deck_id, _owner_id(self.request))
+        deck = async_to_sync(DeckRepository().find_by_id)(
+            deck_id, _owner_id(self.request)
+        )
         if deck is None:
             raise NotFound()
         return deck
@@ -104,15 +108,15 @@ class DeckStatisticsView(APIView):
         goal = deck.daily_review_goal
         reviewed_today = statistics["reviewed_today"]
         progress = (
-            min(100, round((reviewed_today / goal) * 100))
-            if goal is not None
-            else None
+            min(100, round((reviewed_today / goal) * 100)) if goal is not None else None
         )
-        return Response({
-            **statistics,
-            "daily_review_goal": goal,
-            "goal_progress_percentage": progress,
-        })
+        return Response(
+            {
+                **statistics,
+                "daily_review_goal": goal,
+                "goal_progress_percentage": progress,
+            }
+        )
 
 
 class CardPageNumberPagination(PageNumberPagination):
@@ -166,7 +170,9 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         card_id = uuid.UUID(self.kwargs["card_id"])
-        card = async_to_sync(CardRepository().find_by_id)(card_id, _owner_id(self.request))
+        card = async_to_sync(CardRepository().find_by_id)(
+            card_id, _owner_id(self.request)
+        )
         if card is None:
             raise NotFound()
         return card
@@ -213,7 +219,9 @@ class CardReviewView(APIView):
         )
         async_to_sync(CardReviewRepository().save)(review)
 
-        return Response(CardReviewSerializer(review).data, status=status.HTTP_201_CREATED)
+        return Response(
+            CardReviewSerializer(review).data, status=status.HTTP_201_CREATED
+        )
 
 
 class CardReviewListView(generics.ListAPIView):
@@ -228,4 +236,6 @@ class CardReviewListView(generics.ListAPIView):
     permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
-        return async_to_sync(CardReviewRepository().find_by_owner)(_owner_id(self.request))
+        return async_to_sync(CardReviewRepository().find_by_owner)(
+            _owner_id(self.request)
+        )

@@ -25,14 +25,18 @@ _RATING_MAP = {
 }
 
 
-def review_card(card: Card, rating: str, reviewed_at: Optional[datetime] = None) -> Card:
+def review_card(
+    card: Card, rating: str, reviewed_at: Optional[datetime] = None
+) -> Card:
     """
     Aplica uma revisão ao card, recalculando seus campos de agendamento FSRS
     em memória (não persiste — quem chama decide quando salvar via
     repositório).
     """
     if rating not in _RATING_MAP:
-        raise DomainValidationError(f"Invalid rating: {rating!r}. Must be one of {sorted(_RATING_MAP)}")
+        raise DomainValidationError(
+            f"Invalid rating: {rating!r}. Must be one of {sorted(_RATING_MAP)}"
+        )
 
     reviewed_at = reviewed_at or datetime.now(timezone.utc)
 

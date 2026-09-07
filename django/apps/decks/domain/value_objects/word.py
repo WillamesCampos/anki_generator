@@ -44,14 +44,16 @@ class Word:
         normalized_value = self.value.strip()
 
         # Valida se contém apenas letras, espaços e hífens
-        if not re.match(r'^[a-zA-Z\s\-]+$', normalized_value):
-            raise DomainValidationError("Word can only contain letters, spaces and hyphens")
+        if not re.match(r"^[a-zA-Z\s\-]+$", normalized_value):
+            raise DomainValidationError(
+                "Word can only contain letters, spaces and hyphens"
+            )
 
         # Remove espaços múltiplos
-        normalized_value = re.sub(r'\s+', ' ', normalized_value)
+        normalized_value = re.sub(r"\s+", " ", normalized_value)
 
         # Define o valor normalizado
-        object.__setattr__(self, 'value', normalized_value)
+        object.__setattr__(self, "value", normalized_value)
 
     @property
     def normalized(self) -> str:
@@ -95,7 +97,7 @@ class Word:
             return False
 
         first_letter = self.value.lower()[0]
-        return first_letter in 'aeiou'
+        return first_letter in "aeiou"
 
     def to_dict(self) -> dict:
         """
@@ -105,11 +107,11 @@ class Word:
             "value": self.value,
             "normalized": self.normalized,
             "length": self.length,
-            "word_count": self.word_count
+            "word_count": self.word_count,
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Word':
+    def from_dict(cls, data: dict) -> "Word":
         """
         Cria um Word a partir de um dicionário.
         """
