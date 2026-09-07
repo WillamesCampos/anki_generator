@@ -31,7 +31,7 @@
 - Consumes: imagem atual do README como referência visual e os tokens de `frontend/src/tokens/tokens.css`.
 - Produces: banner PNG horizontal e favicon PNG quadrado prontos para consumo estático.
 
-- [ ] **Step 1: Gerar o banner a partir da referência atual**
+- [x] **Step 1: Gerar o banner a partir da referência atual**
 
 Usar a ferramenta integrada de geração de imagem com a arte atual carregada como
 referência e esta especificação:
@@ -56,7 +56,7 @@ Avoid: azul ou turquesa como cores principais, aparência infantil, excesso de p
 Salvar o resultado escolhido em `docs/assets/anki-generator-banner.png` sem
 sobrescrever qualquer outro asset.
 
-- [ ] **Step 2: Inspecionar e corrigir o banner**
+- [x] **Step 2: Inspecionar e corrigir o banner**
 
 Abrir o PNG em resolução original e conferir composição, identidade, paleta e
 texto. Se houver erro textual, distorção ou elemento proibido, fazer uma única
@@ -70,7 +70,7 @@ file docs/assets/anki-generator-banner.png
 
 Esperado: `PNG image data, 1536 x 640`.
 
-- [ ] **Step 3: Gerar o favicon a partir do mascote aprovado**
+- [x] **Step 3: Gerar o favicon a partir do mascote aprovado**
 
 Usar o banner aprovado como referência e esta especificação:
 
@@ -90,7 +90,7 @@ Avoid: qualquer texto, tagline, arco cortado, objetos extras, gradientes pastéi
 
 Substituir `frontend/public/favicon.png` pelo resultado final.
 
-- [ ] **Step 4: Validar o favicon nos tamanhos de consumo**
+- [x] **Step 4: Validar o favicon nos tamanhos de consumo**
 
 Abrir o favicon em resolução original e conferir uma prévia reduzida a `32 × 32`
 para confirmar silhueta, contraste, olhos, sorriso e cérebro.
@@ -103,7 +103,7 @@ file frontend/public/favicon.png
 
 Esperado: `PNG image data, 192 x 192`.
 
-- [ ] **Step 5: Commitar os assets aprovados**
+- [x] **Step 5: Commitar os assets aprovados**
 
 ```bash
 git add docs/assets/anki-generator-banner.png frontend/public/favicon.png
