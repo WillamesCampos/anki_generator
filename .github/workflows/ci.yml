@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.13"
+  NODE_VERSION: "20"
+  POETRY_VERSION: "2.1.2"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        run: pip install poetry==${{ env.POETRY_VERSION }}
+
+      - name: Install backend dependencies
+        working-directory: django
+        run: poetry install --no-root --with dev
+
+      - name: black --check
+        working-directory: django
+        run: poetry run black --check .
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: eslint
+        working-directory: frontend
+        run: npm run lint
+
+  backend-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: anki_generator
+          POSTGRES_USER: anki_generator
+          POSTGRES_PASSWORD: anki_generator
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U anki_generator"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval \"db.version()\""
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+      POSTGRES_DB: anki_generator
+      POSTGRES_USER: anki_generator
+      POSTGRES_PASSWORD: anki_generator
+      POSTGRES_HOST: localhost
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install poetry
+        run: pip install poetry==${{ env.POETRY_VERSION }}
+
+      - name: Install backend dependencies
+        working-directory: django
+        run: poetry install --no-root --with dev
+
+      - name: pytest
+        working-directory: django
+        run: poetry run pytest apps/
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Vitest
+        working-directory: frontend
+        run: npm test

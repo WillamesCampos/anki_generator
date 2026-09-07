@@ -35,6 +35,8 @@ Estado atual, confirmado por leitura direta do repo:
 ### D2 — `black` sem `ruff`/`flake8`, config mínima
 Adiciona `black` como dependência de dev (`poetry add --group dev black` em `django/`), com `[tool.black]` no `pyproject.toml` existente (sem opções customizadas além de `line-length` se necessário pra bater com o código já escrito). `.pre-commit-config.yaml` na raiz roda o hook oficial do `black`. O job `lint` do CI roda `black --check .` diretamente (não via `pre-commit run`), pra não depender de instalar o `pre-commit` no runner por uma checagem só — mais simples e mais rápido.
 
+`[tool.black]` usa `force-exclude` pra nunca formatar `manage.py` nem `**/migrations/*.py` — decisão explícita do usuário: são arquivos gerados pelo próprio Django (`django-admin startproject`/`makemigrations`), não código de aplicação escrito à mão, e não devem ser tocados pela correção de formatação. `force-exclude` (em vez de `exclude`/`extend-exclude`) é obrigatório aqui porque `exclude` só se aplica quando o `black` descobre arquivos varrendo um diretório (`black --check .`, usado no CI) — quando arquivos são passados explicitamente por nome, como o `pre-commit` faz com a lista de arquivos alterados no commit, `exclude` é ignorado e só `force-exclude` continua funcionando.
+
 **Alternativa descartada**: `pre-commit run --all-files` no CI. Rejeitada por ora — adiciona uma dependência (`pre-commit` no runner) sem ganho sobre chamar `black --check` direto, já que hoje só há um hook configurado.
 
 ### D3 — Service containers no job de backend, não Docker Compose

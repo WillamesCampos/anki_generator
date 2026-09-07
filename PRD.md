@@ -223,14 +223,14 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 **Objetivo**: nenhuma sprint até aqui (0-7) foi mesclada na `main` com gate automatizado — os testes existentes (`pytest` desde a Sprint 1, Vitest desde a Sprint 4) só rodam se alguém lembrar de rodar localmente antes do merge. Antecipada pra cá — lugar originalmente da antiga "Sprint 10 — Testes & CI/CD" — por decisão explícita do usuário: quanto antes o pipeline existir, menos sprints ficam sem essa proteção (empurra a antiga Sprint 8, Tela de Estudo, pra 9, e a antiga Sprint 9, Estatísticas por Deck, pra 10; ver reordenação completa em `PRD.md` §9). Também fecha uma regra mandatória de `PROMPT_REFINADO.md` (`ferramentas-lint`) declarada desde o início do projeto mas nunca implementada: o backend não tem `black` nem `pre-commit` configurados. As duas etapas (PR e merge na `main`) rodam a mesma suíte — lint, testes de backend e testes de frontend, cada um como job independente.
 
-- [ ] 8.1 `black` como dependência de dev do Django (`django/pyproject.toml`) + `[tool.black]` configurado
-- [ ] 8.2 Reformatação única do código existente via `black .`, commitada antes de ativar o gate no CI
-- [ ] 8.3 `.pre-commit-config.yaml` na raiz do repo, com o hook oficial do `black`
-- [ ] 8.4 `.github/workflows/ci.yml` — gatilhos `pull_request` (visando `main`) e `push` (`branches: [main]`), mesma suíte rodando nos dois
-- [ ] 8.5 Job `lint`: `black --check .` no backend + `npm run lint` no frontend
-- [ ] 8.6 Job `backend-test`: `pytest apps/`, com Postgres/MongoDB/Redis como service containers do job
-- [ ] 8.7 Job `frontend-test`: `npm test` (Vitest) — os 3 jobs rodam em paralelo, cada um como status check independente no PR
-- [ ] 8.8 Badge de status do CI no `README.md`
+- [x] 8.1 `black` como dependência de dev do Django (`django/pyproject.toml`) + `[tool.black]` configurado
+- [x] 8.2 Reformatação única do código existente via `black .`, commitada antes de ativar o gate no CI
+- [x] 8.3 `.pre-commit-config.yaml` na raiz do repo, com o hook oficial do `black`
+- [x] 8.4 `.github/workflows/ci.yml` — gatilhos `pull_request` (visando `main`) e `push` (`branches: [main]`), mesma suíte rodando nos dois
+- [x] 8.5 Job `lint`: `black --check .` no backend + `npm run lint` no frontend
+- [x] 8.6 Job `backend-test`: `pytest apps/`, com Postgres/MongoDB/Redis como service containers do job
+- [x] 8.7 Job `frontend-test`: `npm test` (Vitest) — os 3 jobs rodam em paralelo, cada um como status check independente no PR
+- [x] 8.8 Badge de status do CI no `README.md`
 
 *Critérios de aceite relevantes: 8 (lint/PEP-8 já cobre backend; aqui vira gate automatizado de CI, não só `pre-commit` local).*
 

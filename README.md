@@ -4,6 +4,8 @@
 
 # 🎴 Anki Generator
 
+[![CI](https://github.com/WillamesCampos/anki_generator/actions/workflows/ci.yml/badge.svg)](https://github.com/WillamesCampos/anki_generator/actions/workflows/ci.yml)
+
 Plataforma de flashcards inspirada no Anki, com um agente de IA que dá feedback de estudo, sugere novos cards/decks, envia lembretes via WhatsApp e gera relatórios periódicos de desempenho em PDF.
 
 > A partir da **Sprint 0**, a arquitetura mudou drasticamente em relação às versões anteriores deste README: o projeto passou de um monólito FastAPI/Flask incompleto para Django como backend principal + microsserviços FastAPI satélites. Veja o porquê e o histórico completo das decisões em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
@@ -178,8 +180,8 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 4 — Robustecimento do frontend (responsividade tablet, error boundary, code-splitting, favicon, consistência de estilo e fundação mínima de testes)
 - [x] Sprint 5 — Fundações transversais: auditoria & permissões (campos `created_by`/`updated_by` + grupo/permissão real + autenticação service-to-service via JWT com o `document-generator`)
 - [x] Sprint 6 — Ciclo de vida de Deck/Card (edição, soft delete com retenção de 7 dias em Deck/Card/Category, meta por deck)
-- [ ] Sprint 7 — Gerenciamento de Decks & Cards no frontend (tela `/decks` real, criar/editar/excluir deck e card, categorias)
-- [ ] Sprint 8 — Pipeline de testes & CI/CD (lint + testes de backend/frontend, GitHub Actions, gate em PR e em merge na main)
+- [x] Sprint 7 — Gerenciamento de Decks & Cards no frontend (tela `/decks` real, criar/editar/excluir deck e card, categorias)
+- [x] Sprint 8 — Pipeline de testes & CI/CD (lint + testes de backend/frontend, GitHub Actions, gate em PR e em merge na main)
 - [ ] Sprint 9 — Tela de estudo (revisar card, avaliar again/hard/good/easy, por deck)
 - [ ] Sprint 10 — Estatísticas por deck (endpoint dedicado + dropdown na Home)
 - [ ] Sprint 11 — Exportação Anki & microsserviço de documentos (integração completa)
