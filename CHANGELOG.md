@@ -2,6 +2,16 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Infraestrutura] Commit do `django/poetry.lock` — 2026-09-08
+
+Fora do ciclo de sprints: bug descoberto ao cortar o primeiro release real (`v0.1.0`) com o `release.yml` da entrada seguinte — `django/poetry.lock` estava no `.gitignore` desde o commit inicial do projeto, então o build Docker em CI (`COPY pyproject.toml poetry.lock ./`) falhava com o arquivo ausente, apesar de existir e funcionar localmente. `poetry install` no `backend-test` do `ci.yml` também rodava sem lock, resolvendo dependências transitivas do zero a cada execução, sem trava de reprodutibilidade — não travava a suíte só porque nenhuma mudança de dependência causou conflito ainda.
+
+### Corrigido
+- `django/poetry.lock` removido do `.gitignore` e commitado — prática recomendada pelo próprio Poetry para aplicações (diferente de bibliotecas), garantindo que dev local, CI e build de imagem Docker resolvam exatamente as mesmas versões transitivas.
+
+### Validado
+- `docker build ./django` e `docker build ./microservices/document-generator` rodados localmente com sucesso após o commit do lockfile.
+
 ## [Infraestrutura] Versionamento SemVer via tag Git + release de imagens no GHCR — 2026-09-08
 
 Fora do ciclo de sprints: fecha a regra mandatória `cicd` (`PROMPT_REFINADO.md`) — "DEVE existir um fluxo de deploy baseado em tags, via GitHub Actions". Complementa o [[changelog-check]] da entrada anterior: agora o próprio `make patch/minor/major` recusa taguear se o `CHANGELOG.md` não mudou desde a última tag.
