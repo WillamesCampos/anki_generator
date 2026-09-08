@@ -2,6 +2,21 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Infraestrutura] Gate de CHANGELOG obrigatório em PRs — 2026-09-08
+
+Fora do ciclo de sprints: mentoria sobre versionamento (SemVer, tags Git, imagens Docker) identificou que a regra mandatória `changelog` era só verificada de olho, sem gate — nada impedia um PR de mexer em código sem tocar no `CHANGELOG.md`. Este é o primeiro passo (shift-left do próprio gate de CI) antes de construir a automação de tags/release que atende à regra mandatória `cicd`.
+
+### Adicionado
+- Job `changelog-check` em `.github/workflows/ci.yml`: falha o PR se ele alterar qualquer arquivo fora de uma lista de exceção (documentação/planejamento: `docs/`, `openspec/`, `.claude/`, `.vscode/`, `README.md`, `PRD.md`, `PROMPT_BRUTO.md`, `PROMPT_REFINADO.md`, `ETAPAS_PROJETO.md`) sem também alterar `CHANGELOG.md`. Roda só em `pull_request`, comparando via merge-base (`origin/<base>...HEAD`) contra a branch de destino — não repete a checagem no `push` pós-merge.
+- Lista de exceção é uma denylist (o que NÃO exige changelog), não allowlist — decisão deliberada para que pastas/serviços novos criados no futuro fiquem cobertos pelo gate por padrão, em vez de exigir atualizar o regex toda vez.
+
+### Alterado
+- Branch protection da branch `main` no GitHub: passa a exigir PR antes de merge (sem exigência de aprovação de revisor — mantenedor único), os checks `lint`/`backend-test`/`frontend-test` obrigatórios, branch atualizada com `main` antes de mergear (`strict: true`), com bypass de admin mantido (`enforce_admins: false`) para emergências.
+
+### Fora de escopo (decisão explícita)
+- `changelog-check` ainda não é um check obrigatório na branch protection — só passa a ser exigido depois de rodar pelo menos uma vez de verdade nesta própria PR, evitando travar merges futuros esperando um status que nunca é reportado.
+- Automação `make major/minor/patch` (bump de versão via tag Git anotada) e o workflow de release que builda/publica as imagens Docker no GHCR (atendendo à regra mandatória `cicd`) ficam para uma etapa seguinte.
+
 ## [Sprint 8] Pipeline de Testes & CI/CD — 2026-09-07
 
 Nenhuma sprint até aqui (0-7) foi mesclada na `main` com gate automatizado — os testes existentes só rodavam se alguém lembrasse de rodar localmente antes do merge. Antecipada pro lugar da antiga Sprint 10 por decisão explícita do usuário. Fecha também a regra mandatória `ferramentas-lint` (`PROMPT_REFINADO.md`), nunca implementada: o backend não tinha `black` nem `pre-commit` configurados. Ver `openspec/changes/sprint-8-pipeline-ci-cd/`.

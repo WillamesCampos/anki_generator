@@ -126,3 +126,31 @@ jobs:
       - name: Vitest
         working-directory: frontend
         run: npm test
+
+  changelog-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verifica atualização do CHANGELOG.md
+        run: |
+          git fetch origin "${{ github.base_ref }}" --quiet
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+
+          if echo "$CHANGED" | grep -q '^CHANGELOG.md$'; then
+            echo "CHANGELOG.md foi atualizado neste PR."
+            exit 0
+          fi
+
+          RELEVANT=$(echo "$CHANGED" | grep -vE '^(docs/|openspec/|\.claude/|\.vscode/|README\.md|PRD\.md|PROMPT_BRUTO\.md|PROMPT_REFINADO\.md|ETAPAS_PROJETO\.md)')
+
+          if [ -n "$RELEVANT" ]; then
+            echo "Este PR mexe em arquivos além de documentação/planejamento, mas não atualizou o CHANGELOG.md:"
+            echo "$RELEVANT"
+            exit 1
+          fi
+
+          echo "PR só mexe em documentação/planejamento — CHANGELOG.md não é obrigatório aqui."
