@@ -276,10 +276,10 @@ Atue como um(a) Arquiteto(a) de Software Sênior, especialista em Django/DRF, Fa
     DEVE existir um `Makefile` com comandos que facilitem operações recorrentes (ex.: rodar migrations do Django, subir containers).
     </regra_obrigatoria>
     <regra_obrigatoria id="changelog">
-    Toda alteração relevante DEVE gerar uma entrada em um arquivo de changelog.
+    Toda alteração relevante DEVE gerar uma entrada em um arquivo de changelog. Enforcement automatizado em CI a partir de decisão resolvida (ver `<decisoes_resolvidas>`).
     </regra_obrigatoria>
     <regra_obrigatoria id="cicd">
-    DEVE existir um fluxo de deploy baseado em tags, via GitHub Actions.
+    DEVE existir um fluxo de publicação de artefato versionado baseado em tags, via GitHub Actions — decisão resolvida (ver `<decisoes_resolvidas>`). O deploy real na VPS a partir desse artefato é escopo da Sprint 15, ainda não implementado.
     </regra_obrigatoria>
   </qualidade_e_padroes>
 
@@ -511,6 +511,10 @@ Sprint 9 (nova, inserida após a Sprint 7; renumerada de 8 pra 9 quando a Sprint
 
 <decisao_resolvida id="frontend-hardening-sprint3">
 Sprint 4 (nova, inserida após a Sprint 3, antes de todas as demais): auditoria via `backend-mentor` (grep direto no código) encontrou pontas reais da Sprint 3 nunca fechadas — zero responsividade (nenhuma `@media query` em todo o CSS, apesar de ser `<regra_obrigatoria>`), sem error boundary (exceção JS derruba a tela pra branco), `LoginPage.jsx`/`HomePage.jsx` usando inline `style` enquanto os outros 6 componentes usam CSS dedicado com tokens, bundle sem code-splitting (`jsPDF`+`html2canvas` no chunk principal mesmo sem uso), e `index.html` sem nenhum `<link rel="icon">`. Responsividade escopada como "não quebrar num tablet" (breakpoint ~1024px, sidebar colapsa automaticamente reaproveitando o toggle da Sprint 3) — mobile de verdade (nav diferente) fica fora de escopo por decisão explícita do usuário, sem uso mobile previsto no curto prazo. Inserida antes das Sprints 5/6/7 de propósito: elas adicionam bastante UI nova, e construir sobre um frontend inconsistente só reproduziria o problema.
+</decisao_resolvida>
+
+<decisao_resolvida id="versionamento-semver-release-ghcr">
+Fora do ciclo de sprints (mentoria de versionamento/CI/CD via `backend-mentor`): fecha as regras mandatórias `changelog` e `cicd`. Branch protection na `main` passa a exigir PR + 4 checks obrigatórios (`lint`, `backend-test`, `frontend-test`, `changelog-check`), branch atualizada antes de merge, sem exigência de aprovação (mantenedor único), com bypass de admin mantido para emergência. `changelog-check` (`.github/workflows/ci.yml`) falha o PR se ele alterar código/infra sem atualizar `CHANGELOG.md`, via denylist de exceções (docs/planejamento) — decisão deliberada para cobrir por padrão pastas/serviços criados no futuro. `make patch`/`make minor`/`make major` calculam a próxima versão SemVer a partir da última tag Git (`git describe`), com guardas de working tree limpa, HEAD sincronizado com `origin/main` e `CHANGELOG.md` atualizado desde a última tag; criam uma tag anotada e dão push. `.github/workflows/release.yml`, disparado por push de tag `v*.*.*`, builda e publica no GHCR as imagens `anki-generator-web` (`django/`) e `anki-generator-document-generator` (`microservices/document-generator/`), com tags `vX.Y.Z` + `latest` e labels OCI de versão/commit — versão única e global do projeto (não por serviço), coerente com o `CHANGELOG.md` ser por projeto. Primeiro release publicado: `v0.1.0`. No caminho, corrigido bug pré-existente desde o commit inicial do projeto: `django/poetry.lock` estava no `.gitignore`, quebrando o build Docker em CI (arquivo ausente do checkout) — removido do `.gitignore` e commitado, prática recomendada pelo Poetry para aplicações. **Fora de escopo, fica para a Sprint 15**: consumir essas imagens versionadas no deploy real da VPS (troca de `docker compose build` local por `docker compose pull` de uma tag fixa do GHCR).
 </decisao_resolvida>
 
 </decisoes_resolvidas>
