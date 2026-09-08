@@ -2,6 +2,23 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Infraestrutura] Versionamento SemVer via tag Git + release de imagens no GHCR — 2026-09-08
+
+Fora do ciclo de sprints: fecha a regra mandatória `cicd` (`PROMPT_REFINADO.md`) — "DEVE existir um fluxo de deploy baseado em tags, via GitHub Actions". Complementa o [[changelog-check]] da entrada anterior: agora o próprio `make patch/minor/major` recusa taguear se o `CHANGELOG.md` não mudou desde a última tag.
+
+### Adicionado
+- `make patch` / `make minor` / `make major`: calculam a próxima versão a partir da última tag `vX.Y.Z` (via `git describe`), criam uma tag anotada e dão push — com três guardas antes de taguear: working tree limpa, HEAD sincronizado com `origin/main`, e `CHANGELOG.md` alterado desde a última tag (primeiro release, sem tag anterior, pula essa última checagem).
+- `.github/workflows/release.yml`: disparado por push de tag `v*.*.*`, builda e publica no GHCR as duas imagens do projeto (`anki-generator-web` a partir de `django/`, `anki-generator-document-generator` a partir de `microservices/document-generator/`) com tags `vX.Y.Z` e `latest`, gravando versão e SHA do commit como labels OCI na própria imagem.
+- Documentação dos novos comandos `make` no `README.md`.
+
+### Alterado
+- Nenhum arquivo de aplicação — mudança isolada em tooling de release.
+
+### Fora de escopo (decisão explícita)
+- Versionamento independente por serviço (django vs. document-generator) — optou-se por uma versão global única do projeto, coerente com este próprio `CHANGELOG.md` ser por projeto, não por serviço.
+- Consumir essas imagens versionadas no deploy real da VPS (troca de `docker compose build` local por `docker compose pull` de uma tag fixa do GHCR) — fica para o Sprint 15 (Deploy real).
+- Corte do primeiro release (`v0.0.1`) — esta entrada só adiciona a ferramenta; a decisão de quando cortar a primeira tag fica para depois do merge.
+
 ## [Infraestrutura] Gate de CHANGELOG obrigatório em PRs — 2026-09-08
 
 Fora do ciclo de sprints: mentoria sobre versionamento (SemVer, tags Git, imagens Docker) identificou que a regra mandatória `changelog` era só verificada de olho, sem gate — nada impedia um PR de mexer em código sem tocar no `CHANGELOG.md`. Este é o primeiro passo (shift-left do próprio gate de CI) antes de construir a automação de tags/release que atende à regra mandatória `cicd`.
