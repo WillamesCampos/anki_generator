@@ -153,6 +153,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | `make run` | Roda o Django fora de container (`runserver`) |
 | `make test` | Suíte pytest do backend (`apps/`) |
 | `make frontend-install` / `make frontend-dev` / `make frontend-test` / `make frontend-build` / `make frontend-lint` | SPA React (`frontend/`) |
+| `make patch` / `make minor` / `make major` | Cria e envia uma tag SemVer (`vX.Y.Z`) a partir da última tag existente, disparando o build/publicação das imagens Docker no GHCR (ver `.github/workflows/release.yml`). Exige working tree limpa, HEAD sincronizado com `origin/main` e `CHANGELOG.md` atualizado desde a última tag. |
 
 ## 🧪 Testes
 
