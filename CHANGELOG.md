@@ -2,6 +2,14 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Infraestrutura] Corrige falso-negativo do `changelog-check` em PRs só de documentação — 2026-09-08
+
+Fora do ciclo de sprints: bug descoberto ao abrir uma PR que só alterava `PROMPT_REFINADO.md` (arquivo isento na denylist do `changelog-check`) — o job falhava mesmo devendo passar, sem imprimir nenhuma mensagem própria. Causa: `bash -e` (modo estrito) trata `grep -v` que não encontra nenhuma linha correspondente como falha (exit code 1), mesmo sem erro real — e isso aborta silenciosamente uma atribuição `RELEVANT=$(...)` sob `set -e`, antes de chegar no `if` que decide a mensagem. Esse caminho nunca tinha sido exercitado de verdade em CI: as três PRs anteriores (#22, #23, #24) sempre incluíam `CHANGELOG.md` na própria mudança, então o script sempre saía mais cedo, no primeiro `if`.
+
+### Corrigido
+- `.github/workflows/ci.yml`, job `changelog-check`: `RELEVANT=$(... | grep -vE '...' || true)` — neutraliza o exit code do `grep` sem afetar a lógica de decisão (`if [ -n "$RELEVANT" ]` continua funcionando igual nos dois sentidos).
+- Reproduzido e validado localmente antes e depois da correção, nos dois caminhos (PR só de documentação → sucesso; PR com arquivo relevante sem `CHANGELOG.md` → falha, como esperado).
+
 ## [Infraestrutura] Commit do `django/poetry.lock` — 2026-09-08
 
 Fora do ciclo de sprints: bug descoberto ao cortar o primeiro release real (`v0.1.0`) com o `release.yml` da entrada seguinte — `django/poetry.lock` estava no `.gitignore` desde o commit inicial do projeto, então o build Docker em CI (`COPY pyproject.toml poetry.lock ./`) falhava com o arquivo ausente, apesar de existir e funcionar localmente. `poetry install` no `backend-test` do `ci.yml` também rodava sem lock, resolvendo dependências transitivas do zero a cada execução, sem trava de reprodutibilidade — não travava a suíte só porque nenhuma mudança de dependência causou conflito ainda.
