@@ -18,8 +18,6 @@ from apps.decks.domain.value_objects.word import Word
 from apps.decks.infrastructure.repositories.card_repository import CardRepository
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 
-from .conftest import run_async
-
 
 @pytest.mark.django_db
 def test_deck_create_and_list(client_a):
@@ -127,9 +125,8 @@ def test_card_list_filtered_by_deck(client_a):
 @pytest.mark.django_db
 def test_card_list_is_paginated_ten_at_a_time(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(
-        DeckRepository().save(Deck(title="Deck paginado", owner_id=owner_id))
-    )
+    deck = DeckRepository().save(Deck(title="Deck paginado", owner_id=owner_id))
+
     fronts = [
         "alpha",
         "bravo",
@@ -145,16 +142,14 @@ def test_card_list_is_paginated_ten_at_a_time(client_a, owner_a):
     ]
 
     for front in fronts:
-        run_async(
-            CardRepository().save(
-                Card(
-                    front=Word(front),
-                    back=Translation(f"tradução de {front}"),
-                    front_description=f"Description for {front} card.",
-                    back_description=f"Descrição suficientemente longa de {front}.",
-                    owner_id=owner_id,
-                    deck_id=deck.id,
-                )
+        CardRepository().save(
+            Card(
+                front=Word(front),
+                back=Translation(f"tradução de {front}"),
+                front_description=f"Description for {front} card.",
+                back_description=f"Descrição suficientemente longa de {front}.",
+                owner_id=owner_id,
+                deck_id=deck.id,
             )
         )
 

@@ -34,7 +34,7 @@ class DuplicateDetectionService:
         """
         self.card_repository = card_repository
 
-    async def find_duplicates_for_card(
+    def find_duplicates_for_card(
         self, card: Card, similarity_threshold: float = 0.8
     ) -> List[Tuple[Card, float]]:
         """
@@ -53,12 +53,12 @@ class DuplicateDetectionService:
 
         # Busca cards existentes no mesmo deck
         if card.deck_id:
-            existing_cards = await self.card_repository.find_by_deck_id(
+            existing_cards = self.card_repository.find_by_deck_id(
                 card.deck_id, card.owner_id
             )
         else:
             # Se não tem deck_id, busca todos os cards do mesmo owner
-            existing_cards = await self._get_all_cards(card.owner_id)
+            existing_cards = self._get_all_cards(card.owner_id)
 
         for existing_card in existing_cards:
             # Não compara com o próprio card
@@ -75,7 +75,7 @@ class DuplicateDetectionService:
 
         return duplicates
 
-    async def find_exact_duplicates(
+    def find_exact_duplicates(
         self, front: str, owner_id: str, deck_id: str = None
     ) -> List[Card]:
         """
@@ -89,9 +89,9 @@ class DuplicateDetectionService:
         Returns:
             Lista de cards com a mesma palavra
         """
-        return await self.card_repository.find_by_front(front, owner_id)
+        return self.card_repository.find_by_front(front, owner_id)
 
-    async def find_similar_fronts(
+    def find_similar_fronts(
         self, front: str, owner_id: str, similarity_threshold: float = 0.7
     ) -> List[Tuple[Card, float]]:
         """
@@ -106,7 +106,7 @@ class DuplicateDetectionService:
         Returns:
             Lista de tuplas (card, score_similaridade)
         """
-        all_cards = await self._get_all_cards(owner_id)
+        all_cards = self._get_all_cards(owner_id)
         similar_cards = []
 
         front_normalized = front.lower().strip()
@@ -253,7 +253,7 @@ class DuplicateDetectionService:
 
         return unique_suggestions
 
-    async def _get_all_cards(self, owner_id: str) -> List[Card]:
+    def _get_all_cards(self, owner_id: str) -> List[Card]:
         """
         Busca todos os cards do owner especificado.
 

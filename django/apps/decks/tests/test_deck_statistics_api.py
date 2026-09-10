@@ -14,34 +14,28 @@ from apps.decks.infrastructure.repositories.card_review_repository import (
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 from apps.decks.infrastructure.schemas import IndexDefinitions
 
-from .conftest import run_async
-
 
 def _save_card(owner_id, deck_id, front="network"):
-    return run_async(
-        CardRepository().save(
-            Card(
-                front=Word(front),
-                back=Translation("rede"),
-                front_description="The network is stable today.",
-                back_description="A rede está estável durante o dia.",
-                owner_id=owner_id,
-                deck_id=deck_id,
-            )
+    return CardRepository().save(
+        Card(
+            front=Word(front),
+            back=Translation("rede"),
+            front_description="The network is stable today.",
+            back_description="A rede está estável durante o dia.",
+            owner_id=owner_id,
+            deck_id=deck_id,
         )
     )
 
 
 def _save_review(card, owner_id, rating, reviewed_at=None):
-    return run_async(
-        CardReviewRepository().save(
-            CardReview(
-                card_id=card.id,
-                deck_id=card.deck_id,
-                owner_id=owner_id,
-                rating=rating,
-                reviewed_at=reviewed_at or datetime.now(timezone.utc),
-            )
+    return CardReviewRepository().save(
+        CardReview(
+            card_id=card.id,
+            deck_id=card.deck_id,
+            owner_id=owner_id,
+            rating=rating,
+            reviewed_at=reviewed_at or datetime.now(timezone.utc),
         )
     )
 
@@ -49,15 +43,14 @@ def _save_review(card, owner_id, rating, reviewed_at=None):
 @pytest.mark.django_db
 def test_deck_statistics_return_all_time_rating_distribution(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(
-        DeckRepository().save(
-            Deck(
-                title="Deck com histórico",
-                owner_id=owner_id,
-                daily_review_goal=8,
-            )
+    deck = DeckRepository().save(
+        Deck(
+            title="Deck com histórico",
+            owner_id=owner_id,
+            daily_review_goal=8,
         )
     )
+
     card = _save_card(owner_id, deck.id)
     _save_review(
         card, owner_id, "again", datetime.now(timezone.utc) - timedelta(days=20)
@@ -80,12 +73,10 @@ def test_deck_statistics_return_all_time_rating_distribution(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_deck_statistics_are_zeroed_without_reviews(client_a, owner_a):
-    deck = run_async(
-        DeckRepository().save(
-            Deck(
-                title="Deck sem histórico",
-                owner_id=str(owner_a.id),
-            )
+    deck = DeckRepository().save(
+        Deck(
+            title="Deck sem histórico",
+            owner_id=str(owner_a.id),
         )
     )
 
@@ -102,12 +93,10 @@ def test_deck_statistics_are_zeroed_without_reviews(client_a, owner_a):
 
 @pytest.mark.django_db
 def test_deck_statistics_hide_another_tenants_deck(client_a, owner_b):
-    deck = run_async(
-        DeckRepository().save(
-            Deck(
-                title="Deck privado",
-                owner_id=str(owner_b.id),
-            )
+    deck = DeckRepository().save(
+        Deck(
+            title="Deck privado",
+            owner_id=str(owner_b.id),
         )
     )
 
@@ -119,12 +108,12 @@ def test_deck_statistics_hide_another_tenants_deck(client_a, owner_b):
 @pytest.mark.django_db
 def test_deck_statistics_exclude_reviews_from_soft_deleted_cards(client_a, owner_a):
     owner_id = str(owner_a.id)
-    deck = run_async(DeckRepository().save(Deck(title="Deck ativo", owner_id=owner_id)))
+    deck = DeckRepository().save(Deck(title="Deck ativo", owner_id=owner_id))
     active_card = _save_card(owner_id, deck.id, "active")
     deleted_card = _save_card(owner_id, deck.id, "deleted")
     _save_review(active_card, owner_id, "easy")
     _save_review(deleted_card, owner_id, "again")
-    run_async(CardRepository().delete(deleted_card.id, owner_id))
+    CardRepository().delete(deleted_card.id, owner_id)
 
     response = client_a.get(f"/api/v1/decks/{deck.id}/statistics/")
 

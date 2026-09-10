@@ -26,30 +26,17 @@ Este README é só uma porta de entrada. As fontes de verdade do projeto são:
 ```mermaid
 flowchart TB
     subgraph Client["Cliente"]
-        SPA["SPA React (Vite)\nfrontend/ — build estático p/ S3"]
+        SPA["SPA React (Vite)"]
     end
 
     subgraph DjangoApp["Django + DRF (django/)"]
-        Auth["apps.accounts\nJWT + Google OAuth\nTenantOwnedModel (ORM)"]
-        Decks["apps.decks\nDeck / Category / Card / CardReview\nGeneric Views + APIView pontual\n+ GET /reviews/ (histórico)"]
-        Bridge["async_to_sync\n(view sync → repositório Motor)"]
-    end
-
-    subgraph Repos["Repositórios Motor (async)"]
-        DeckRepo["DeckRepository"]
-        CardRepo["CardRepository\n+ owner_id obrigatório"]
-        CategoryRepo["CategoryRepository"]
-        ReviewRepo["CardReviewRepository"]
-        GenRepo["GenerationSessionRepository\n(protótipo antigo — inalterado)"]
-    end
-
-    subgraph Seed["management command seed"]
-        SeedCmd["asyncio.gather\n(concorrência real, sem bridge)"]
+        Auth["apps.accounts\nJWT + Google OAuth"]
+        Decks["apps.decks\nDeck / Category / Card / CardReview"]
     end
 
     subgraph Data["Bancos"]
         PG[("PostgreSQL\nauth / Permission / Group")]
-        Mongo[("MongoDB\ndecks / cards / categories\ncard_reviews / generation_sessions")]
+        Mongo[("MongoDB\ndecks / cards / categories / card_reviews")]
         Redis[("Redis\ncache / JWT blocklist / throttle")]
     end
 
@@ -61,10 +48,7 @@ flowchart TB
     SPA -->|"REST /api/v1/..."| Decks
     Auth --> PG
     Auth --> Redis
-    Decks --> Bridge
-    Bridge --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
-    DeckRepo & CardRepo & CategoryRepo & ReviewRepo & GenRepo --> Mongo
-    SeedCmd --> DeckRepo & CardRepo & CategoryRepo & ReviewRepo
+    Decks --> Mongo
     DjangoApp -.->|"chamada HTTP versionada — Sprint 11"| DocGen
 ```
 
@@ -72,7 +56,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 
 - **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
 - **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
-- **Domínio de deck/card**: `django/apps/decks/` — entities (`Deck`/`Category`/`Card`/`CardReview`), value objects e repositórios Mongo (via Motor). Isolamento multi-tenant aqui é `owner_id` obrigatório embutido em toda query do repositório (mecanismo próprio, já que não há ORM do Django sobre Mongo). CRUD via Generic Views do DRF com serializers manuais; repetição espaçada via FSRS (pacote `fsrs`); views síncronas fazendo bridge (`async_to_sync`) para os repositórios assíncronos.
+- **Domínio de deck/card**: `django/apps/decks/` — entities (`Deck`/`Category`/`Card`/`CardReview`), value objects e repositórios Mongo (via `pymongo`, síncrono). Isolamento multi-tenant aqui é `owner_id` obrigatório embutido em toda query do repositório (mecanismo próprio, já que não há ORM do Django sobre Mongo). CRUD via Generic Views do DRF com serializers manuais; repetição espaçada via FSRS (pacote `fsrs`).
 - **Frontend**: `frontend/` — SPA React (Vite), consumindo a API do Django. Tokens de design extraídos por auditoria real de `refs/Ashley_files/style.css` (ver `frontend/src/tokens/`), não importados diretamente — o `design_system/design-system.html` documenta um template comercial de portfólio, não um design system de app pronto. Home dashboard responsiva para tablet, login por e-mail/senha ou Google, gráfico Chart.js com exportação PDF sob demanda e fallback global de erro. A fundação de testes usa Vitest + React Testing Library.
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
 - **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
@@ -89,7 +73,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 | Testes | pytest + pytest-django |
 | Microsserviços | FastAPI, `venv`/`requirements.txt` por serviço |
 | Banco relacional | PostgreSQL (auth/permissions do Django) |
-| Banco de domínio | MongoDB (decks/cards/categorias/reviews), via Motor |
+| Banco de domínio | MongoDB (decks/cards/categorias/reviews), via `pymongo` |
 | Fila/assíncrono | Celery + RabbitMQ + Redis |
 | Frontend | React + Vite (SPA estática, hospedada em S3), `react-router`, Chart.js + `jsPDF` |
 | Deploy | Docker Compose numa VPS |

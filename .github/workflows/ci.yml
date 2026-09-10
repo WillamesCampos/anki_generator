@@ -84,6 +84,7 @@ jobs:
           --health-retries 5
     env:
       DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+      SEED_PASSWORD: ci-test-seed-password
       POSTGRES_DB: anki_generator
       POSTGRES_USER: anki_generator
       POSTGRES_PASSWORD: anki_generator

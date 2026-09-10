@@ -13,8 +13,6 @@ from apps.decks.infrastructure.repositories.category_repository import (
 )
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 
-from .conftest import run_async
-
 
 @pytest.mark.django_db
 def test_deck_create_sets_created_by_and_updated_by(client_a, owner_a):
@@ -23,7 +21,7 @@ def test_deck_create_sets_created_by_and_updated_by(client_a, owner_a):
     )
     deck_id = response.data["id"]
 
-    deck = run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id)))
+    deck = DeckRepository().find_by_id(deck_id, str(owner_a.id))
 
     assert deck.created_by == str(owner_a.id)
     assert deck.updated_by == str(owner_a.id)
@@ -38,7 +36,7 @@ def test_deck_create_ignores_client_supplied_audit_fields(client_a, owner_a):
     )
     deck_id = response.data["id"]
 
-    deck = run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id)))
+    deck = DeckRepository().find_by_id(deck_id, str(owner_a.id))
 
     assert deck.created_by == str(owner_a.id)
     assert deck.created_by != "attacker"
@@ -53,7 +51,7 @@ def test_deck_update_refreshes_updated_by_keeps_created_by(client_a, owner_a):
 
     client_a.patch(f"/api/v1/decks/{deck_id}/", {"title": "Renomeado"}, format="json")
 
-    deck = run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id)))
+    deck = DeckRepository().find_by_id(deck_id, str(owner_a.id))
 
     assert deck.created_by == str(owner_a.id)
     assert deck.updated_by == str(owner_a.id)
@@ -66,7 +64,7 @@ def test_category_create_sets_created_by(client_a, owner_a):
     )
     category_id = response.data["id"]
 
-    category = run_async(CategoryRepository().find_by_id(category_id, str(owner_a.id)))
+    category = CategoryRepository().find_by_id(category_id, str(owner_a.id))
 
     assert category.created_by == str(owner_a.id)
     assert category.updated_by == str(owner_a.id)
@@ -92,7 +90,7 @@ def test_card_create_sets_created_by(client_a, owner_a):
     )
     card_id = card_response.data["id"]
 
-    card = run_async(CardRepository().find_by_id(card_id, str(owner_a.id)))
+    card = CardRepository().find_by_id(card_id, str(owner_a.id))
 
     assert card.created_by == str(owner_a.id)
     assert card.updated_by == str(owner_a.id)
@@ -120,7 +118,7 @@ def test_card_update_refreshes_updated_by(client_a, owner_a):
 
     client_a.patch(f"/api/v1/cards/{card_id}/", {"context": "infra"}, format="json")
 
-    card = run_async(CardRepository().find_by_id(card_id, str(owner_a.id)))
+    card = CardRepository().find_by_id(card_id, str(owner_a.id))
 
     assert card.created_by == str(owner_a.id)
     assert card.updated_by == str(owner_a.id)

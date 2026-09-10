@@ -19,7 +19,7 @@ class IGenerationSessionRepository(ABC):
     """
 
     @abstractmethod
-    async def save(self, session: GenerationSession) -> GenerationSession:
+    def save(self, session: GenerationSession) -> GenerationSession:
         """
         Salva uma sessão de geração no banco de dados.
 
@@ -35,7 +35,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_id(
+    def find_by_id(
         self, session_id: uuid.UUID, owner_id: str
     ) -> Optional[GenerationSession]:
         """
@@ -58,7 +58,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_deck_id(self, deck_id: uuid.UUID) -> List[GenerationSession]:
+    def find_by_deck_id(self, deck_id: uuid.UUID) -> List[GenerationSession]:
         """
         Busca todas as sessões de um deck.
 
@@ -74,7 +74,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_status(self, status: GenerationStatus) -> List[GenerationSession]:
+    def find_by_status(self, status: GenerationStatus) -> List[GenerationSession]:
         """
         Busca sessões por status.
 
@@ -90,7 +90,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_by_context(self, context: str) -> List[GenerationSession]:
+    def find_by_context(self, context: str) -> List[GenerationSession]:
         """
         Busca sessões por contexto.
 
@@ -106,7 +106,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_active_sessions(
+    def find_active_sessions(
         self, deck_id: Optional[uuid.UUID] = None
     ) -> List[GenerationSession]:
         """
@@ -124,7 +124,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_finished_sessions(
+    def find_finished_sessions(
         self, deck_id: Optional[uuid.UUID] = None
     ) -> List[GenerationSession]:
         """
@@ -142,7 +142,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def find_recent_sessions(
+    def find_recent_sessions(
         self, limit: int = 10, deck_id: Optional[uuid.UUID] = None
     ) -> List[GenerationSession]:
         """
@@ -161,7 +161,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def update(self, session: GenerationSession) -> GenerationSession:
+    def update(self, session: GenerationSession) -> GenerationSession:
         """
         Atualiza uma sessão existente.
 
@@ -178,7 +178,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete(self, session_id: uuid.UUID) -> bool:
+    def delete(self, session_id: uuid.UUID) -> bool:
         """
         Remove uma sessão do banco de dados.
 
@@ -194,7 +194,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def delete_by_deck_id(self, deck_id: uuid.UUID) -> int:
+    def delete_by_deck_id(self, deck_id: uuid.UUID) -> int:
         """
         Remove todas as sessões de um deck.
 
@@ -210,7 +210,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def count(self) -> int:
+    def count(self) -> int:
         """
         Conta o total de sessões no banco.
 
@@ -223,7 +223,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def count_by_deck_id(self, deck_id: uuid.UUID) -> int:
+    def count_by_deck_id(self, deck_id: uuid.UUID) -> int:
         """
         Conta o número de sessões de um deck.
 
@@ -239,7 +239,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def count_by_status(self, status: GenerationStatus) -> int:
+    def count_by_status(self, status: GenerationStatus) -> int:
         """
         Conta o número de sessões com um status específico.
 
@@ -255,7 +255,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def exists(self, session_id: uuid.UUID) -> bool:
+    def exists(self, session_id: uuid.UUID) -> bool:
         """
         Verifica se uma sessão existe.
 
@@ -271,7 +271,7 @@ class IGenerationSessionRepository(ABC):
         pass
 
     @abstractmethod
-    async def cleanup_old_sessions(self, days_old: int = 30) -> int:
+    def cleanup_old_sessions(self, days_old: int = 30) -> int:
         """
         Remove sessões antigas (para limpeza de dados).
 

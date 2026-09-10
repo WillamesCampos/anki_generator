@@ -1,9 +1,9 @@
 """
 Serializers do domínio de decks/cards — todos `serializers.Serializer`
 puros, nunca `ModelSerializer` (que exige um Django Model real): o dado
-vive em MongoDB via repositórios Motor, não no ORM (ver D2 em
+vive em MongoDB via repositórios pymongo (síncronos), não no ORM (ver D2 em
 openspec/changes/sprint-2-decks-cards/design.md). `create()`/`update()`
-delegam ao repositório correspondente pela ponte assíncrona persistente (D3/D9).
+delegam diretamente ao repositório correspondente (D3/D9).
 
 `owner_id` nunca é aceito como input do cliente — sempre vem de
 `self.context["request"].user`, no mesmo espírito do `AuditSerializerMixin`
@@ -20,7 +20,6 @@ from .domain.entities.category import Category
 from .domain.entities.deck import Deck
 from .domain.value_objects.translation import Translation
 from .domain.value_objects.word import Word
-from .infrastructure.async_bridge import persistent_async_to_sync as async_to_sync
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
 from .infrastructure.repositories.deck_repository import DeckRepository
@@ -40,13 +39,13 @@ class CategorySerializer(serializers.Serializer):
             created_by=owner_id,
             updated_by=owner_id,
         )
-        return async_to_sync(CategoryRepository().save)(category)
+        return CategoryRepository().save(category)
 
     def update(self, instance: Category, validated_data):
         if "name" in validated_data:
             instance.rename(validated_data["name"])
         instance.updated_by = str(self.context["request"].user.id)
-        return async_to_sync(CategoryRepository().update)(instance)
+        return CategoryRepository().update(instance)
 
 
 class DeckSerializer(serializers.Serializer):
@@ -75,7 +74,7 @@ class DeckSerializer(serializers.Serializer):
             created_by=owner_id,
             updated_by=owner_id,
         )
-        return async_to_sync(DeckRepository().save)(deck)
+        return DeckRepository().save(deck)
 
     def update(self, instance: Deck, validated_data):
         if "title" in validated_data:
@@ -88,7 +87,7 @@ class DeckSerializer(serializers.Serializer):
         if "daily_review_goal" in validated_data:
             instance.update_daily_review_goal(validated_data["daily_review_goal"])
         instance.updated_by = str(self.context["request"].user.id)
-        return async_to_sync(DeckRepository().update)(instance)
+        return DeckRepository().update(instance)
 
 
 class CardSerializer(serializers.Serializer):
@@ -148,7 +147,7 @@ class CardSerializer(serializers.Serializer):
             created_by=owner_id,
             updated_by=owner_id,
         )
-        return async_to_sync(CardRepository().save)(card)
+        return CardRepository().save(card)
 
     def update(self, instance: Card, validated_data):
         if "front" in validated_data:
@@ -171,7 +170,7 @@ class CardSerializer(serializers.Serializer):
             instance.tags = list(validated_data["tags"])
         instance.updated_at = datetime.now(timezone.utc)
         instance.updated_by = str(self.context["request"].user.id)
-        return async_to_sync(CardRepository().update)(instance)
+        return CardRepository().update(instance)
 
 
 class CardReviewRequestSerializer(serializers.Serializer):

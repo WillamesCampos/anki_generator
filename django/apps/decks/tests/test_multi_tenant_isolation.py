@@ -23,8 +23,6 @@ from apps.decks.infrastructure.repositories.category_repository import (
 )
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 
-from .conftest import run_async
-
 
 def _build_card(owner_id, deck_id) -> Card:
     return Card(
@@ -41,54 +39,46 @@ def _build_card(owner_id, deck_id) -> Card:
 def test_deck_cross_tenant_access_is_blocked(owner_a, owner_b):
     owner_id_a, owner_id_b = str(owner_a.id), str(owner_b.id)
 
-    deck = run_async(DeckRepository().save(Deck(title="Secreto", owner_id=owner_id_a)))
+    deck = DeckRepository().save(Deck(title="Secreto", owner_id=owner_id_a))
 
-    assert run_async(DeckRepository().find_by_id(deck.id, owner_id_a)) is not None
-    assert run_async(DeckRepository().find_by_id(deck.id, owner_id_b)) is None
+    assert DeckRepository().find_by_id(deck.id, owner_id_a) is not None
+    assert DeckRepository().find_by_id(deck.id, owner_id_b) is None
 
 
 @pytest.mark.django_db
 def test_category_cross_tenant_access_is_blocked(owner_a, owner_b):
     owner_id_a, owner_id_b = str(owner_a.id), str(owner_b.id)
 
-    category = run_async(
-        CategoryRepository().save(Category(name="Trabalho", owner_id=owner_id_a))
-    )
+    category = CategoryRepository().save(Category(name="Trabalho", owner_id=owner_id_a))
 
-    assert (
-        run_async(CategoryRepository().find_by_id(category.id, owner_id_a)) is not None
-    )
-    assert run_async(CategoryRepository().find_by_id(category.id, owner_id_b)) is None
+    assert CategoryRepository().find_by_id(category.id, owner_id_a) is not None
+    assert CategoryRepository().find_by_id(category.id, owner_id_b) is None
 
 
 @pytest.mark.django_db
 def test_card_cross_tenant_access_is_blocked(owner_a, owner_b):
     owner_id_a, owner_id_b = str(owner_a.id), str(owner_b.id)
 
-    deck = run_async(DeckRepository().save(Deck(title="Deck A", owner_id=owner_id_a)))
-    card = run_async(CardRepository().save(_build_card(owner_id_a, deck.id)))
+    deck = DeckRepository().save(Deck(title="Deck A", owner_id=owner_id_a))
+    card = CardRepository().save(_build_card(owner_id_a, deck.id))
 
-    assert run_async(CardRepository().find_by_id(card.id, owner_id_a)) is not None
-    assert run_async(CardRepository().find_by_id(card.id, owner_id_b)) is None
-    assert run_async(CardRepository().find_by_deck_id(deck.id, owner_id_b)) == []
+    assert CardRepository().find_by_id(card.id, owner_id_a) is not None
+    assert CardRepository().find_by_id(card.id, owner_id_b) is None
+    assert CardRepository().find_by_deck_id(deck.id, owner_id_b) == []
 
 
 @pytest.mark.django_db
 def test_card_review_cross_tenant_access_is_blocked(owner_a, owner_b):
     owner_id_a, owner_id_b = str(owner_a.id), str(owner_b.id)
 
-    deck = run_async(DeckRepository().save(Deck(title="Deck A", owner_id=owner_id_a)))
-    card = run_async(CardRepository().save(_build_card(owner_id_a, deck.id)))
-    run_async(
-        CardReviewRepository().save(
-            CardReview(card_id=card.id, owner_id=owner_id_a, rating="good")
-        )
+    deck = DeckRepository().save(Deck(title="Deck A", owner_id=owner_id_a))
+    card = CardRepository().save(_build_card(owner_id_a, deck.id))
+    CardReviewRepository().save(
+        CardReview(card_id=card.id, owner_id=owner_id_a, rating="good")
     )
 
-    own_reviews = run_async(CardReviewRepository().find_by_card_id(card.id, owner_id_a))
-    other_reviews = run_async(
-        CardReviewRepository().find_by_card_id(card.id, owner_id_b)
-    )
+    own_reviews = CardReviewRepository().find_by_card_id(card.id, owner_id_a)
+    other_reviews = CardReviewRepository().find_by_card_id(card.id, owner_id_b)
 
     assert len(own_reviews) == 1
     assert other_reviews == []
