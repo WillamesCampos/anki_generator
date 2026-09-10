@@ -98,7 +98,12 @@ async function refreshAccessToken() {
 // inválido, mesmo antes de validar email/senha. Bug real encontrado
 // investigando um "login não funciona" que na verdade eram credenciais
 // corretas sendo bloqueadas por um token velho.
-const UNAUTHENTICATED_PATHS = ["/auth/login/", "/auth/google/"];
+const UNAUTHENTICATED_PATHS = [
+  "/auth/login/",
+  "/auth/google/",
+  "/auth/password/reset/",
+  "/auth/password/reset/confirm/",
+];
 
 export async function apiFetch(path, options = {}, { isRetry = false } = {}) {
   const token = UNAUTHENTICATED_PATHS.includes(path) ? null : getAccessToken();

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { loginWithGoogle, loginWithPassword } from "../api/auth";
 import Button from "../components/ui/Button";
@@ -86,6 +86,9 @@ export default function LoginPage() {
         />
         {error && <p className="login-page__error">{error}</p>}
         <Button type="submit">{submitting ? "Entrando…" : "Entrar"}</Button>
+        <Link to="/esqueci-minha-senha" className="login-page__divider">
+          Esqueci minha senha
+        </Link>
       </form>
 
       <div className="login-page__divider">ou</div>
