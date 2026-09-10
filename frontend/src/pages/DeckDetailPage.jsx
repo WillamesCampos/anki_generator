@@ -151,6 +151,7 @@ export default function DeckDetailPage() {
         </div>
         <div className="deck-detail__header-actions">
           <Button as={Link} variant="secondary" to="/decks">Voltar</Button>
+          <Button as={Link} to={`/decks/${deckId}/estudar`}>Estudar</Button>
           <Button
             variant="secondary"
             onClick={() => setEditingDeck((current) => !current)}
