@@ -1,7 +1,7 @@
 """
 Views REST de decks/cards (Sprint 2). Generic Views do DRF sobre
-repositórios Motor: serializers puros, `get_queryset()` devolve uma lista
-Python já resolvida pela ponte assíncrona persistente, nunca um `QuerySet` real (D2/D3 em
+repositórios pymongo (síncronos): serializers puros, `get_queryset()`
+devolve uma lista Python já resolvida, nunca um `QuerySet` real (D2/D3 em
 openspec/changes/sprint-2-decks-cards/design.md). `APIView` pontual para a
 ação de registrar revisão, que não é uma substituição de estado CRUD.
 """
@@ -16,7 +16,6 @@ from rest_framework.views import APIView
 
 from .domain.entities.card_review import CardReview
 from .domain.services import scheduling_service
-from .infrastructure.async_bridge import persistent_async_to_sync as async_to_sync
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.card_review_repository import CardReviewRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
@@ -40,7 +39,7 @@ class CategoryListCreateView(generics.ListCreateAPIView):
     permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
-        return async_to_sync(CategoryRepository().find_all)(_owner_id(self.request))
+        return CategoryRepository().find_all(_owner_id(self.request))
 
 
 class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -49,15 +48,13 @@ class CategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         category_id = uuid.UUID(self.kwargs["category_id"])
-        category = async_to_sync(CategoryRepository().find_by_id)(
-            category_id, _owner_id(self.request)
-        )
+        category = CategoryRepository().find_by_id(category_id, _owner_id(self.request))
         if category is None:
             raise NotFound()
         return category
 
     def perform_destroy(self, instance):
-        async_to_sync(CategoryRepository().delete)(instance.id, _owner_id(self.request))
+        CategoryRepository().delete(instance.id, _owner_id(self.request))
 
 
 class DeckListCreateView(generics.ListCreateAPIView):
@@ -65,7 +62,7 @@ class DeckListCreateView(generics.ListCreateAPIView):
     permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
-        return async_to_sync(DeckRepository().find_all)(_owner_id(self.request))
+        return DeckRepository().find_all(_owner_id(self.request))
 
 
 class DeckDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -74,15 +71,13 @@ class DeckDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         deck_id = uuid.UUID(self.kwargs["deck_id"])
-        deck = async_to_sync(DeckRepository().find_by_id)(
-            deck_id, _owner_id(self.request)
-        )
+        deck = DeckRepository().find_by_id(deck_id, _owner_id(self.request))
         if deck is None:
             raise NotFound()
         return deck
 
     def perform_destroy(self, instance):
-        async_to_sync(DeckRepository().delete)(instance.id, _owner_id(self.request))
+        DeckRepository().delete(instance.id, _owner_id(self.request))
 
 
 class DeckStatisticsView(APIView):
@@ -97,11 +92,11 @@ class DeckStatisticsView(APIView):
             raise NotFound() from None
 
         owner_id = _owner_id(request)
-        deck = async_to_sync(DeckRepository().find_by_id)(parsed_deck_id, owner_id)
+        deck = DeckRepository().find_by_id(parsed_deck_id, owner_id)
         if deck is None:
             raise NotFound()
 
-        statistics = async_to_sync(CardReviewRepository().get_deck_statistics)(
+        statistics = CardReviewRepository().get_deck_statistics(
             owner_id,
             parsed_deck_id,
         )
@@ -133,13 +128,13 @@ class CardListCreateView(generics.ListCreateAPIView):
         card_repo = CardRepository()
 
         if self.request.query_params.get("due") == "true":
-            return async_to_sync(card_repo.find_due)(owner_id)
+            return card_repo.find_due(owner_id)
 
         deck_id = self.request.query_params.get("deck_id")
         if not deck_id:
             return []
 
-        return async_to_sync(card_repo.find_by_deck_id)(uuid.UUID(deck_id), owner_id)
+        return card_repo.find_by_deck_id(uuid.UUID(deck_id), owner_id)
 
 
 class CardCountView(APIView):
@@ -157,7 +152,7 @@ class CardCountView(APIView):
         if deck_id is None:
             raise ValidationError({"deck_id": "Informe um UUID válido."})
 
-        count = async_to_sync(CardRepository().count_by_deck_id)(
+        count = CardRepository().count_by_deck_id(
             deck_id,
             _owner_id(request),
         )
@@ -170,15 +165,13 @@ class CardDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         card_id = uuid.UUID(self.kwargs["card_id"])
-        card = async_to_sync(CardRepository().find_by_id)(
-            card_id, _owner_id(self.request)
-        )
+        card = CardRepository().find_by_id(card_id, _owner_id(self.request))
         if card is None:
             raise NotFound()
         return card
 
     def perform_destroy(self, instance):
-        async_to_sync(CardRepository().delete)(instance.id, _owner_id(self.request))
+        CardRepository().delete(instance.id, _owner_id(self.request))
 
 
 class CardReviewView(APIView):
@@ -195,7 +188,7 @@ class CardReviewView(APIView):
         owner_id = _owner_id(request)
         card_repo = CardRepository()
 
-        card = async_to_sync(card_repo.find_by_id)(uuid.UUID(card_id), owner_id)
+        card = card_repo.find_by_id(uuid.UUID(card_id), owner_id)
         if card is None:
             raise NotFound()
 
@@ -204,7 +197,7 @@ class CardReviewView(APIView):
         rating = request_serializer.validated_data["rating"]
 
         scheduling_service.review_card(card, rating)
-        async_to_sync(card_repo.update)(card)
+        card_repo.update(card)
 
         review = CardReview(
             card_id=card.id,
@@ -217,7 +210,7 @@ class CardReviewView(APIView):
             created_by=owner_id,
             updated_by=owner_id,
         )
-        async_to_sync(CardReviewRepository().save)(review)
+        CardReviewRepository().save(review)
 
         return Response(
             CardReviewSerializer(review).data, status=status.HTTP_201_CREATED
@@ -236,6 +229,4 @@ class CardReviewListView(generics.ListAPIView):
     permission_classes = [HasAuthorizedGroup]
 
     def get_queryset(self):
-        return async_to_sync(CardReviewRepository().find_by_owner)(
-            _owner_id(self.request)
-        )
+        return CardReviewRepository().find_by_owner(_owner_id(self.request))

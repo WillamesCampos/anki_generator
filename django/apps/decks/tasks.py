@@ -17,7 +17,6 @@ from datetime import datetime, timedelta, timezone
 
 from celery import shared_task
 
-from .infrastructure.async_bridge import persistent_async_to_sync as async_to_sync
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
 from .infrastructure.repositories.deck_repository import DeckRepository
@@ -38,9 +37,9 @@ def purge_soft_deleted() -> dict:
     """
     cutoff = datetime.now(timezone.utc) - timedelta(days=RETENTION_DAYS)
 
-    decks_purged = async_to_sync(DeckRepository().purge_soft_deleted)(cutoff)
-    cards_purged = async_to_sync(CardRepository().purge_soft_deleted)(cutoff)
-    categories_purged = async_to_sync(CategoryRepository().purge_soft_deleted)(cutoff)
+    decks_purged = DeckRepository().purge_soft_deleted(cutoff)
+    cards_purged = CardRepository().purge_soft_deleted(cutoff)
+    categories_purged = CategoryRepository().purge_soft_deleted(cutoff)
 
     result = {
         "decks_purged": decks_purged,

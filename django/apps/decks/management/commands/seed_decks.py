@@ -1,19 +1,18 @@
 """
 Comando de seed multi-tenant para desenvolvimento local (PRD Sprint 2, 2.6).
 
-Roda como entrypoint async standalone (`asyncio.run`), fora do ciclo
-request/response do Django, usando `asyncio.gather` para inserções
-concorrentes reais — sem bridge `async_to_sync` (ver D3.1 em
-openspec/changes/sprint-2-decks-cards/design.md: este é exatamente o
-segundo consumidor que justifica manter os repositórios em Motor mesmo com
-as views do DRF sendo síncronas).
+Entrypoint síncrono, sem event loop (ver `migrate-motor-para-pymongo`:
+repositórios rodam sobre `pymongo`, não Motor). Cards são inseridos em lote
+via `CardRepository.save_many` (`insert_many` do pymongo) em vez de um loop
+`insert_one` por documento — é o volume real do seed (até `CARDS_PER_DECK`
+por deck); categorias, decks e reviews são poucos por usuário, inseridos
+sequencialmente sem perda de desempenho perceptível.
 
 Uso:
     poetry run python manage.py seed_decks
     poetry run python manage.py seed_decks --reset
 """
 
-import asyncio
 import random
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -113,58 +112,50 @@ class Command(BaseCommand):
                 "seed_decks recusa rodar fora de DEBUG=True (proteção contra produção, ver PRD 2.6)."
             )
 
-        asyncio.run(self._run(reset=options["reset"]))
+        self._run(reset=options["reset"])
         self.stdout.write(self.style.SUCCESS("Seed concluído."))
 
-    async def _run(self, reset: bool) -> None:
-        await ensure_mongodb_connection()
+    def _run(self, reset: bool) -> None:
+        ensure_mongodb_connection()
 
-        users = await asyncio.to_thread(self._get_or_create_seed_users)
+        users = self._get_or_create_seed_users()
 
         if reset:
-            await self._reset_seed_data(users)
+            self._reset_seed_data(users)
 
-        await asyncio.gather(*[self._seed_for_user(user) for user in users])
+        for user in users:
+            self._seed_for_user(user)
 
     def _get_or_create_seed_users(self) -> List[User]:
-        # Roda em uma thread separada via `asyncio.to_thread` (chamada de
-        # dentro de `_run`, async) — Django não fecha a conexão Postgres
-        # dessa thread sozinho quando ela termina, então fechamos
-        # explicitamente para não vazar conexão.
-        from django.db import connection
+        users = []
+        for username in SEED_USERNAMES:
+            user, created = User.objects.get_or_create(
+                username=username,
+                defaults={"email": f"{username}@seed.local"},
+            )
+            # `get_or_create` não passa por `set_password()` — sem isso
+            # o usuário fica com `password=""`. `has_usable_password()`
+            # NÃO pega esse caso: ela só verifica o marcador especial de
+            # `set_unusable_password()`, e uma string vazia não é esse
+            # marcador — `is_password_usable("")` retorna `True`
+            # (confirmado lendo o source do Django), então checar só
+            # `has_usable_password()` deixaria o seed antigo (sem senha)
+            # intocado numa reexecução. Define sempre, incondicional —
+            # idempotente, sem custo real de rehash pros 3 usuários.
+            user.set_password(SEED_PASSWORD)
+            user.save(update_fields=["password"])
+            users.append(user)
+        return users
 
-        try:
-            users = []
-            for username in SEED_USERNAMES:
-                user, created = User.objects.get_or_create(
-                    username=username,
-                    defaults={"email": f"{username}@seed.local"},
-                )
-                # `get_or_create` não passa por `set_password()` — sem isso
-                # o usuário fica com `password=""`. `has_usable_password()`
-                # NÃO pega esse caso: ela só verifica o marcador especial de
-                # `set_unusable_password()`, e uma string vazia não é esse
-                # marcador — `is_password_usable("")` retorna `True`
-                # (confirmado lendo o source do Django), então checar só
-                # `has_usable_password()` deixaria o seed antigo (sem senha)
-                # intocado numa reexecução. Define sempre, incondicional —
-                # idempotente, sem custo real de rehash pros 3 usuários.
-                user.set_password(SEED_PASSWORD)
-                user.save(update_fields=["password"])
-                users.append(user)
-            return users
-        finally:
-            connection.close()
-
-    async def _reset_seed_data(self, users: List[User]) -> None:
-        mongodb_manager = await ensure_mongodb_connection()
+    def _reset_seed_data(self, users: List[User]) -> None:
+        mongodb_manager = ensure_mongodb_connection()
         owner_ids = [str(user.id) for user in users]
 
         for collection_name in SEEDED_COLLECTIONS:
-            collection = await mongodb_manager.get_collection(collection_name)
-            await collection.delete_many({"owner_id": {"$in": owner_ids}})
+            collection = mongodb_manager.get_collection(collection_name)
+            collection.delete_many({"owner_id": {"$in": owner_ids}})
 
-    async def _seed_for_user(self, user: User) -> None:
+    def _seed_for_user(self, user: User) -> None:
         owner_id = str(user.id)
 
         category_repo = CategoryRepository()
@@ -172,26 +163,21 @@ class Command(BaseCommand):
         card_repo = CardRepository()
         review_repo = CardReviewRepository()
 
-        categories = await self._create_categories(category_repo, owner_id)
-        decks = await self._create_decks(deck_repo, owner_id, categories)
+        categories = self._create_categories(category_repo, owner_id)
+        decks = self._create_decks(deck_repo, owner_id, categories)
 
-        await asyncio.gather(
-            *[
-                self._seed_deck_cards(card_repo, review_repo, deck, owner_id)
-                for deck in decks
-            ]
-        )
+        for deck in decks:
+            self._seed_deck_cards(card_repo, review_repo, deck, owner_id)
 
-    async def _create_categories(
+    def _create_categories(
         self, category_repo: CategoryRepository, owner_id: str
     ) -> List[Category]:
         new_categories = [
             Category(name=name, owner_id=owner_id) for name in CATEGORY_NAMES
         ]
-        save_calls = [category_repo.save(category) for category in new_categories]
-        return list(await asyncio.gather(*save_calls))
+        return [category_repo.save(category) for category in new_categories]
 
-    async def _create_decks(
+    def _create_decks(
         self, deck_repo: DeckRepository, owner_id: str, categories: List[Category]
     ) -> List[Deck]:
         new_decks = [
@@ -204,10 +190,9 @@ class Command(BaseCommand):
             for category in categories
             for title, description in DECK_CATALOG[category.name]
         ]
-        save_calls = [deck_repo.save(deck) for deck in new_decks]
-        return list(await asyncio.gather(*save_calls))
+        return [deck_repo.save(deck) for deck in new_decks]
 
-    async def _seed_deck_cards(
+    def _seed_deck_cards(
         self,
         card_repo: CardRepository,
         review_repo: CardReviewRepository,
@@ -221,15 +206,10 @@ class Command(BaseCommand):
             for front, back in sampled_words
         ]
 
-        save_calls = [card_repo.save(card) for card in new_cards]
-        cards = await asyncio.gather(*save_calls)
+        cards = card_repo.save_many(new_cards)
 
-        await asyncio.gather(
-            *[
-                self._seed_reviews_for_card(card_repo, review_repo, card, owner_id)
-                for card in cards
-            ]
-        )
+        for card in cards:
+            self._seed_reviews_for_card(card_repo, review_repo, card, owner_id)
 
     def _build_card(
         self, owner_id: str, deck_id, tag: str, front: str, back: str
@@ -244,7 +224,7 @@ class Command(BaseCommand):
             tags=[tag],
         )
 
-    async def _seed_reviews_for_card(
+    def _seed_reviews_for_card(
         self,
         card_repo: CardRepository,
         review_repo: CardReviewRepository,
@@ -258,11 +238,9 @@ class Command(BaseCommand):
             rating = random.choice(RATINGS)
 
             scheduling_service.review_card(card, rating, reviewed_at=reviewed_at)
-            await review_repo.save(
-                self._build_review(card, owner_id, rating, reviewed_at)
-            )
+            review_repo.save(self._build_review(card, owner_id, rating, reviewed_at))
 
-        await card_repo.update(card)
+        card_repo.update(card)
 
     def _build_review(
         self, card: Card, owner_id: str, rating: str, reviewed_at: datetime
