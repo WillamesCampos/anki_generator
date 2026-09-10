@@ -48,6 +48,7 @@ def test_password_reset_email_uses_branded_multipart_templates():
     html_body = html_alternative.content
     assert 'lang="pt-BR"' in html_body
     assert "Seu próximo estudo está esperando." in html_body
+    assert "Por segurança, não encaminhe este link para outras pessoas." in html_body
     assert "Redefinir minha senha" in html_body
     assert f'href="{escape(reset_url, quote=True)}"' in html_body
     assert escape(reset_url) in html_body
