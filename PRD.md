@@ -240,14 +240,14 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 **Objetivo**: o gap mais fundamental do produto — nenhuma sprint do roadmap jamais construiu a tela que mostra um card e permite avaliá-lo (`again`/`hard`/`good`/`easy`). Registrado em `PRD.md` §7.1 desde a auditoria pré-Sprint 6, formalizado agora via `backend-mentor`. O backend já tem quase tudo: `POST /api/v1/cards/{card_id}/review/` (FSRS, Sprint 2) e `GET /api/v1/cards/?due=true` (Sprint 2) — só falta a UI, mais um ajuste pontual de backend (a busca de cards devidos hoje não filtra por deck). **Depende da Sprint 7** (tela de detalhe do deck, de onde "Estudar" é acionado). Decisões fechadas via `backend-mentor`: estudo é sempre por deck específico (não global); sessão não é persistida — sempre recomeça buscando os cards ainda devidos, sem conceito de "retomar de onde parou".
 
-- [ ] 9.1 `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` — ganha filtro opcional por deck
-- [ ] 9.2 `GET /api/v1/cards/?due=true&deck_id=X` — a view hoje trata `due` e `deck_id` como mutuamente exclusivos; passa a aceitar os dois juntos
-- [ ] 9.3 Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`
-- [ ] 9.4 Tela de estudo busca os cards devidos do deck uma vez ao entrar (sem sessão persistida) — mostra `front` e revela `back` + `front_description` + `back_description` sob interação do usuário, com rótulos em português
-- [ ] 9.5 4 botões de avaliação (`again`/`hard`/`good`/`easy`) — `POST /api/v1/cards/{card_id}/review/`, avança pro próximo card da lista buscada no início da sessão, sem reconsultar `due` em tempo real (cards avaliados como "again" só voltam a aparecer numa sessão futura, não na mesma)
-- [ ] 9.6 Progresso "X de Y" durante a sessão
-- [ ] 9.7 Estado vazio ("nenhum card devido agora") e tela de fim de sessão (resumo + voltar pro deck)
-- [ ] 9.8 Testes automatizados: backend (filtro `due`+`deck_id`) e frontend (fluxo de revisão, avanço entre cards, estado vazio, fim de sessão)
+- [x] 9.1 `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` — ganha filtro opcional por deck
+- [x] 9.2 `GET /api/v1/cards/?due=true&deck_id=X` — a view hoje trata `due` e `deck_id` como mutuamente exclusivos; passa a aceitar os dois juntos
+- [x] 9.3 Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`
+- [x] 9.4 Tela de estudo busca os cards devidos do deck uma vez ao entrar (sem sessão persistida) — mostra `front` e revela `back` + `front_description` + `back_description` sob interação do usuário, com rótulos em português
+- [x] 9.5 4 botões de avaliação (`again`/`hard`/`good`/`easy`) — `POST /api/v1/cards/{card_id}/review/`, avança pro próximo card da lista buscada no início da sessão, sem reconsultar `due` em tempo real (cards avaliados como "again" só voltam a aparecer numa sessão futura, não na mesma)
+- [x] 9.6 Progresso "X de Y" durante a sessão
+- [x] 9.7 Estado vazio ("nenhum card devido agora") e tela de fim de sessão (resumo + voltar pro deck)
+- [x] 9.8 Testes automatizados: backend (filtro `due`+`deck_id`) e frontend (fluxo de revisão, avanço entre cards, estado vazio, fim de sessão)
 
 *Critérios de aceite relevantes: 1 (isolamento — já garantido pela API), 12 (consistência visual).*
 
@@ -376,10 +376,10 @@ Gaps reais encontrados durante a implementação, deliberadamente adiados — n�
 **Nota**: login por e-mail/senha em si já está resolvido (ver tarefa 3.7) — os itens abaixo sobre e-mail/vínculo de conta são sobre **cadastro de conta nova** e **vínculo entre Google e senha no mesmo e-mail**, não sobre login de usuário já existente.
 
 - [x] ~~Cascade delete de `CardReview`~~ **Resolvido na Sprint 6** (encontrado na Sprint 3): decidido via `backend-mentor` — soft delete cascateia de `Deck` pra `Card` (`deleted_at` em ambos), `CardReview` nunca é apagada (mantida como histórico "congelado"), só passa a ser excluída das estatísticas (Sprint 10) quando o `card_id`/`deck_id` associado está soft ou permanentemente deletado.
-- [ ] **`EMAIL_BACKEND`/SMTP não configurado em lugar nenhum** (encontrado na Sprint 3, ao levantar requisitos de login por e-mail/senha): nem verificação de e-mail, nem "esqueci minha senha" funcionam sem isso. Hoje só é requisito explícito na Sprint 14 (Relatório Semanal por E-mail) — decidir se adianta pra quando o cadastro por e-mail/senha for implementado, ou se esses fluxos ficam bloqueados até lá.
+- [x] ~~`EMAIL_BACKEND`/SMTP não configurado em lugar nenhum~~ **Resolvido na Sprint 9** (encontrado na Sprint 3): Resend como provedor (SMTP relay em produção, backend de console em dev) — decisão via `backend-mentor`, ver `PROMPT_REFINADO.md`. Ainda em sandbox (sem domínio próprio verificado) — `DEFAULT_FROM_EMAIL=onboarding@resend.dev` até o domínio existir.
 - [ ] **Vínculo de conta quando Google e e-mail/senha usam o mesmo e-mail** (encontrado na Sprint 3): decidir entre vínculo automático sem verificação (simples, risco de sequestro de conta), vínculo automático só com e-mail verificado (mais seguro, depende do item de e-mail acima), ou nenhum vínculo automático (contas separadas ou colisão recusada). Ver levantamento de requisitos completo na conversa da Sprint 3.
-- [ ] **`ACCOUNT_EMAIL_VERIFICATION`: `"none"` vs `"mandatory"`** (encontrado na Sprint 3): hoje desligado (`"none"`). Ativar depende do item de e-mail acima e trava a decisão de vínculo de conta.
-- [ ] **Fluxo de "esqueci minha senha"** (encontrado na Sprint 3): endpoints prontos no `dj-rest-auth`, mas dependem de e-mail configurado (mesmo bloqueador acima) — decidir se entra junto com o login por e-mail/senha ou fica pra depois.
+- [ ] **`ACCOUNT_EMAIL_VERIFICATION`: `"none"` vs `"mandatory"`** (encontrado na Sprint 3): hoje desligado (`"none"`). Ativar depende do item de e-mail acima e trava a decisão de vínculo de conta. Nota: agora que `EMAIL_BACKEND` está configurado (item acima), esse item deixou de estar bloqueado tecnicamente — só falta a decisão de produto/segurança em si.
+- [x] ~~Fluxo de "esqueci minha senha"~~ **Resolvido na Sprint 9** (encontrado na Sprint 3): endpoints do `dj-rest-auth` (`password/reset/`, `password/reset/confirm/`) com `url_generator` customizado apontando pro frontend (`apps/accounts/serializers.py`). O e-mail usa templates próprios em texto + HTML, com a identidade visual “Dark premium” do Anki Generator e sem recursos externos; token, link da SPA e telas React permanecem inalterados. Páginas novas no frontend: `/esqueci-minha-senha` e `/redefinir-senha`.
 - [x] ~~Tela de estudo (revisar card e avaliar)~~ **Resolvido na Sprint 9** (encontrado numa auditoria pré-Sprint 6 via `backend-mentor`): levantamento de requisitos feito via `backend-mentor` — estudo por deck específico (não global), sessão sem persistência (sempre recomeça buscando os cards ainda devidos). Backend ganha filtro `due`+`deck_id` combinado em `GET /api/v1/cards/`; o resto é UI nova consumindo `POST /api/v1/cards/{id}/review/`, que já existia desde a Sprint 2.
 
 ---
