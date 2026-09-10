@@ -2,6 +2,39 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 9] Tela de Estudo — 2026-09-10
+
+Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria pré-Sprint 6 e formalizado via `backend-mentor`: nenhuma sprint do roadmap jamais construiu a tela que mostra um card e permite avaliá-lo (`again`/`hard`/`good`/`easy`) — a Home só lia histórico de revisão (`GET /api/v1/reviews/`), nunca criava um novo. O backend já tinha quase tudo desde a Sprint 2 (`POST /api/v1/cards/{card_id}/review/`, FSRS); faltava a UI e um ajuste pontual de backend (a busca de cards devidos não filtrava por deck). Ampliada, a pedido do usuário, pra também fechar os itens 1 e 4 de `PRD.md` §7.1 (`EMAIL_BACKEND` nunca configurado, fluxo de "esqueci minha senha"). Ver `openspec/changes/sprint-9-tela-de-estudo/`.
+
+### Adicionado
+- `CardRepository.find_due(owner_id, deck_id=None, due_before=None)` — ganha filtro opcional por deck, retrocompatível (`deck_id=None` preserva a busca global existente).
+- `GET /api/v1/cards/?due=true&deck_id=X` — `CardListCreateView.get_queryset` passa a aceitar os dois parâmetros combinados (antes eram mutuamente exclusivos).
+- Botão "Estudar" na tela de detalhe do deck (Sprint 7), navegando pra `/decks/{deckId}/estudar`.
+- `StudySessionPage`: busca os cards devidos do deck uma única vez ao entrar (sessão não persistida — decisão explícita via `backend-mentor`, sempre recomeça); mostra `front`, revela `back`/`front_description`/`back_description` sob interação; 4 botões de avaliação (`again`/`hard`/`good`/`easy`) que chamam `POST /api/v1/cards/{card_id}/review/` e avançam para o próximo card da lista já buscada (sem reconsultar `due` em tempo real); progresso "Card X de Y"; estado vazio; tela de fim de sessão com resumo e link de volta ao deck.
+- `api/reviews.js`: `createReview(cardId, rating)`. `api/cards.js`: `fetchDueCards` ganha parâmetro opcional `deckId`.
+- **Recuperação de senha**: `EMAIL_BACKEND` configurado — console em dev, relay SMTP do Resend em produção (`RESEND_API_KEY`, nunca hardcoded). Provedor escolhido via `backend-mentor` (levantamento completo em `PROMPT_REFINADO.md` — `recuperacao-de-senha-resend`): Resend sobre Brevo/SES/SendGrid/Mailgun/Postmark/self-host.
+- `apps/accounts/serializers.py` (`CustomPasswordResetSerializer`): personaliza o `url_generator` do `dj-rest-auth`/`allauth` pra apontar o link do e-mail pro frontend (`FRONTEND_URL/redefinir-senha?uid=...&token=...`), em vez da URL Django server-rendered que não existe nesta arquitetura API-only.
+- `templates/account/email/password_reset_key_*`: assunto e corpos texto/HTML próprios com identidade “Dark premium” do Anki Generator, CTA e URL alternativa; sem imagens, fontes ou tracking externos. O allauth continua responsável pela mensagem multipart, token e envio.
+- Rotas `POST /api/v1/auth/password/reset/` e `POST /api/v1/auth/password/reset/confirm/` (`apps/accounts/urls.py`).
+- Frontend: `ForgotPasswordPage` (`/esqueci-minha-senha`, solicita o e-mail, sempre mostra a mesma mensagem de sucesso) e `ResetPasswordPage` (`/redefinir-senha`, lê `uid`/`token` da URL, formulário de nova senha); link "Esqueci minha senha" na `LoginPage`.
+- Testes automatizados: backend (filtro por deck em `find_due`, endpoint combinado, isolamento multi-tenant; envio de e-mail com link correto, não-vazamento de existência de conta, confirmação troca a senha, token reusado/adulterado rejeitado) e frontend (fluxo completo de estudo — revelar/avaliar/avançar, estado vazio, fim de sessão — e recuperação de senha — solicitação, link inválido, sucesso, erro).
+
+### Corrigido
+- `django.contrib.sites` (`SITE_ID=1`) nunca tinha sido configurado desde o Sprint 0/1 — aparecia literalmente como "example.com" no e-mail de recuperação de senha. Migration de dados corrige pra "Anki Generator" (`apps/accounts/migrations/0003_site_name.py`), usando `update_or_create` em vez de `filter().update()` — a linha default do `Site` é criada por um signal `post_migrate` que roda depois de todas as migrations, então um `update()` simples seria um no-op silencioso.
+- `frontend/src/api/client.js`: `UNAUTHENTICATED_PATHS` ganha as duas rotas de reset de senha — mesmo bug já documentado ali pra login/Google (um token velho no `localStorage` derrubaria a request com 401 antes de validar o payload).
+- `ForgotPasswordPage`: `try/finally` sem `catch` gerava uma rejeição de Promise não tratada sempre que a solicitação falhasse (silencioso nos testes, mas poluiria o console/ferramentas de monitoramento em produção).
+
+### Validado
+- Suíte completa: 76 testes de backend, 44 de frontend, `black --check` e `eslint` limpos.
+- Fluxo real testado com a API key de produção do Resend: e-mail de recuperação entregue com sucesso na caixa de entrada do usuário, link com `uid`/`token` corretos.
+
+### Fora de escopo (decisão explícita)
+- Estudo global (todos os decks numa sessão só) — estudo é sempre por deck específico, entrado a partir da tela de detalhe do deck.
+- Sessão retomável (estado persistido de "onde o usuário parou") — mais simples, sem conceito novo de "sessão" no backend; revisitável se virar reclamação recorrente de uso real.
+- Requeue de cards avaliados como "again" dentro da mesma sessão — consequência direta do item anterior: sem estado de sessão, o card só reaparece numa sessão futura.
+- `django-anymail` — sem domínio próprio verificado, webhooks de entrega/abertura/clique não são testáveis de ponta a ponta ainda; relay SMTP nativo do Resend já resolve o caso de uso atual. Revisitar no deploy real (Sprint 15).
+- Vínculo de conta Google+e-mail/senha e `ACCOUNT_EMAIL_VERIFICATION="mandatory"` — itens 2 e 3 de `PRD.md` §7.1, continuam em aberto.
+
 ## [Arquitetura] Migração do driver MongoDB: Motor (async) → pymongo (síncrono) — 2026-09-10
 
 Fora do ciclo de sprints: mentoria técnica sobre a ponte assíncrona de `apps/decks` (`infrastructure/async_bridge.py` — thread dedicada com event loop persistente, exigida pelo `AsyncIOMotorClient` do Motor amarrar sua pool de conexões ao loop em que foi criado) levantou, com o código em mãos, que nenhuma view ou repositório do caminho de requisição real usava concorrência assíncrona (`asyncio.gather` só aparecia no comando de seed, fora do request/response). Django continua em WSGI, sem plano de migrar para ASGI — os serviços que precisam de async nativo são os microsserviços FastAPI/uvicorn, não este app. Reverte a decisão `sync-views-async-repositorio` (Sprint 7). Ver `openspec/changes/migrate-motor-para-pymongo/`.

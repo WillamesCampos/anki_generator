@@ -56,9 +56,12 @@ class ICardRepository(ABC):
 
     @abstractmethod
     def find_due(
-        self, owner_id: str, due_before: Optional[datetime] = None
+        self,
+        owner_id: str,
+        deck_id: Optional[uuid.UUID] = None,
+        due_before: Optional[datetime] = None,
     ) -> List[Card]:
-        """Cards devidos (`due_at <= due_before`, default agora) para um owner."""
+        """Cards devidos (`due_at <= due_before`, default agora) para um owner, opcionalmente restrito a um deck."""
         pass
 
     @abstractmethod

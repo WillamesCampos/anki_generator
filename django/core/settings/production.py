@@ -23,3 +23,14 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SECURE_HSTS_SECONDS = 60 * 60 * 24 * 7
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+
+# E-mail (recuperação de senha, PRD.md §7.1): relay SMTP do Resend —
+# confirme host/porta/usuário no dashboard do Resend ao criar a conta, este
+# valor segue a convenção documentada por eles no momento da escolha do
+# provedor (usuário "resend", senha = API key).
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.resend.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "resend"
+EMAIL_HOST_PASSWORD = os.environ["RESEND_API_KEY"]

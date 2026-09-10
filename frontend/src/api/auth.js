@@ -24,6 +24,29 @@ export async function loginWithGoogle(googleAccessToken) {
   return data.user;
 }
 
+// Sempre resolve (o backend responde 200 mesmo pra e-mail inexistente — não
+// revela se a conta existe, ver apps/accounts/tests/test_password_reset.py).
+export function requestPasswordReset(email) {
+  return apiFetch("/auth/password/reset/", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+// `uid`/`token` vêm da query string do link recebido por e-mail (ver
+// apps/accounts/serializers.py — url_generator customizado).
+export function confirmPasswordReset({ uid, token, newPassword1, newPassword2 }) {
+  return apiFetch("/auth/password/reset/confirm/", {
+    method: "POST",
+    body: JSON.stringify({
+      uid,
+      token,
+      new_password1: newPassword1,
+      new_password2: newPassword2,
+    }),
+  });
+}
+
 export async function logout() {
   const refresh = getRefreshToken();
   try {

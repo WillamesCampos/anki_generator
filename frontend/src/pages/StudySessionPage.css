@@ -1,0 +1,39 @@
+.study-session__progress {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.study-session__back {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.study-session__description {
+  margin: var(--space-xs) 0 0;
+  color: var(--color-text-secondary);
+}
+
+.study-session__ratings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.study-session__summary {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-primary);
+}
+
+.study-session__empty-text {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.study-session__error {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
