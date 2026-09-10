@@ -13,6 +13,7 @@ Uso:
     poetry run python manage.py seed_decks --reset
 """
 
+import os
 import random
 from datetime import datetime, timedelta, timezone
 from typing import List
@@ -42,8 +43,10 @@ SEED_USERNAMES = ["seed_ana", "seed_bruno", "seed_carla"]
 
 # Senha fixa de dev pros usuários seedados — só pra testar o login por
 # e-mail/senha (`POST /api/v1/auth/login/`) localmente antes de existirem
-# credenciais reais do Google. Documentada em frontend/README.md.
-SEED_PASSWORD = "anki12345"
+# credenciais reais do Google. Documentada em frontend/README.md. Vem de
+# env var (nunca hardcoded no código) — ver `SEED_PASSWORD` em
+# `config.example.env`/`django/.env` e no job `backend-test` do CI.
+SEED_PASSWORD = os.environ["SEED_PASSWORD"]
 
 # Título + descrição reais por deck — não um padrão genérico tipo
 # "Categoria — Deck N". A Home (Sprint 3) mostra esses valores como

@@ -21,6 +21,9 @@ Fora do ciclo de sprints: mentoria técnica sobre a ponte assíncrona de `apps/d
 - Dependência `motor` de `django/pyproject.toml`/`poetry.lock` (`pymongo` já era dependência direta).
 - `apps/decks/tests/test_mongodb_integration.py` — script manual redundante com a suíte real de `apps/decks/tests/` (mesmos repositórios, agora com asserções de verdade em vez de `print`).
 
+### Corrigido
+- `apps/decks/management/commands/seed_decks.py`: `SEED_PASSWORD` (senha fixa dos usuários de seed) deixa de ser um literal hardcoded no código — passa a vir de `os.environ["SEED_PASSWORD"]`, seguindo o mesmo padrão já usado por `DJANGO_SECRET_KEY`. Motivo: GitGuardian sinalizou o literal como "Generic Password" no scan da PR desta migração (o valor em si já era pré-existente no `main`, sem risco real — usuário de seed fictício, comando recusa rodar fora de `DEBUG=True` — mas o padrão de código continua incorreto). `SEED_PASSWORD` adicionado a `config.example.env` (placeholder) e ao job `backend-test` do CI (`.github/workflows/ci.yml`), com um valor dummy distinto do usado em dev local.
+
 ### Validado
 - Suíte completa do projeto (68 testes, Postgres/Mongo/Redis reais, sem mocks) — local e dentro do container `web`.
 - `docker compose build web celery-worker celery-beat` — as três imagens buildam sem `motor`.
