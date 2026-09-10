@@ -209,6 +209,11 @@ REST_AUTH = {
     # Sem `rest_framework.authtoken`: autenticação é só JWT, sem o token
     # legado de sessão única do DRF.
     "TOKEN_MODEL": None,
+    # Serializer próprio (PRD.md §7.1): personaliza o e-mail de "esqueci
+    # minha senha" — template em português e link apontando pro frontend
+    # (FRONTEND_URL), em vez do template/URL padrão do dj-rest-auth (que
+    # assume uma view Django server-rendered, inexistente nesta arquitetura).
+    "PASSWORD_RESET_SERIALIZER": "apps.accounts.serializers.CustomPasswordResetSerializer",
 }
 
 # allauth: login por e-mail (não username) — User.USERNAME_FIELD já é
@@ -227,6 +232,18 @@ ACCOUNT_LOGIN_METHODS = {"email"}
 # "*", e todo campo vira required=False silenciosamente).
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"
+
+# URL base da SPA — usada só pra montar o link de "redefinir senha" no
+# e-mail (apps/accounts/serializers.py). O backend é puramente API; quem
+# renderiza a tela de "nova senha" é o frontend, não uma view Django.
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+
+# Remetente do e-mail de recuperação de senha. `onboarding@resend.dev` é o
+# endereço de teste que o Resend libera antes de qualquer domínio próprio
+# verificado (ver PROMPT_REFINADO.md — compra do domínio via Cloudflare
+# ainda não aconteceu) — troca pra um endereço do domínio verificado quando
+# o domínio existir.
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "onboarding@resend.dev")
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
