@@ -19,7 +19,7 @@ from apps.decks.infrastructure.repositories.category_repository import (
 from apps.decks.infrastructure.repositories.deck_repository import DeckRepository
 from apps.decks.tasks import RETENTION_DAYS, purge_soft_deleted
 
-from .conftest import backdate_deleted_at, read_raw_document, run_async
+from .conftest import backdate_deleted_at, read_raw_document
 
 
 def _create_card(client, deck_id, **overrides):
@@ -44,7 +44,7 @@ def test_deck_soft_delete_sets_deleted_at_and_excludes_from_reads(client_a, owne
     cache.clear()
     client_a.delete(f"/api/v1/decks/{deck_id}/")
 
-    assert run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id))) is None
+    assert DeckRepository().find_by_id(deck_id, str(owner_a.id)) is None
 
     document = read_raw_document("decks", deck_id)
     assert document is not None
@@ -63,7 +63,7 @@ def test_card_soft_delete_sets_deleted_at_and_excludes_from_reads(client_a, owne
     cache.clear()
     client_a.delete(f"/api/v1/cards/{card_id}/")
 
-    assert run_async(CardRepository().find_by_id(card_id, str(owner_a.id))) is None
+    assert CardRepository().find_by_id(card_id, str(owner_a.id)) is None
 
     document = read_raw_document("cards", card_id)
     assert document is not None
@@ -82,9 +82,7 @@ def test_category_soft_delete_sets_deleted_at_and_excludes_from_reads(
     cache.clear()
     client_a.delete(f"/api/v1/categories/{category_id}/")
 
-    assert (
-        run_async(CategoryRepository().find_by_id(category_id, str(owner_a.id))) is None
-    )
+    assert CategoryRepository().find_by_id(category_id, str(owner_a.id)) is None
 
     document = read_raw_document("categories", category_id)
     assert document is not None
@@ -105,7 +103,7 @@ def test_deck_deletion_cascades_soft_delete_to_cards(client_a, owner_a):
     cache.clear()
     client_a.delete(f"/api/v1/decks/{deck_id}/")
 
-    assert run_async(CardRepository().find_by_id(card_id, str(owner_a.id))) is None
+    assert CardRepository().find_by_id(card_id, str(owner_a.id)) is None
     document = read_raw_document("cards", card_id)
     assert document["deleted_at"] is not None
 
@@ -132,7 +130,7 @@ def test_category_deletion_unlinks_referencing_decks_without_deleting_them(
     delete_response = client_a.delete(f"/api/v1/categories/{category_id}/")
     assert delete_response.status_code == 204
 
-    deck = run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id)))
+    deck = DeckRepository().find_by_id(deck_id, str(owner_a.id))
     assert deck is not None
     assert deck.category_id is None
 
@@ -157,7 +155,7 @@ def test_card_review_survives_card_and_deck_deletion(client_a, owner_a):
     cache.clear()
     client_a.delete(f"/api/v1/decks/{deck_id}/")
 
-    reviews = run_async(CardReviewRepository().find_by_owner(str(owner_a.id)))
+    reviews = CardReviewRepository().find_by_owner(str(owner_a.id))
     assert len(reviews) == 1
     assert str(reviews[0].card_id) == card_id
 
@@ -226,7 +224,7 @@ def test_patch_deck_ignores_owner_and_audit_fields_in_payload(client_a, owner_a)
         format="json",
     )
 
-    deck = run_async(DeckRepository().find_by_id(deck_id, str(owner_a.id)))
+    deck = DeckRepository().find_by_id(deck_id, str(owner_a.id))
     assert deck.owner_id == str(owner_a.id)
     assert deck.created_by == str(owner_a.id)
     assert deck.updated_by == str(owner_a.id)
@@ -253,7 +251,7 @@ def test_patch_card_ignores_owner_and_audit_fields_in_payload(client_a, owner_a)
         format="json",
     )
 
-    card = run_async(CardRepository().find_by_id(card_id, str(owner_a.id)))
+    card = CardRepository().find_by_id(card_id, str(owner_a.id))
     assert card.owner_id == str(owner_a.id)
     assert card.created_by == str(owner_a.id)
     assert card.updated_by == str(owner_a.id)
