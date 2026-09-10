@@ -7,7 +7,7 @@ openspec/changes/sprint-2-decks-cards/design.md).
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List
-from motor.motor_asyncio import AsyncIOMotorCollection
+from pymongo.collection import Collection
 
 from apps.decks.domain.entities.card_review import CardReview
 from apps.decks.domain.repositories.icard_review_repository import ICardReviewRepository
@@ -22,21 +22,19 @@ class CardReviewRepository(ICardReviewRepository):
     def __init__(self):
         self._collection_name = "card_reviews"
 
-    async def _get_collection(self) -> AsyncIOMotorCollection:
-        # Nunca cacheia a collection na instância — ver comentário
-        # equivalente em CardRepository._get_collection().
+    def _get_collection(self) -> Collection:
         try:
-            mongodb_manager = await ensure_mongodb_connection()
-            return await mongodb_manager.get_collection(self._collection_name)
+            mongodb_manager = ensure_mongodb_connection()
+            return mongodb_manager.get_collection(self._collection_name)
         except Exception as e:
             raise RepositoryError(f"Failed to get MongoDB collection: {e}")
 
-    async def save(self, review: CardReview) -> CardReview:
+    def save(self, review: CardReview) -> CardReview:
         try:
-            collection = await self._get_collection()
+            collection = self._get_collection()
             document = CardReviewSchema.to_document(review.to_dict())
 
-            result = await collection.insert_one(document)
+            result = collection.insert_one(document)
             review.id = uuid.UUID(int=int(str(result.inserted_id), 16))
 
             return review
@@ -44,18 +42,16 @@ class CardReviewRepository(ICardReviewRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to save card review: {e}")
 
-    async def find_by_card_id(
-        self, card_id: uuid.UUID, owner_id: str
-    ) -> List[CardReview]:
+    def find_by_card_id(self, card_id: uuid.UUID, owner_id: str) -> List[CardReview]:
         try:
-            collection = await self._get_collection()
+            collection = self._get_collection()
             cursor = collection.find(
                 {
                     "card_id": uuid_to_object_id(card_id),
                     "owner_id": owner_id,
                 }
             ).sort("reviewed_at", -1)
-            documents = await cursor.to_list(length=None)
+            documents = list(cursor)
 
             return [
                 CardReview.from_dict(CardReviewSchema.from_document(doc))
@@ -65,15 +61,15 @@ class CardReviewRepository(ICardReviewRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find reviews by card ID: {e}")
 
-    async def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
+    def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
         try:
-            collection = await self._get_collection()
+            collection = self._get_collection()
             cursor = (
                 collection.find({"owner_id": owner_id})
                 .sort("reviewed_at", -1)
                 .limit(limit)
             )
-            documents = await cursor.to_list(length=None)
+            documents = list(cursor)
 
             return [
                 CardReview.from_dict(CardReviewSchema.from_document(doc))
@@ -83,9 +79,7 @@ class CardReviewRepository(ICardReviewRepository):
         except Exception as e:
             raise RepositoryError(f"Failed to find reviews by owner: {e}")
 
-    async def get_deck_statistics(
-        self, owner_id: str, deck_id: uuid.UUID
-    ) -> Dict[str, Any]:
+    def get_deck_statistics(self, owner_id: str, deck_id: uuid.UUID) -> Dict[str, Any]:
         """Agrega avaliações do histórico ativo sem materializar CardReview.
 
         O ``$lookup`` restringe a agregação aos cards ainda ativos do mesmo
@@ -93,7 +87,7 @@ class CardReviewRepository(ICardReviewRepository):
         mas deixa de participar das estatísticas, conforme a Sprint 6.
         """
         try:
-            collection = await self._get_collection()
+            collection = self._get_collection()
             deck_object_id = uuid_to_object_id(deck_id)
             today_start = datetime.now(timezone.utc).replace(
                 hour=0,
@@ -142,7 +136,7 @@ class CardReviewRepository(ICardReviewRepository):
                     },
                 },
             ]
-            result = await collection.aggregate(pipeline).to_list(length=1)
+            result = list(collection.aggregate(pipeline))
             facet = result[0] if result else {"ratings": [], "today": []}
             distribution = {"again": 0, "hard": 0, "good": 0, "easy": 0}
             for rating in facet.get("ratings", []):

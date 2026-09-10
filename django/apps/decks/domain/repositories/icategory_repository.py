@@ -16,33 +16,31 @@ class ICategoryRepository(ABC):
     """Interface para repositório de Categories."""
 
     @abstractmethod
-    async def save(self, category: Category) -> Category:
+    def save(self, category: Category) -> Category:
         pass
 
     @abstractmethod
-    async def find_by_id(
-        self, category_id: uuid.UUID, owner_id: str
-    ) -> Optional[Category]:
+    def find_by_id(self, category_id: uuid.UUID, owner_id: str) -> Optional[Category]:
         pass
 
     @abstractmethod
-    async def find_all(self, owner_id: str) -> List[Category]:
+    def find_all(self, owner_id: str) -> List[Category]:
         pass
 
     @abstractmethod
-    async def update(self, category: Category) -> Category:
+    def update(self, category: Category) -> Category:
         pass
 
     @abstractmethod
-    async def delete(self, category_id: uuid.UUID, owner_id: str) -> bool:
+    def delete(self, category_id: uuid.UUID, owner_id: str) -> bool:
         """Soft delete (Sprint 6) — marca `deleted_at` e desvincula (não cascateia) os decks que a referenciam."""
         pass
 
     @abstractmethod
-    async def exists(self, category_id: uuid.UUID, owner_id: str) -> bool:
+    def exists(self, category_id: uuid.UUID, owner_id: str) -> bool:
         pass
 
     @abstractmethod
-    async def purge_soft_deleted(self, older_than: datetime) -> int:
+    def purge_soft_deleted(self, older_than: datetime) -> int:
         """Remove fisicamente categorias com `deleted_at` anterior a `older_than` (Sprint 6, purge job)."""
         pass

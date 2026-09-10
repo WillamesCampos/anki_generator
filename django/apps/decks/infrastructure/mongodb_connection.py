@@ -1,21 +1,22 @@
 """
 Gerenciador de Conexão MongoDB
 
-Este módulo gerencia a conexão assíncrona com MongoDB usando Motor.
+Este módulo gerencia a conexão síncrona com MongoDB usando pymongo.
 Implementa o padrão Singleton para garantir uma única instância de conexão
 em toda a aplicação.
 
 Características:
-- Conexão assíncrona com Motor
+- Conexão síncrona com pymongo
 - Singleton pattern
 - Pool de conexões otimizado
 - Reconexão automática
 - Health check
 """
 
-import asyncio
+import threading
 from typing import Optional, Dict, Any
-from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from pymongo import MongoClient
+from pymongo.database import Database
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
 from apps.decks.infrastructure.exceptions import (
@@ -28,19 +29,17 @@ from apps.decks.infrastructure.schemas import IndexDefinitions
 
 class MongoDBConnectionManager:
     """
-    Gerenciador de conexão MongoDB usando Motor (async).
+    Gerenciador de conexão MongoDB usando pymongo (síncrono).
 
     Implementa o padrão Singleton para garantir uma única instância
     de conexão em toda a aplicação.
     """
 
     _instance: Optional["MongoDBConnectionManager"] = None
-    _client: Optional[AsyncIOMotorClient] = None
-    _database: Optional[AsyncIOMotorDatabase] = None
+    _client: Optional[MongoClient] = None
+    _database: Optional[Database] = None
     _config: Optional[MongoDBConfig] = None
-    _loop: Optional[asyncio.AbstractEventLoop] = None
-    _connect_lock: Optional[asyncio.Lock] = None
-    _connect_lock_loop: Optional[asyncio.AbstractEventLoop] = None
+    _connect_lock: threading.Lock = threading.Lock()
 
     def __new__(cls) -> "MongoDBConnectionManager":
         """
@@ -58,7 +57,7 @@ class MongoDBConnectionManager:
             self._initialized = True
             self._config = get_mongodb_config()
 
-    async def connect(self, config: Optional[MongoDBConfig] = None) -> None:
+    def connect(self, config: Optional[MongoDBConfig] = None) -> None:
         """
         Estabelece conexão com MongoDB.
 
@@ -81,7 +80,7 @@ class MongoDBConnectionManager:
 
             # Cria cliente MongoDB com configurações otimizadas
             connection_params = self._config.get_connection_params()
-            self._client = AsyncIOMotorClient(
+            self._client = MongoClient(
                 host=connection_params.pop("host"),
                 port=connection_params.pop("port"),
                 **connection_params,
@@ -90,14 +89,8 @@ class MongoDBConnectionManager:
             # Obtém referência do banco
             self._database = self._client[self._config.database]
 
-            # Motor prende o client ao loop ativo. Entry points síncronos do
-            # Django usam `persistent_async_to_sync`, mantendo esse loop
-            # estável mesmo sob requests concorrentes. Chamadas standalone
-            # (seed/testes) ainda podem trocar de loop de forma sequencial.
-            self._loop = asyncio.get_running_loop()
-
             # Testa a conexão
-            await self._test_connection()
+            self._test_connection()
 
             print(
                 f"✅ MongoDB conectado: {self._config.host}:{self._config.port}/{self._config.database}"
@@ -107,7 +100,7 @@ class MongoDBConnectionManager:
             print(f"❌ Erro ao conectar MongoDB: {e}")
             raise
 
-    async def disconnect(self) -> None:
+    def disconnect(self) -> None:
         """
         Fecha a conexão com MongoDB.
         """
@@ -115,10 +108,9 @@ class MongoDBConnectionManager:
             self._client.close()
             self._client = None
             self._database = None
-            self._loop = None
             print("🔌 MongoDB desconectado")
 
-    async def _test_connection(self) -> None:
+    def _test_connection(self) -> None:
         """
         Testa a conexão com MongoDB.
 
@@ -127,11 +119,11 @@ class MongoDBConnectionManager:
         """
         try:
             # Ping no servidor para testar conexão
-            await self._client.admin.command("ping")
+            self._client.admin.command("ping")
         except Exception as e:
             raise ConnectionFailure(f"Failed to ping MongoDB server: {e}")
 
-    async def health_check(self) -> Dict[str, Any]:
+    def health_check(self) -> Dict[str, Any]:
         """
         Verifica a saúde da conexão MongoDB.
 
@@ -143,13 +135,13 @@ class MongoDBConnectionManager:
 
         try:
             # Ping no servidor
-            ping_result = await self._client.admin.command("ping")
+            ping_result = self._client.admin.command("ping")
 
             # Informações do servidor
-            server_info = await self._client.server_info()
+            server_info = self._client.server_info()
 
             # Estatísticas do banco
-            db_stats = await self._database.command("dbStats")
+            db_stats = self._database.command("dbStats")
 
             return {
                 "status": "connected",
@@ -166,30 +158,17 @@ class MongoDBConnectionManager:
 
     def is_connected(self) -> bool:
         """
-        Verifica se está conectado ao MongoDB *no event loop atual*.
-
-        Não basta checar se `_client` existe: um client de uma chamada
-        anterior, criado num event loop já fechado (ver comentário em
-        `connect()`), conta como desconectado — força `ensure_mongodb_connection()`
-        a reconectar (criar um novo `AsyncIOMotorClient`) no loop atual.
+        Verifica se está conectado ao MongoDB.
         """
-        if self._client is None or self._database is None:
-            return False
-
-        try:
-            current_loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return False
-
-        return current_loop is self._loop
+        return self._client is not None and self._database is not None
 
     @property
-    def client(self) -> AsyncIOMotorClient:
+    def client(self) -> MongoClient:
         """
         Retorna o cliente MongoDB.
 
         Returns:
-            Cliente AsyncIOMotorClient
+            Cliente MongoClient
 
         Raises:
             MongoNotConnectedError: Se não estiver conectado
@@ -199,12 +178,12 @@ class MongoDBConnectionManager:
         return self._client
 
     @property
-    def database(self) -> AsyncIOMotorDatabase:
+    def database(self) -> Database:
         """
         Retorna o banco de dados MongoDB.
 
         Returns:
-            Banco AsyncIOMotorDatabase
+            Banco Database
 
         Raises:
             MongoNotConnectedError: Se não estiver conectado
@@ -223,7 +202,7 @@ class MongoDBConnectionManager:
         """
         return self._config
 
-    async def get_collection(self, collection_name: str):
+    def get_collection(self, collection_name: str):
         """
         Retorna uma collection do MongoDB.
 
@@ -235,7 +214,7 @@ class MongoDBConnectionManager:
         """
         return self.database[collection_name]
 
-    async def create_indexes(self) -> None:
+    def create_indexes(self) -> None:
         """
         Cria índices otimizados para o sistema, a partir da fonte única de
         verdade em `IndexDefinitions` (schemas.py) — evita duas listas de
@@ -246,18 +225,18 @@ class MongoDBConnectionManager:
             raise MongoNotConnectedError("MongoDB not connected. Call connect() first.")
 
         for collection_name, index_defs in IndexDefinitions.get_all_indexes().items():
-            collection = await self.get_collection(collection_name)
+            collection = self.get_collection(collection_name)
             for index_def in index_defs:
                 if isinstance(index_def, tuple) and isinstance(index_def[0], str):
                     field_name, direction = index_def
-                    await collection.create_index([(field_name, direction)])
+                    collection.create_index([(field_name, direction)])
                 else:
                     keys, options = index_def
-                    await collection.create_index(keys, **options)
+                    collection.create_index(keys, **options)
 
         print("✅ Índices MongoDB criados com sucesso")
 
-    async def drop_collection(self, collection_name: str) -> None:
+    def drop_collection(self, collection_name: str) -> None:
         """
         Remove uma collection (apenas para desenvolvimento/testes).
 
@@ -267,10 +246,10 @@ class MongoDBConnectionManager:
         if not self.is_connected():
             raise MongoNotConnectedError("MongoDB not connected. Call connect() first.")
 
-        await self.database.drop_collection(collection_name)
+        self.database.drop_collection(collection_name)
         print(f"🗑️ Collection '{collection_name}' removida")
 
-    async def get_database_info(self) -> Dict[str, Any]:
+    def get_database_info(self) -> Dict[str, Any]:
         """
         Retorna informações sobre o banco de dados.
 
@@ -280,10 +259,10 @@ class MongoDBConnectionManager:
         if not self.is_connected():
             raise MongoNotConnectedError("MongoDB not connected. Call connect() first.")
 
-        db_stats = await self._database.command("dbStats")
+        db_stats = self._database.command("dbStats")
 
         # Lista collections
-        collections = await self._database.list_collection_names()
+        collections = self._database.list_collection_names()
 
         return {
             "database_name": self._config.database,
@@ -300,7 +279,7 @@ class MongoDBConnectionManager:
 mongodb_manager = MongoDBConnectionManager()
 
 
-async def get_mongodb_manager() -> MongoDBConnectionManager:
+def get_mongodb_manager() -> MongoDBConnectionManager:
     """
     Retorna a instância global do gerenciador MongoDB.
 
@@ -310,9 +289,14 @@ async def get_mongodb_manager() -> MongoDBConnectionManager:
     return mongodb_manager
 
 
-async def ensure_mongodb_connection() -> MongoDBConnectionManager:
+def ensure_mongodb_connection() -> MongoDBConnectionManager:
     """
     Garante que a conexão MongoDB está estabelecida.
+
+    Protegida por um lock comum (`threading.Lock`) para que requisições
+    concorrentes chegando antes de qualquer conexão existir não disparem
+    múltiplos `connect()` simultâneos — só a primeira efetivamente conecta,
+    as demais reaproveitam o client já criado.
 
     Returns:
         Gerenciador MongoDB conectado
@@ -320,15 +304,10 @@ async def ensure_mongodb_connection() -> MongoDBConnectionManager:
     Raises:
         ConnectionFailure: Se não conseguir conectar
     """
-    manager = await get_mongodb_manager()
+    manager = get_mongodb_manager()
 
-    current_loop = asyncio.get_running_loop()
-    if manager._connect_lock_loop is not current_loop:
-        manager._connect_lock = asyncio.Lock()
-        manager._connect_lock_loop = current_loop
-
-    async with manager._connect_lock:
+    with manager._connect_lock:
         if not manager.is_connected():
-            await manager.connect()
+            manager.connect()
 
     return manager

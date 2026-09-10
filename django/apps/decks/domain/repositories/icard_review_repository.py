@@ -14,23 +14,19 @@ class ICardReviewRepository(ABC):
     """Interface para repositório de CardReview."""
 
     @abstractmethod
-    async def save(self, review: CardReview) -> CardReview:
+    def save(self, review: CardReview) -> CardReview:
         pass
 
     @abstractmethod
-    async def find_by_card_id(
-        self, card_id: uuid.UUID, owner_id: str
-    ) -> List[CardReview]:
+    def find_by_card_id(self, card_id: uuid.UUID, owner_id: str) -> List[CardReview]:
         pass
 
     @abstractmethod
-    async def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
+    def find_by_owner(self, owner_id: str, limit: int = 100) -> List[CardReview]:
         """Revisões do owner, mais recentes primeiro — base da Home (Sprint 3: último deck estudado, gráfico de estatísticas)."""
         pass
 
     @abstractmethod
-    async def get_deck_statistics(
-        self, owner_id: str, deck_id: uuid.UUID
-    ) -> Dict[str, Any]:
+    def get_deck_statistics(self, owner_id: str, deck_id: uuid.UUID) -> Dict[str, Any]:
         """Agrega a distribuição histórica e as revisões de hoje de um deck ativo."""
         pass
