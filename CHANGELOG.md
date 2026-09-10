@@ -2,6 +2,31 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Arquitetura] Migração do driver MongoDB: Motor (async) → pymongo (síncrono) — 2026-09-10
+
+Fora do ciclo de sprints: mentoria técnica sobre a ponte assíncrona de `apps/decks` (`infrastructure/async_bridge.py` — thread dedicada com event loop persistente, exigida pelo `AsyncIOMotorClient` do Motor amarrar sua pool de conexões ao loop em que foi criado) levantou, com o código em mãos, que nenhuma view ou repositório do caminho de requisição real usava concorrência assíncrona (`asyncio.gather` só aparecia no comando de seed, fora do request/response). Django continua em WSGI, sem plano de migrar para ASGI — os serviços que precisam de async nativo são os microsserviços FastAPI/uvicorn, não este app. Reverte a decisão `sync-views-async-repositorio` (Sprint 7). Ver `openspec/changes/migrate-motor-para-pymongo/`.
+
+### Alterado
+- `apps/decks/infrastructure/mongodb_connection.py`: `MongoDBConnectionManager` passa a usar `pymongo.MongoClient` — removido todo rastreamento/comparação de event loop; `ensure_mongodb_connection()` vira lazy-connect protegido por `threading.Lock` comum, em vez de `asyncio.Lock` recriado por loop.
+- As 5 interfaces de domínio (`I*Repository`), os 5 repositórios concretos (`Deck`/`Card`/`Category`/`CardReview`/`GenerationSession`) e `duplicate_detection_service.py` viram síncronos (`def`, sem `await`).
+- `apps/decks/views.py` e `apps/decks/serializers.py` chamam os repositórios diretamente, sem nenhuma ponte sync↔async.
+- `apps/decks/tasks.py` (task Celery `purge_soft_deleted`) chama os repositórios diretamente.
+- `apps/decks/management/commands/seed_decks.py`: `asyncio.gather` substituído por `CardRepository.save_many` (`insert_many` em lote do pymongo) — preserva o desempenho de inserção em massa sem depender de concorrência assíncrona. `migrate_card_fields.py` convertido para a API síncrona do pymongo.
+- Suíte de testes de `apps/decks` (11 arquivos) adaptada para chamar os repositórios diretamente, sem `asyncio.run`/`await`.
+- `README.md`: diagrama de arquitetura simplificado (remove a ponte e os repositórios individuais do nível de arquitetura) e prosa/tabela de stack atualizadas para `pymongo`.
+- `PROMPT_REFINADO.md`: decisão `sync-views-async-repositorio` registrada como revisada, com o histórico da decisão original da Sprint 7 preservado.
+
+### Removido
+- `apps/decks/infrastructure/async_bridge.py` (`PersistentAsyncExecutor`) — não há mais nenhum consumidor.
+- Dependência `motor` de `django/pyproject.toml`/`poetry.lock` (`pymongo` já era dependência direta).
+- `apps/decks/tests/test_mongodb_integration.py` — script manual redundante com a suíte real de `apps/decks/tests/` (mesmos repositórios, agora com asserções de verdade em vez de `print`).
+
+### Validado
+- Suíte completa do projeto (68 testes, Postgres/Mongo/Redis reais, sem mocks) — local e dentro do container `web`.
+- `docker compose build web celery-worker celery-beat` — as três imagens buildam sem `motor`.
+- `docker compose up -d` com todos os serviços saudáveis; `celery-worker` conectado ao RabbitMQ com a task `purge_soft_deleted` registrada.
+- Fluxo real via HTTP: login (`POST /api/v1/auth/login/`) → criação de card (`POST /api/v1/cards/`, `201`) → leitura de volta (`GET /api/v1/cards/{id}/`, `200`) confirmando persistência real no Mongo.
+
 ## [Infraestrutura] Corrige falso-negativo do `changelog-check` em PRs só de documentação — 2026-09-08
 
 Fora do ciclo de sprints: bug descoberto ao abrir uma PR que só alterava `PROMPT_REFINADO.md` (arquivo isento na denylist do `changelog-check`) — o job falhava mesmo devendo passar, sem imprimir nenhuma mensagem própria. Causa: `bash -e` (modo estrito) trata `grep -v` que não encontra nenhuma linha correspondente como falha (exit code 1), mesmo sem erro real — e isso aborta silenciosamente uma atribuição `RELEVANT=$(...)` sob `set -e`, antes de chegar no `if` que decide a mensagem. Esse caminho nunca tinha sido exercitado de verdade em CI: as três PRs anteriores (#22, #23, #24) sempre incluíam `CHANGELOG.md` na própria mudança, então o script sempre saía mais cedo, no primeiro `if`.

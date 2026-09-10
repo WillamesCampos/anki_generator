@@ -428,7 +428,7 @@ Cada unidade implantável vive em pasta própria na raiz: `django/` (backend pri
 </decisao_resolvida>
 
 <decisao_resolvida id="isolamento-multi-tenant-mongo">
-Sprint 2: isolamento multi-tenant em MongoDB (decks/cards/categorias/card_reviews) é implementado via `owner_id` obrigatório embutido diretamente em toda query do repositório (nunca checado depois em Python) — mecanismo próprio da camada de repositório Motor, já que não há `Manager`/`QuerySet` do Django ORM para essas coleções (o `TenantOwnedModel` da Sprint 1 é ORM/Postgres-only e não se aplica aqui). Ver D1 em `openspec/changes/sprint-2-decks-cards/design.md`.
+Sprint 2: isolamento multi-tenant em MongoDB (decks/cards/categorias/card_reviews) é implementado via `owner_id` obrigatório embutido diretamente em toda query do repositório (nunca checado depois em Python) — mecanismo próprio da camada de repositório (pymongo desde `migrate-motor-para-pymongo`, Motor antes disso), já que não há `Manager`/`QuerySet` do Django ORM para essas coleções (o `TenantOwnedModel` da Sprint 1 é ORM/Postgres-only e não se aplica aqui). Ver D1 em `openspec/changes/sprint-2-decks-cards/design.md`.
 </decisao_resolvida>
 
 <decisao_resolvida id="generic-views-sobre-mongo">
@@ -436,7 +436,11 @@ Generic Views do DRF continuam a forma preferencial de expor CRUD, mesmo sobre d
 </decisao_resolvida>
 
 <decisao_resolvida id="sync-views-async-repositorio">
-Views do Django/DRF permanecem síncronas (não se adota `adrf`/views assíncronas nativas nesta fase) e chamam os repositórios Motor por uma ponte com event loop persistente por processo (`infrastructure/async_bridge.py`). O `asgiref.sync.async_to_sync` por chamada foi substituído na Sprint 7 depois de reproduzir um `500` concorrente: requests simultâneos criavam loops diferentes e invalidavam o singleton Motor. Os repositórios continuam em Motor (não migram para `pymongo`), porque o comando de seed usa concorrência assíncrona real via `asyncio.gather`. Ver D9 no design da Sprint 7.
+**Revisado (change `migrate-motor-para-pymongo`, pós-Sprint 9)**: repositórios de `apps/decks` migraram de Motor (async) para `pymongo` (síncrono) — views/serializers/tasks Celery chamam os repositórios diretamente, sem nenhuma ponte sync↔async. `infrastructure/async_bridge.py` foi removido.
+
+Histórico (Sprint 7, decisão então vigente, mantido como registro): views do Django/DRF permaneciam síncronas (sem `adrf`/views assíncronas nativas) e chamavam os repositórios Motor por uma ponte com event loop persistente por processo (`infrastructure/async_bridge.py`), depois de reproduzir um `500` concorrente com `asgiref.sync.async_to_sync` por chamada (requests simultâneos criavam loops diferentes e invalidavam o singleton Motor — ver D9 no design da Sprint 7). Os repositórios continuavam em Motor porque o seed usava `asyncio.gather` para concorrência real.
+
+Motivo da reversão: levantamento (mentoria técnica) confirmou que nenhuma view/repositório do caminho de requisição usava `asyncio.gather` — só o seed, fora do request/response — então o assincronismo do Motor não trazia ganho real, só o custo da ponte (thread dedicada, rastreamento de event loop, lock recriado por loop). Django segue em WSGI (sem plano de ASGI); os serviços que precisam de async nativo são os microsserviços FastAPI/uvicorn. Seed passou a usar `CardRepository.save_many` (`insert_many` em lote) em vez de `asyncio.gather`. Ver `openspec/changes/migrate-motor-para-pymongo/design.md`.
 </decisao_resolvida>
 
 <decisao_resolvida id="repeticao-espacada-fsrs">
@@ -574,7 +578,7 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Estrutura do monorepo**: `django/` + `microservices/<nome>/` + `frontend/`, uma pasta por unidade implantável — ver `<estrutura_monorepo>`.
 - [x] **Isolamento multi-tenant em MongoDB** (Sprint 2): `owner_id` obrigatório embutido em toda query do repositório — ver `isolamento-multi-tenant-mongo`.
 - [x] **Generic Views sobre dado não-ORM** (Sprint 2): serializers manuais + `get_queryset()` retornando lista resolvida — ver `generic-views-sobre-mongo`.
-- [x] **Sync vs. async nas views de deck/card**: views síncronas + ponte de event loop persistente, repositórios continuam em Motor — ver `sync-views-async-repositorio`.
+- [x] **Sync vs. async nas views de deck/card**: revisado — repositórios migrados de Motor para `pymongo` (síncrono), ponte de event loop removida — ver `sync-views-async-repositorio`.
 - [x] **Algoritmo de repetição espaçada** (Sprint 2): FSRS via pacote `fsrs`, não SM-2 manual — ver `repeticao-espacada-fsrs`.
 - [x] **Tokens visuais do frontend** (Sprint 3): extraídos por auditoria real de `refs/Ashley_files/style.css`, não importados diretamente — ver `frontend-tokens-visuais`.
 - [x] **Gráfico + exportação PDF da Home** (Sprint 3): Chart.js + jsPDF — ver `frontend-grafico-pdf`.
