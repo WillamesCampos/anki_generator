@@ -23,6 +23,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - `django.contrib.sites` (`SITE_ID=1`) nunca tinha sido configurado desde o Sprint 0/1 — aparecia literalmente como "example.com" no e-mail de recuperação de senha. Migration de dados corrige pra "Anki Generator" (`apps/accounts/migrations/0003_site_name.py`), usando `update_or_create` em vez de `filter().update()` — a linha default do `Site` é criada por um signal `post_migrate` que roda depois de todas as migrations, então um `update()` simples seria um no-op silencioso.
 - `frontend/src/api/client.js`: `UNAUTHENTICATED_PATHS` ganha as duas rotas de reset de senha — mesmo bug já documentado ali pra login/Google (um token velho no `localStorage` derrubaria a request com 401 antes de validar o payload).
 - `ForgotPasswordPage`: `try/finally` sem `catch` gerava uma rejeição de Promise não tratada sempre que a solicitação falhasse (silencioso nos testes, mas poluiria o console/ferramentas de monitoramento em produção).
+- `.gitguardian.yaml` (novo, raiz do repo): GitGuardian sinalizava usuário/senha hardcoded nos testes de recuperação de senha como "Generic Password" — fixtures descartáveis de bancos reais locais/CI, não segredos de verdade (mesma convenção de testes sem mocks já documentada). Escopo restrito a caminhos de teste (`django/**/tests/**`, `frontend/**/*.test.jsx`, `frontend/**/*.test.js`), não ao detector inteiro — mantém o alerta ativo fora desses caminhos.
 
 ### Validado
 - Suíte completa: 76 testes de backend, 44 de frontend, `black --check` e `eslint` limpos.

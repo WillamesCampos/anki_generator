@@ -1,0 +1,14 @@
+# Config do GitGuardian (GitHub App + ggshield) — https://docs.gitguardian.com/ggshield-docs/configuration
+#
+# Escopo deliberadamente restrito a caminhos de teste, não ao detector
+# inteiro ("Generic Password"): senhas/usuários hardcoded em testes são
+# fixtures descartáveis (bancos reais locais/CI, nunca serviços externos —
+# ver convenção de testes em PROMPT_REFINADO.md), não segredos de verdade.
+# Manter o detector ativo fora desses caminhos preserva o alerta caso uma
+# credencial real algum dia seja colada por engano em código de produção.
+version: 2
+secret:
+  ignored_paths:
+    - "django/**/tests/**"
+    - "frontend/**/*.test.jsx"
+    - "frontend/**/*.test.js"
