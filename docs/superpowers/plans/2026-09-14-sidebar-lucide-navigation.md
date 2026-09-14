@@ -36,7 +36,7 @@
 - Consumes: existing `collapsed`, `NAV_ITEMS`, `NavLink`, and toggle semantics.
 - Produces: Lucide SVG components, `.sidebar__link-label`, `.sidebar__tooltip`, and complete collapsed `aria-label` values.
 
-- [ ] **Step 1: Write failing icon and collapsed-label tests**
+- [x] **Step 1: Write failing icon and collapsed-label tests**
 
 Extend `Sidebar.test.jsx` with:
 
@@ -77,13 +77,13 @@ test("mantém nomes completos e tooltips no menu recolhido", () => {
 
 In the existing toggle test, assert the initial icon has class `lucide-chevrons-left` and the post-click icon has class `lucide-chevrons-right`.
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run `cd frontend && npm test -- src/components/layout/Sidebar.test.jsx`.
 
 Expected: failures for missing item icons, label spans, tooltip spans, complete collapsed accessible names, and Lucide toggle classes.
 
-- [ ] **Step 3: Install and validate Lucide exports**
+- [x] **Step 3: Install and validate Lucide exports**
 
 Run:
 
@@ -95,7 +95,7 @@ node --input-type=module -e 'import { House, Layers3, Tags, ChartColumn, Bot, Lo
 
 Expected: npm updates only the frontend manifests and Node prints `true`.
 
-- [ ] **Step 4: Render named icons, labels, and tooltips**
+- [x] **Step 4: Render named icons, labels, and tooltips**
 
 Add the named imports to `Sidebar.jsx`. Change `NAV_ITEMS` to:
 
@@ -137,7 +137,7 @@ Render each item with `const Icon = item.icon`, remove the native `title`, add `
 
 Render logout with the same three children using `LogOut`, `Sair`, and `aria-label={collapsed ? "Sair" : undefined}`. Preserve `handleLogout` unchanged.
 
-- [ ] **Step 5: Implement expanded alignment and collapsed tooltips**
+- [x] **Step 5: Implement expanded alignment and collapsed tooltips**
 
 Change `.sidebar__link` to flex alignment with `position: relative`, `gap: var(--space-xs)`, and `overflow: visible`. Add:
 
@@ -206,11 +206,11 @@ Change `.sidebar__link` to flex alignment with `position: relative`, `gap: var(-
 
 Remove the now-obsolete SVG stroke rules and collapsed rotation. In reduced motion, include `.sidebar__tooltip` in `transition: none` and force its visible transform to `translate(0, -50%)`.
 
-- [ ] **Step 6: Run GREEN and full checks**
+- [x] **Step 6: Run GREEN and full checks**
 
 Run focused tests, ESLint, full Vitest, Vite build, and `git diff --check`. Expected: all exit 0 and the new Sidebar tests pass.
 
-- [ ] **Step 7: Update Sprint records and commit**
+- [x] **Step 7: Update Sprint records and commit**
 
 Append task 7.10, add a design decision for Lucide/icons/tooltips, and add a concise CHANGELOG entry. Commit only the eight listed files:
 

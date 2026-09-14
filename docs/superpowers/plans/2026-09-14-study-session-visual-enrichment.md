@@ -36,7 +36,7 @@
 - Consumes: existing `RATINGS` and `Button` prop spreading.
 - Produces: four CSS/JS rating tokens and `data-rating="again|hard|good|easy"`.
 
-- [ ] **Step 1: Write the failing semantic-rating test**
+- [x] **Step 1: Write the failing semantic-rating test**
 
 In the existing complete-flow test, after revealing the answer and before clicking `Bom`, add:
 
@@ -68,13 +68,13 @@ test("expõe as quatro cores semânticas de avaliação", () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run `cd frontend && npm test -- StudySessionPage.test.jsx`.
 
 Expected: failures because `data-rating` and the four JS token properties do not exist.
 
-- [ ] **Step 3: Add paired rating tokens**
+- [x] **Step 3: Add paired rating tokens**
 
 Add to `tokens.css` after `--color-overlay`:
 
@@ -96,7 +96,7 @@ ratingEasy: "rgb(21, 128, 61)",
 
 Update `VISUAL_AUDIT.md` to record these four paired semantic rating tokens and their local use.
 
-- [ ] **Step 4: Expose the existing rating value to local CSS**
+- [x] **Step 4: Expose the existing rating value to local CSS**
 
 Add only this prop to each mapped rating `Button` in `StudySessionPage.jsx`:
 
@@ -106,7 +106,7 @@ data-rating={value}
 
 Do not add `className` and do not change `RATINGS` or `handleRate`.
 
-- [ ] **Step 5: Replace StudySessionPage.css with the enriched local styles**
+- [x] **Step 5: Replace StudySessionPage.css with the enriched local styles**
 
 Keep the existing error/summary/empty rules and add/replace the presentation with:
 
@@ -245,11 +245,11 @@ Add the responsive and reduced-motion rules exactly as follows:
 }
 ```
 
-- [ ] **Step 6: Run GREEN and regression checks**
+- [x] **Step 6: Run GREEN and regression checks**
 
 Run focused StudySession tests, ESLint, full Vitest, Vite build, the visual-audit hardcoded-color search, and `git diff --check`. Expected: all exit 0.
 
-- [ ] **Step 7: Update Sprint records and commit**
+- [x] **Step 7: Update Sprint records and commit**
 
 Append task 7.11, add a design decision for the study-session surface and semantic rating tokens, and add a concise CHANGELOG entry. Commit only the nine listed files:
 

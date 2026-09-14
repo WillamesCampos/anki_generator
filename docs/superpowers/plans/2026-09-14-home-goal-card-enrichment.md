@@ -33,7 +33,7 @@
 - Consumes: `goalProgress: { reviewedToday: number, goal: number, percentage: number }`.
 - Produces: `.home-page__goal-card`, `role="progressbar"`, and `--goal-progress` from `percentage`.
 
-- [ ] **Step 1: Add failing goal-card tests**
+- [x] **Step 1: Add failing goal-card tests**
 
 Add a `describe("meta de estudo da Home", ...)` block to `HomePage.test.jsx`. In its `beforeEach`, clear mocks and provide empty defaults for reviews. Add three tests:
 
@@ -100,13 +100,13 @@ describe("meta de estudo da Home", () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run `cd frontend && npm test -- HomePage.test.jsx`.
 
 Expected: three new tests fail because no progressbar, percent badge, or helper exists.
 
-- [ ] **Step 3: Implement the semantic goal panel**
+- [x] **Step 3: Implement the semantic goal panel**
 
 After `goalProgress` in `HomePage.jsx`, add:
 
@@ -155,7 +155,7 @@ Replace the current goal `Card` with:
 </div>
 ```
 
-- [ ] **Step 4: Add the local white-card CSS**
+- [x] **Step 4: Add the local white-card CSS**
 
 Add to `HomePage.css` after `.home-page__summary-grid`:
 
@@ -264,7 +264,7 @@ Add to the existing reduced-motion block:
 }
 ```
 
-- [ ] **Step 5: Run GREEN and regression checks**
+- [x] **Step 5: Run GREEN and regression checks**
 
 Run:
 
@@ -280,7 +280,7 @@ git diff --check
 
 Expected: Home tests and the complete frontend suite pass; lint/build/diff check exit 0.
 
-- [ ] **Step 6: Update Sprint 9 records and commit**
+- [x] **Step 6: Update Sprint 9 records and commit**
 
 Append task 7.9 to `openspec/changes/sprint-9-tela-de-estudo/tasks.md`, add a design decision for the white goal progress panel and shared top-card border, and add one concise CHANGELOG item. Then commit only the six files:
 
