@@ -105,15 +105,21 @@ describe("caminhos até a tela de estudo", () => {
 
     await screen.findByText("Hospedagem e Transporte");
 
-    expect(screen.getByRole("link", { name: "Continuar estudando" })).toHaveAttribute(
+    const continueLink = screen.getByRole("link", { name: "Continuar estudando" });
+    expect(continueLink).toHaveAttribute(
       "href",
       "/decks/deck-last/estudar",
     );
+    expect(continueLink).toHaveClass("ui-button", "ui-button--primary");
+    expect(continueLink).toHaveAttribute("data-home-action", "continue");
 
     expect(
       screen.getByText("Não é o deck que deseja estudar agora? Escolha o seu deck!"),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver meus decks" })).toHaveAttribute("href", "/decks");
+    const decksLink = screen.getByRole("link", { name: "Ver meus decks" });
+    expect(decksLink).toHaveAttribute("href", "/decks");
+    expect(decksLink).toHaveClass("ui-button", "ui-button--secondary");
+    expect(decksLink).toHaveAttribute("data-home-action", "decks");
   });
 
   test("sem nenhuma revisão: sem botão 'Continuar estudando', CTA convida a escolher um deck", async () => {

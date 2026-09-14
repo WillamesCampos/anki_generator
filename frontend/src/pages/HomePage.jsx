@@ -126,7 +126,7 @@ export default function HomePage() {
                 as={Link}
                 variant="primary"
                 to={`/decks/${lastDeck.id}/estudar`}
-                className="home-page__deck-study-button"
+                data-home-action="continue"
               >
                 Continuar estudando
               </Button>
@@ -152,7 +152,7 @@ export default function HomePage() {
             as={Link}
             variant="secondary"
             to="/decks"
-            className="home-page__decks-cta-button"
+            data-home-action="decks"
           >
             Ver meus decks
           </Button>
