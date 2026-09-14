@@ -72,12 +72,10 @@
   box-shadow: 3px 3px 0 var(--color-accent);
 }
 
-.home-page [data-home-action="decks"]::after {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-top: 2px solid currentColor;
-  border-right: 2px solid currentColor;
+.home-page__decks-eye-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
 }
 
 .home-page [data-home-action="continue"]:hover,

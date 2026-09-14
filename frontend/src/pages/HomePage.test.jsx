@@ -120,6 +120,9 @@ describe("caminhos até a tela de estudo", () => {
     expect(decksLink).toHaveAttribute("href", "/decks");
     expect(decksLink).toHaveClass("ui-button", "ui-button--secondary");
     expect(decksLink).toHaveAttribute("data-home-action", "decks");
+    const eyeIcon = decksLink.querySelector(".home-page__decks-eye-icon");
+    expect(eyeIcon).toHaveAttribute("aria-hidden", "true");
+    expect(eyeIcon).toHaveAttribute("focusable", "false");
   });
 
   test("sem nenhuma revisão: sem botão 'Continuar estudando', CTA convida a escolher um deck", async () => {

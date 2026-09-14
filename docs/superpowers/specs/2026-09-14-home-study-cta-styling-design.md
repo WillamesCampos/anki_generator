@@ -34,7 +34,7 @@ A composição deve parecer energética e acionável, sem aumentar a altura do c
 
 ### Ação secundária — “Ver meus decks”
 
-O botão mantém o texto **“Ver meus decks”**, com fundo preto, texto branco, os mesmos cantos de card e uma sombra laranja deslocada. Uma seta diagonal decorativa sucede o texto e comunica exploração/navegação.
+O botão mantém o texto **“Ver meus decks”**, com fundo preto, texto branco, os mesmos cantos de card e uma sombra laranja deslocada. Um ícone de olho aberto decorativo sucede o texto e comunica visualização/exploração.
 
 Apesar do contraste alto, sua área menor e sua posição fora do card preservam a prioridade visual de “Continuar estudando”. O texto condicional atual ao lado do botão não muda.
 
@@ -44,7 +44,7 @@ Apesar do contraste alto, sua área menor e sua posição fora do card preservam
 - `:active`: o deslocamento aumenta e a sombra se aproxima de zero.
 - `:focus-visible`: outline preto no botão laranja e outline laranja no botão preto, ambos com distância suficiente para não se confundirem com a sombra.
 - `prefers-reduced-motion: reduce`: remove transições e transformações dos dois CTAs.
-- Os símbolos de play e seta são decorativos, produzidos por CSS, e não alteram os nomes acessíveis usados nos testes ou por leitores de tela.
+- O símbolo de play continua sendo um pseudo-elemento CSS. O olho aberto é um SVG inline decorativo, com `aria-hidden="true"` e `focusable="false"`; nenhum dos dois altera os nomes acessíveis usados nos testes ou por leitores de tela.
 - O contraste de texto permanece alto: preto sobre laranja e branco sobre preto.
 
 ## Responsividade
@@ -57,7 +57,7 @@ Em telas de até `640px`, o bloco secundário empilha texto e botão; “Ver meu
 
 O ajuste fica isolado nos seletores locais de `HomePage.css`. O `Button` global continua fornecendo semântica, tipografia básica e comportamento de link; as classes específicas da Home definem apenas a linguagem visual destes dois CTAs.
 
-`HomePage.jsx` muda somente o rótulo da ação primária. Os símbolos são pseudo-elementos CSS, evitando markup semântico desnecessário. Não há mudança no fluxo de dados:
+`HomePage.jsx` muda o rótulo da ação primária e inclui o SVG inline decorativo do olho. O play continua sendo pseudo-elemento CSS; o SVG é oculto da árvore acessível. Não há mudança no fluxo de dados:
 
 1. A Home carrega revisões e resolve o último deck acessível.
 2. Se houver deck válido, renderiza “Continuar estudando” com o mesmo destino atual.
