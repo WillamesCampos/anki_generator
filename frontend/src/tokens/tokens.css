@@ -12,6 +12,10 @@
   --color-bg-dark: rgb(0, 0, 0);
   --color-white: rgb(255, 255, 255);
   --color-overlay: rgba(0, 0, 0, 0.5);
+  --color-rating-again: rgb(220, 38, 38);
+  --color-rating-hard: rgb(245, 158, 11);
+  --color-rating-good: rgb(37, 99, 235);
+  --color-rating-easy: rgb(21, 128, 61);
 
   --font-family: "Outfit", sans-serif;
   --font-size-base: 16px;

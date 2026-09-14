@@ -23,6 +23,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - **Estatísticas da Home**: o gráfico do último deck ganha dataset e opções tokenizados (barras com borda/hover, tooltip escuro e eixos de valores inteiros), respeita `prefers-reduced-motion` e expõe uma lista resumida associada ao gráfico para leitura por tecnologias assistivas. O ajuste visual permanece local ao card de estatísticas; Sidebar, componentes globais e a faixa CTA são preservados.
 - **Meta de estudo da Home**: os dois cards superiores passam a usar a mesma borda preta das estatísticas; o card da meta permanece branco e ganha contagem destacada, selo percentual, barra de progresso acessível e mensagem de meta restante/concluída, com suporte a movimento reduzido.
 - **Navegação lateral com Lucide**: itens, logout e controle de recolhimento passam a usar ícones consistentes; aberta, a Sidebar exibe ícone e texto, enquanto recolhida mantém nomes acessíveis completos e revela tooltips visuais no hover/foco. Rotas, persistência, dimensões e o toggle sem sombra foram preservados.
+- **Sessão de estudo enriquecida**: o card branco ganha borda preta, sombra laranja e conteúdo centralizado; o progresso vira selo e Errei/Difícil/Bom/Fácil usam, respectivamente, tokens vermelho/âmbar/azul/verde em uma grade responsiva, com estados de foco, interação, desabilitado e movimento reduzido.
 
 ### Corrigido
 - `django.contrib.sites` (`SITE_ID=1`) nunca tinha sido configurado desde o Sprint 0/1 — aparecia literalmente como "example.com" no e-mail de recuperação de senha. Migration de dados corrige pra "Anki Generator" (`apps/accounts/migrations/0003_site_name.py`), usando `update_or_create` em vez de `filter().update()` — a linha default do `Site` é criada por um signal `post_migrate` que roda depois de todas as migrations, então um `update()` simples seria um no-op silencioso.
@@ -30,7 +31,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - `ForgotPasswordPage`: `try/finally` sem `catch` gerava uma rejeição de Promise não tratada sempre que a solicitação falhasse (silencioso nos testes, mas poluiria o console/ferramentas de monitoramento em produção).
 
 ### Validado
-- Suíte completa: 77 testes de backend, 48 de frontend, `black --check` e `eslint` limpos.
+- Suíte completa: 77 testes de backend, 54 de frontend, `black --check` e `eslint` limpos.
 - Fluxo real testado com a API key de produção do Resend: e-mail de recuperação entregue com sucesso na caixa de entrada do usuário, link com `uid`/`token` corretos.
 
 ### Fora de escopo (decisão explícita)

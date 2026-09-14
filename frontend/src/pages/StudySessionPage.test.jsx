@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { fetchDueCards } from "../api/cards";
 import { fetchDeck } from "../api/decks";
 import { createReview } from "../api/reviews";
+import { colors } from "../tokens/tokens";
 import StudySessionPage from "./StudySessionPage";
 
 vi.mock("../api/cards", () => ({
@@ -74,6 +75,19 @@ describe("sessão de estudo", () => {
     expect(screen.getByText("rede")).toBeInTheDocument();
     expect(screen.getByText("The network is stable.")).toBeInTheDocument();
 
+    const expectedRatings = [
+      ["Errei", "again"],
+      ["Difícil", "hard"],
+      ["Bom", "good"],
+      ["Fácil", "easy"],
+    ];
+
+    expectedRatings.forEach(([label, rating]) => {
+      const button = screen.getByRole("button", { name: label });
+      expect(button).toHaveClass("ui-button", "ui-button--secondary");
+      expect(button).toHaveAttribute("data-rating", rating);
+    });
+
     await user.click(screen.getByRole("button", { name: "Bom" }));
 
     await waitFor(() => {
@@ -102,5 +116,12 @@ describe("sessão de estudo", () => {
     const backLinks = screen.getAllByRole("link", { name: "Voltar ao deck" });
     expect(backLinks).toHaveLength(2);
     backLinks.forEach((link) => expect(link).toHaveAttribute("href", "/decks/deck-1"));
+  });
+
+  test("expõe as quatro cores semânticas de avaliação", () => {
+    expect(colors.ratingAgain).toBe("rgb(220, 38, 38)");
+    expect(colors.ratingHard).toBe("rgb(245, 158, 11)");
+    expect(colors.ratingGood).toBe("rgb(37, 99, 235)");
+    expect(colors.ratingEasy).toBe("rgb(21, 128, 61)");
   });
 });

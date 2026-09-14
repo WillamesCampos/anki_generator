@@ -79,6 +79,13 @@ Os SVGs são decorativos (`aria-hidden`) e os controles recolhidos recebem `aria
 
 - **Alternativa descartada**: manter letras ou copiar SVGs individualmente. Rejeitada porque as letras eram ambíguas no estado recolhido e os SVGs locais duplicariam manutenção que a biblioteca tree-shakable já resolve.
 
+### D10 — Sessão de estudo usa superfície expressiva e cores semânticas por avaliação
+O card da sessão permanece branco, recebe borda preta de 2 px e sombra laranja deslocada, com título, resposta e descrições centralizados. O progresso vira um selo compacto e os quatro botões ocupam uma grade responsiva de quatro, duas ou uma coluna conforme a largura disponível.
+
+Cada ação preserva o mesmo valor enviado à API, mas expõe esse valor em `data-rating` para estilização local: `again` vermelho, `hard` âmbar, `good` azul e `easy` verde. As cores são pares de tokens CSS/JS, com texto branco ou preto conforme o contraste. Estados hover, active, focus-visible e disabled permanecem distinguíveis, e transformações são removidas sob `prefers-reduced-motion`.
+
+- **Alternativa descartada**: criar variantes globais no `Button`. Rejeitada porque as quatro cores representam a semântica específica da avaliação FSRS e não um padrão genérico de ação da aplicação.
+
 ## Risks / Trade-offs
 
 - **[Risco]** Sem sessão persistida, se o usuário fechar a aba no meio do estudo, perde a noção de progresso da sessão (mas não perde nenhuma revisão já feita — cada avaliação já foi persistida via `POST /review/` no momento em que aconteceu). → **Mitigação**: nenhuma nesta sprint, aceito como trade-off da v1.

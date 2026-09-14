@@ -142,6 +142,7 @@ export default function StudySessionPage() {
                     <Button
                       key={value}
                       variant="secondary"
+                      data-rating={value}
                       disabled={submitting}
                       onClick={() => handleRate(value)}
                     >
