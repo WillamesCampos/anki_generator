@@ -44,3 +44,4 @@
 - [x] 7.5 Testes automatizados (frontend): botão "Continuar estudando" da Home aparece só com `lastDeck` válido, CTA secundário troca de texto conforme o estado.
   Botão "Estudar" presente em cada item de `DeckListPage`.
 - [x] 7.6 Atualizar `PRD.md`/`CHANGELOG.md` com essa extensão da Sprint 9
+- [x] 7.7 HomePage.css: estilizar "Continuar estudando" e "Ver meus decks" na direção “Contraste expressivo”, com estados hover/active/focus, layout móvel e redução de movimento
