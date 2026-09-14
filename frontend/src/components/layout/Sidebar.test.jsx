@@ -61,17 +61,32 @@ describe('Sidebar responsiva', () => {
     expect(screen.getByRole('navigation')).toHaveClass('sidebar--collapsed')
   })
 
-  test('preserva e atualiza a preferência manual em viewport de tablet', async () => {
+  test('expõe o estado acessível e preserva a preferência manual ao alternar', async () => {
     const user = userEvent.setup()
     localStorage.setItem('anki_generator_sidebar_collapsed', 'false')
     installMatchMedia(true)
     renderSidebar()
 
-    expect(screen.getByRole('navigation')).not.toHaveClass('sidebar--collapsed')
+    const navigation = screen.getByRole('navigation')
+    const toggle = screen.getByRole('button', { name: 'Recolher menu' })
+    const navigationList = document.getElementById('sidebar-navigation-list')
+    const icon = toggle.querySelector('svg')
 
-    await user.click(screen.getByRole('button', { name: 'Recolher menu' }))
+    expect(navigation).not.toHaveClass('sidebar--collapsed')
+    expect(navigationList).toBeInTheDocument()
+    expect(navigationList?.tagName).toBe('UL')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle).toHaveAttribute('aria-controls', 'sidebar-navigation-list')
+    expect(toggle).toHaveAttribute('title', 'Recolher menu')
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+    expect(icon).toHaveAttribute('focusable', 'false')
 
-    expect(screen.getByRole('navigation')).toHaveClass('sidebar--collapsed')
+    await user.click(toggle)
+
+    expect(navigation).toHaveClass('sidebar--collapsed')
+    expect(screen.getByRole('button', { name: 'Expandir menu' })).toBe(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute('title', 'Expandir menu')
     expect(localStorage.getItem('anki_generator_sidebar_collapsed')).toBe('true')
   })
 })

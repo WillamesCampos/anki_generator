@@ -76,12 +76,22 @@ export default function Sidebar() {
           className="sidebar__toggle"
           onClick={toggleCollapsed}
           aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
+          aria-expanded={!collapsed}
+          aria-controls="sidebar-navigation-list"
           title={collapsed ? "Expandir menu" : "Recolher menu"}
         >
-          {collapsed ? "»" : "«"}
+          <svg
+            className="sidebar__toggle-icon"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="m13 17-5-5 5-5" />
+            <path d="m19 17-5-5 5-5" />
+          </svg>
         </button>
       </div>
-      <ul className="sidebar__list">
+      <ul id="sidebar-navigation-list" className="sidebar__list">
         {NAV_ITEMS.map((item) => (
           <li key={item.to}>
             <NavLink
