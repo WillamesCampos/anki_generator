@@ -10,6 +10,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - Tela de estudo: busca os cards devidos do deck uma vez ao entrar (sessão não persistida — decisão explícita via `backend-mentor`, sempre recomeça), mostra a frente do card, revela o verso sob interação, e 4 botões de avaliação que chamam o endpoint de revisão já existente.
 - Progresso "X de Y", estado vazio, e tela de fim de sessão.
 - E-mail de recuperação do allauth customizado em texto + HTML com a identidade “Dark premium” do Anki Generator; token, URL da SPA e transporte Resend permanecem inalterados.
+- Caminho de descoberta até a tela de estudo, que ficou faltando na entrega original: botão "Estudar" no card "Último deck estudado" da Home, CTA secundário na Home levando pra `/decks`, e botão "Estudar" em cada item de `DeckListPage` — sem alterar o menu lateral.
 
 ## Capabilities
 
@@ -17,6 +18,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - `deck-scoped-due-cards`: filtro por deck na busca de cards devidos (`find_due`), endpoint `GET /api/v1/cards/?due=true&deck_id=X`.
 - `study-session-ui`: tela de estudo em si — frente/verso do card, avaliação, progresso, estado vazio, fim de sessão.
 - `branded-password-reset-email`: override nativo dos templates de recuperação do allauth, com assunto, fallback textual e HTML responsivo próprios.
+- `study-entry-points`: pontos de entrada pra tela de estudo a partir da Home e da listagem de decks — levantado via `backend-mentor` depois de identificar que a tela de estudo só era alcançável digitando a URL ou a partir do detalhe de um deck específico.
 
 ### Modified Capabilities
 (nenhuma — não há capability canônica de "cards devidos" arquivada em `openspec/specs/`; o item acima entra como capability nova mesmo estendendo comportamento já existente desde a Sprint 2)
@@ -28,3 +30,4 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - **Depende da Sprint 7** (tela de detalhe do deck, de onde "Estudar" é acionado).
 - Fora de escopo, por decisão explícita: estudo global (todos os decks numa sessão só) e sessão retomável (estado persistido) — ver `design.md`.
 - Backend de autenticação: diretório de templates do projeto, três templates `account/email/password_reset_key_*` e teste de renderização multipart; nenhum impacto no React.
+- Frontend: `HomePage.jsx` (botão no card "Último deck estudado" + CTA secundário condicional), `DeckListPage.jsx` (botão "Estudar" por item, ao lado de "Abrir deck"). `Sidebar.jsx` **não muda** — decisão explícita via `backend-mentor` (ver D6 em `design.md`), pra evitar dois itens de menu com o mesmo destino (`/decks`).

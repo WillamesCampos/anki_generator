@@ -45,6 +45,19 @@ Não haverá imagem, fonte, script, tracking pixel ou stylesheet remoto. Isso ev
 
 O assunto final é produzido como `[Anki Generator] Redefina sua senha`: o template fornece “Redefina sua senha” e o prefixo vem do `Site.name` já configurado pelo allauth.
 
+### D6 — Caminhos de descoberta até a tela de estudo, sem tocar no menu lateral
+
+Levantamento via `backend-mentor` (código lido, não suposto): `DeckListPage.jsx` (`/decks`) **já não tem** formulário de criação embutido hoje — "Novo deck" é só um link pra `/decks/novo`, rota separada. O requisito original ("listagem sem form") já é o comportamento atual; nada muda ali além de adicionar um botão "Estudar" por item.
+
+O gap real estava no menu lateral: a proposta inicial adicionava um item "Estudar" apontando pra exatamente a mesma rota (`/decks`) que o item "Decks" já existente cobre — dois itens de navegação primária, destino idêntico. Três alternativas levantadas: (a) não criar o item novo, já que a Home ganha dois caminhos até `/decks` e "Decks" já existe no menu; (b) o item do menu levar direto pro deck mais recente, pulando a listagem; (c) manter os dois itens, mas com filtros diferentes (`Estudar` mostrando só decks com cards devidos). Escolhido (a) — decisão explícita do usuário: menor mudança, sem duplicar destino, sem lógica de filtro nova pra justificar um item a mais.
+
+Botão "Estudar" em cada item de `DeckListPage` **não pré-checa** se o deck tem cards devidos antes de navegar — evita 1 request extra por deck só pra decidir o estado do botão (N+1); a própria tela de estudo já trata o estado vazio (`total === 0`) desde D2.
+
+Card "Último deck estudado" (Home): o botão "Estudar" só é renderizado dentro do bloco que já existe pra `lastDeck` presente — herda de graça a proteção contra usuário novo (zero reviews) e deck soft-deletado (`fetchDeck` de um deck excluído já cai no branch de erro existente). O CTA secundário abaixo do card **sempre aparece**, com dois textos possíveis: "Não é o deck que deseja estudar agora? Escolha o seu deck!" quando há `lastDeck`, "Escolha um deck pra começar a estudar!" quando não há — nos dois casos leva pra `/decks`.
+- **Alternativa descartada**: (b) e (c) do parágrafo acima — ambas resolveriam a duplicação, mas (b) contradiz a descrição original do usuário (o item deveria levar à listagem, não pular ela) e (c) exige filtro novo (`due` agregado por deck) sem um requisito de produto pedindo isso ainda.
+
+**Achado à parte, fora de escopo**: `DeckListPage` busca `/decks/` sem paginação nem controles de página — acima de `PAGE_SIZE` (20) decks, os excedentes ficam invisíveis nessa tela. Baixo risco pra escala de portfólio; registrado aqui porque essa mudança torna `/decks` o hub principal de descoberta pra estudo, tornando o gap mais visível. Não corrigido nesta sprint.
+
 ## Risks / Trade-offs
 
 - **[Risco]** Sem sessão persistida, se o usuário fechar a aba no meio do estudo, perde a noção de progresso da sessão (mas não perde nenhuma revisão já feita — cada avaliação já foi persistida via `POST /review/` no momento em que aconteceu). → **Mitigação**: nenhuma nesta sprint, aceito como trade-off da v1.
