@@ -6,6 +6,8 @@ import userEvent from '@testing-library/user-event'
 import { AuthProvider } from '../../context/AuthContext'
 import Sidebar from './Sidebar'
 
+const NAV_LABELS = ['Home', 'Decks', 'Categorias', 'Relatórios', 'Chat com IA']
+
 function installMatchMedia(matches) {
   const listeners = new Set()
   const mediaQuery = {
@@ -80,6 +82,7 @@ describe('Sidebar responsiva', () => {
     expect(toggle).toHaveAttribute('title', 'Recolher menu')
     expect(icon).toHaveAttribute('aria-hidden', 'true')
     expect(icon).toHaveAttribute('focusable', 'false')
+    expect(icon).toHaveClass('lucide-chevrons-left')
 
     await user.click(toggle)
 
@@ -87,6 +90,38 @@ describe('Sidebar responsiva', () => {
     expect(screen.getByRole('button', { name: 'Expandir menu' })).toBe(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
     expect(toggle).toHaveAttribute('title', 'Expandir menu')
+    expect(toggle.querySelector('svg')).toHaveClass('lucide-chevrons-right')
     expect(localStorage.getItem('anki_generator_sidebar_collapsed')).toBe('true')
+  })
+
+  test('mostra ícone e nome em todos os itens quando o menu está aberto', () => {
+    localStorage.setItem('anki_generator_sidebar_collapsed', 'false')
+    installMatchMedia(false)
+    renderSidebar()
+
+    NAV_LABELS.forEach((label) => {
+      const link = screen.getByRole('link', { name: label })
+      expect(link.querySelector('.sidebar__item-icon')).toHaveAttribute('aria-hidden', 'true')
+      expect(link.querySelector('.sidebar__link-label')).toHaveTextContent(label)
+    })
+
+    const logoutButton = screen.getByRole('button', { name: 'Sair' })
+    expect(logoutButton.querySelector('.sidebar__item-icon')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  test('mantém nomes completos e tooltips no menu recolhido', () => {
+    localStorage.setItem('anki_generator_sidebar_collapsed', 'true')
+    installMatchMedia(false)
+    renderSidebar()
+
+    NAV_LABELS.forEach((label) => {
+      const link = screen.getByRole('link', { name: label })
+      expect(link).toHaveAttribute('aria-label', label)
+      expect(link.querySelector('.sidebar__item-icon')).toBeInTheDocument()
+      expect(link.querySelector('.sidebar__tooltip')).toHaveTextContent(label)
+      expect(link.querySelector('.sidebar__tooltip')).toHaveAttribute('aria-hidden', 'true')
+    })
+
+    expect(screen.getByRole('button', { name: 'Sair' })).toHaveAttribute('aria-label', 'Sair')
   })
 })

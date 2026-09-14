@@ -1,4 +1,14 @@
 import { useEffect, useState } from "react";
+import {
+  Bot,
+  ChartColumn,
+  ChevronsLeft,
+  ChevronsRight,
+  House,
+  Layers3,
+  LogOut,
+  Tags,
+} from "lucide-react";
 import { NavLink, useNavigate } from "react-router-dom";
 
 import { logout } from "../../api/auth";
@@ -6,11 +16,11 @@ import useAuth from "../../context/useAuth";
 import "./Sidebar.css";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Home", end: true },
-  { to: "/decks", label: "Decks" },
-  { to: "/categorias", label: "Categorias" },
-  { to: "/relatorios", label: "Relatórios" },
-  { to: "/chat-ia", label: "Chat com IA" },
+  { to: "/", label: "Home", icon: House, end: true },
+  { to: "/decks", label: "Decks", icon: Layers3 },
+  { to: "/categorias", label: "Categorias", icon: Tags },
+  { to: "/relatorios", label: "Relatórios", icon: ChartColumn },
+  { to: "/chat-ia", label: "Chat com IA", icon: Bot },
 ];
 
 const COLLAPSED_KEY = "anki_generator_sidebar_collapsed";
@@ -27,6 +37,7 @@ export default function Sidebar() {
   const navigate = useNavigate();
   const { markLoggedOut } = useAuth();
   const [collapsed, setCollapsed] = useState(getInitialCollapsed);
+  const ToggleIcon = collapsed ? ChevronsRight : ChevronsLeft;
 
   useEffect(() => {
     const tabletMedia = window.matchMedia(TABLET_MEDIA_QUERY);
@@ -80,38 +91,56 @@ export default function Sidebar() {
           aria-controls="sidebar-navigation-list"
           title={collapsed ? "Expandir menu" : "Recolher menu"}
         >
-          <svg
+          <ToggleIcon
             className="sidebar__toggle-icon"
-            viewBox="0 0 24 24"
+            size={22}
+            strokeWidth={2.5}
             aria-hidden="true"
             focusable="false"
-          >
-            <path d="m13 17-5-5 5-5" />
-            <path d="m19 17-5-5 5-5" />
-          </svg>
+          />
         </button>
       </div>
       <ul id="sidebar-navigation-list" className="sidebar__list">
-        {NAV_ITEMS.map((item) => (
-          <li key={item.to}>
-            <NavLink
-              to={item.to}
-              end={item.end}
-              title={collapsed ? item.label : undefined}
-              className={({ isActive }) => `sidebar__link${isActive ? " sidebar__link--active" : ""}`}
-            >
-              {collapsed ? item.label[0] : item.label}
-            </NavLink>
-          </li>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <li key={item.to}>
+              <NavLink
+                to={item.to}
+                end={item.end}
+                aria-label={collapsed ? item.label : undefined}
+                className={({ isActive }) => `sidebar__link${isActive ? " sidebar__link--active" : ""}`}
+              >
+                <Icon
+                  className="sidebar__item-icon"
+                  size={20}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  focusable="false"
+                />
+                <span className="sidebar__link-label">{item.label}</span>
+                <span className="sidebar__tooltip" aria-hidden="true">{item.label}</span>
+              </NavLink>
+            </li>
+          );
+        })}
         <li>
           <button
             type="button"
             className="sidebar__link sidebar__logout"
             onClick={handleLogout}
-            title={collapsed ? "Sair" : undefined}
+            aria-label={collapsed ? "Sair" : undefined}
           >
-            {collapsed ? "S" : "Sair"}
+            <LogOut
+              className="sidebar__item-icon"
+              size={20}
+              strokeWidth={2}
+              aria-hidden="true"
+              focusable="false"
+            />
+            <span className="sidebar__link-label">Sair</span>
+            <span className="sidebar__tooltip" aria-hidden="true">Sair</span>
           </button>
         </li>
       </ul>

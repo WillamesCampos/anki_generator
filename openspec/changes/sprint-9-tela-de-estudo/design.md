@@ -72,6 +72,13 @@ A barra expõe `role="progressbar"`, escala de 0 a 100 e descrição textual com
 
 - **Alternativa descartada**: enriquecer o `Card` global. Rejeitada porque essa composição e sua semântica pertencem somente ao indicador de meta da Home.
 
+### D9 — Sidebar usa Lucide com rótulos completos no modo recolhido
+A navegação lateral adota `lucide-react` com imports nomeados e um ícone específico para cada destino, logout e controle de recolhimento. Aberta, a Sidebar combina ícone e texto; recolhida, mantém apenas os ícones visíveis e apresenta o nome completo em tooltip próprio no hover ou foco por teclado.
+
+Os SVGs são decorativos (`aria-hidden`) e os controles recolhidos recebem `aria-label` completo, portanto a substituição das antigas iniciais não reduz a informação disponível a leitores de tela. Rotas, ordem, persistência em `localStorage`, breakpoint, larguras e comportamento do toggle permanecem inalterados. O toggle continua com 44 px, fundo laranja, borda preta e sem sombra.
+
+- **Alternativa descartada**: manter letras ou copiar SVGs individualmente. Rejeitada porque as letras eram ambíguas no estado recolhido e os SVGs locais duplicariam manutenção que a biblioteca tree-shakable já resolve.
+
 ## Risks / Trade-offs
 
 - **[Risco]** Sem sessão persistida, se o usuário fechar a aba no meio do estudo, perde a noção de progresso da sessão (mas não perde nenhuma revisão já feita — cada avaliação já foi persistida via `POST /review/` no momento em que aconteceu). → **Mitigação**: nenhuma nesta sprint, aceito como trade-off da v1.
