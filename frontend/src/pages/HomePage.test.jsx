@@ -92,7 +92,7 @@ describe("caminhos até a tela de estudo", () => {
     vi.clearAllMocks();
   });
 
-  test("com último deck válido: botão 'Estudar' do card aponta pro deck, e o CTA convida a trocar de deck", async () => {
+  test("com último deck válido: botão 'Continuar estudando' aponta pro deck, e o CTA convida a trocar de deck", async () => {
     fetchReviews.mockResolvedValue({
       results: [
         { id: "review-1", deck_id: "deck-last", rating: "again", reviewed_at: "2026-08-31T12:00:00Z" },
@@ -105,9 +105,10 @@ describe("caminhos até a tela de estudo", () => {
 
     await screen.findByText("Hospedagem e Transporte");
 
-    const studyButtons = screen.getAllByRole("link", { name: "Estudar" });
-    expect(studyButtons).toHaveLength(1);
-    expect(studyButtons[0]).toHaveAttribute("href", "/decks/deck-last/estudar");
+    expect(screen.getByRole("link", { name: "Continuar estudando" })).toHaveAttribute(
+      "href",
+      "/decks/deck-last/estudar",
+    );
 
     expect(
       screen.getByText("Não é o deck que deseja estudar agora? Escolha o seu deck!"),
@@ -115,19 +116,19 @@ describe("caminhos até a tela de estudo", () => {
     expect(screen.getByRole("link", { name: "Ver meus decks" })).toHaveAttribute("href", "/decks");
   });
 
-  test("sem nenhuma revisão: sem botão 'Estudar' do card, CTA convida a escolher um deck", async () => {
+  test("sem nenhuma revisão: sem botão 'Continuar estudando', CTA convida a escolher um deck", async () => {
     fetchReviews.mockResolvedValue({ results: [] });
 
     renderHome();
 
     await screen.findByText("Você ainda não revisou nenhum card.");
 
-    expect(screen.queryByRole("link", { name: "Estudar" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Continuar estudando" })).not.toBeInTheDocument();
     expect(screen.getByText("Escolha um deck pra começar a estudar!")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver meus decks" })).toHaveAttribute("href", "/decks");
   });
 
-  test("deck da revisão mais recente não está mais acessível: sem botão 'Estudar' do card, CTA neutro", async () => {
+  test("deck da revisão mais recente não está mais acessível: sem botão 'Continuar estudando', CTA neutro", async () => {
     fetchReviews.mockResolvedValue({
       results: [
         { id: "review-1", deck_id: "deck-deleted", rating: "again", reviewed_at: "2026-08-31T12:00:00Z" },
@@ -139,7 +140,7 @@ describe("caminhos até a tela de estudo", () => {
 
     await waitFor(() => expect(fetchDeck).toHaveBeenCalledWith("deck-deleted"));
     await waitFor(() =>
-      expect(screen.queryByRole("link", { name: "Estudar" })).not.toBeInTheDocument(),
+      expect(screen.queryByRole("link", { name: "Continuar estudando" })).not.toBeInTheDocument(),
     );
     expect(screen.getByText("Escolha um deck pra começar a estudar!")).toBeInTheDocument();
   });

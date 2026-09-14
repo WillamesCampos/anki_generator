@@ -122,8 +122,13 @@ export default function HomePage() {
             <>
               <p className="home-page__deck-title">{lastDeck.title}</p>
               {lastDeck.description && <p className="home-page__deck-description">{lastDeck.description}</p>}
-              <Button as={Link} to={`/decks/${lastDeck.id}/estudar`} className="home-page__deck-study-button">
-                Estudar
+              <Button
+                as={Link}
+                variant="primary"
+                to={`/decks/${lastDeck.id}/estudar`}
+                className="home-page__deck-study-button"
+              >
+                Continuar estudando
               </Button>
             </>
           )}
@@ -143,7 +148,12 @@ export default function HomePage() {
               ? "Não é o deck que deseja estudar agora? Escolha o seu deck!"
               : "Escolha um deck pra começar a estudar!"}
           </p>
-          <Button as={Link} variant="secondary" to="/decks">
+          <Button
+            as={Link}
+            variant="secondary"
+            to="/decks"
+            className="home-page__decks-cta-button"
+          >
             Ver meus decks
           </Button>
         </div>
