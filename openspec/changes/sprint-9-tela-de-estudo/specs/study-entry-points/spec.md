@@ -1,19 +1,19 @@
 ## ADDED Requirements
 
 ### Requirement: Home oferece um caminho direto pro último deck estudado
-O sistema SHALL exibir, dentro do card "Último deck estudado" da Home, um botão "Estudar" que navega pra `/decks/{deckId}/estudar` do deck mais recentemente estudado, apenas quando esse deck existe e está acessível.
+O sistema SHALL exibir, dentro do card "Último deck estudado" da Home, um botão "Continuar estudando" que navega pra `/decks/{deckId}/estudar` do deck mais recentemente estudado, apenas quando esse deck existe e está acessível.
 
 #### Scenario: Usuário com histórico de estudo vê o botão
 - **WHEN** um usuário autenticado com pelo menos uma revisão registrada acessa a Home, e o deck da revisão mais recente ainda existe e pertence a ele
-- **THEN** o card "Último deck estudado" mostra um botão "Estudar" que navega pra `/decks/{deckId}/estudar` daquele deck
+- **THEN** o card "Último deck estudado" mostra um botão "Continuar estudando" que navega pra `/decks/{deckId}/estudar` daquele deck
 
 #### Scenario: Usuário sem nenhuma revisão não vê o botão
 - **WHEN** um usuário autenticado sem nenhuma revisão registrada acessa a Home
-- **THEN** o card "Último deck estudado" não mostra o botão "Estudar" (mantém a mensagem de estado vazio já existente)
+- **THEN** o card "Último deck estudado" não mostra o botão "Continuar estudando" (mantém a mensagem de estado vazio já existente)
 
 #### Scenario: Deck da revisão mais recente não está mais acessível
 - **WHEN** o deck da revisão mais recente do usuário foi soft-deletado ou não pode ser carregado
-- **THEN** o card "Último deck estudado" não mostra o botão "Estudar"
+- **THEN** o card "Último deck estudado" não mostra o botão "Continuar estudando"
 
 ### Requirement: Home sempre oferece um caminho pra escolher outro deck
 O sistema SHALL exibir, na Home, um CTA secundário que navega pra `/decks`, independentemente de existir ou não um "último deck estudado" — com textos distintos para cada caso.

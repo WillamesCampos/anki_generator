@@ -37,9 +37,10 @@
 
 ## 7. Caminhos de descoberta até a tela de estudo
 
-- [x] 7.1 `HomePage.jsx`: botão "Estudar" dentro do bloco já existente de `lastDeck` (card "Último deck estudado"), navegando pra `/decks/{deckId}/estudar`
+- [x] 7.1 `HomePage.jsx`: botão "Continuar estudando" dentro do bloco já existente de `lastDeck` (card "Último deck estudado"), navegando pra `/decks/{deckId}/estudar`
 - [x] 7.2 `HomePage.jsx`: CTA secundário sempre visível, com texto condicional ("Não é o deck que deseja estudar agora? Escolha o seu deck!" com `lastDeck`, "Escolha um deck pra começar a estudar!" sem `lastDeck`), navegando pra `/decks`
 - [x] 7.3 `DeckListPage.jsx`: botão "Estudar" em cada item, ao lado de "Abrir deck", navegando pra `/decks/{deckId}/estudar` — sem checagem prévia de cards devidos
 - [x] 7.4 Confirmar que `Sidebar.jsx` não é alterado (ver D6 em design.md)
-- [x] 7.5 Testes automatizados (frontend): botão da Home aparece só com `lastDeck` válido, CTA secundário troca de texto conforme o estado, botão "Estudar" presente em cada item de `DeckListPage`
+- [x] 7.5 Testes automatizados (frontend): botão "Continuar estudando" da Home aparece só com `lastDeck` válido, CTA secundário troca de texto conforme o estado.
+  Botão "Estudar" presente em cada item de `DeckListPage`.
 - [x] 7.6 Atualizar `PRD.md`/`CHANGELOG.md` com essa extensão da Sprint 9
