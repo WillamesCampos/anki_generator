@@ -18,6 +18,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - Rotas `POST /api/v1/auth/password/reset/` e `POST /api/v1/auth/password/reset/confirm/` (`apps/accounts/urls.py`).
 - Frontend: `ForgotPasswordPage` (`/esqueci-minha-senha`, solicita o e-mail, sempre mostra a mesma mensagem de sucesso) e `ResetPasswordPage` (`/redefinir-senha`, lê `uid`/`token` da URL, formulário de nova senha); link "Esqueci minha senha" na `LoginPage`.
 - Testes automatizados: backend (filtro por deck em `find_due`, endpoint combinado, isolamento multi-tenant; envio de e-mail com link correto, não-vazamento de existência de conta, confirmação troca a senha, token reusado/adulterado rejeitado) e frontend (fluxo completo de estudo — revelar/avaliar/avançar, estado vazio, fim de sessão — e recuperação de senha — solicitação, link inválido, sucesso, erro).
+- **Caminhos de descoberta até a tela de estudo** (gap levantado via `backend-mentor` depois da entrega inicial — a tela só era alcançável digitando a URL ou pelo detalhe de um deck específico): `HomePage.jsx` ganha um botão "Estudar" dentro do card "Último deck estudado" (só quando há um deck válido) e um CTA secundário sempre visível levando pra `/decks`, com texto condicional ("Não é o deck que deseja estudar agora? Escolha o seu deck!" com deck válido, "Escolha um deck pra começar a estudar!" sem deck). `DeckListPage.jsx` ganha um botão "Estudar" em cada item, ao lado de "Abrir deck", sem checar cards devidos antes de navegar (a própria tela de estudo trata o estado vazio). Menu lateral (`Sidebar.jsx`) **não muda** — decisão explícita para não duplicar o destino do item "Decks" já existente.
 
 ### Corrigido
 - `django.contrib.sites` (`SITE_ID=1`) nunca tinha sido configurado desde o Sprint 0/1 — aparecia literalmente como "example.com" no e-mail de recuperação de senha. Migration de dados corrige pra "Anki Generator" (`apps/accounts/migrations/0003_site_name.py`), usando `update_or_create` em vez de `filter().update()` — a linha default do `Site` é criada por um signal `post_migrate` que roda depois de todas as migrations, então um `update()` simples seria um no-op silencioso.
@@ -25,7 +26,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - `ForgotPasswordPage`: `try/finally` sem `catch` gerava uma rejeição de Promise não tratada sempre que a solicitação falhasse (silencioso nos testes, mas poluiria o console/ferramentas de monitoramento em produção).
 
 ### Validado
-- Suíte completa: 76 testes de backend, 44 de frontend, `black --check` e `eslint` limpos.
+- Suíte completa: 77 testes de backend, 47 de frontend, `black --check` e `eslint` limpos.
 - Fluxo real testado com a API key de produção do Resend: e-mail de recuperação entregue com sucesso na caixa de entrada do usuário, link com `uid`/`token` corretos.
 
 ### Fora de escopo (decisão explícita)
@@ -33,6 +34,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - Sessão retomável (estado persistido de "onde o usuário parou") — mais simples, sem conceito novo de "sessão" no backend; revisitável se virar reclamação recorrente de uso real.
 - Requeue de cards avaliados como "again" dentro da mesma sessão — consequência direta do item anterior: sem estado de sessão, o card só reaparece numa sessão futura.
 - `django-anymail` — sem domínio próprio verificado, webhooks de entrega/abertura/clique não são testáveis de ponta a ponta ainda; relay SMTP nativo do Resend já resolve o caso de uso atual. Revisitar no deploy real (Sprint 15).
+- Paginação em `/decks` — `DeckListPage` busca todos os decks sem controles de página; acima de `PAGE_SIZE` (20), os excedentes ficam invisíveis. Achado ao revisar os caminhos de descoberta até a tela de estudo (essa mudança torna `/decks` o hub principal); baixo risco pra escala de portfólio, não corrigido nesta sprint.
 - Vínculo de conta Google+e-mail/senha e `ACCOUNT_EMAIL_VERIFICATION="mandatory"` — itens 2 e 3 de `PRD.md` §7.1, continuam em aberto.
 
 ## [Arquitetura] Migração do driver MongoDB: Motor (async) → pymongo (síncrono) — 2026-09-10

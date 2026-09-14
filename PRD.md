@@ -248,6 +248,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 - [x] 9.6 Progresso "X de Y" durante a sessão
 - [x] 9.7 Estado vazio ("nenhum card devido agora") e tela de fim de sessão (resumo + voltar pro deck)
 - [x] 9.8 Testes automatizados: backend (filtro `due`+`deck_id`) e frontend (fluxo de revisão, avanço entre cards, estado vazio, fim de sessão)
+- [x] 9.9 Caminhos de descoberta até a tela de estudo (gap encontrado depois da entrega inicial, levantado via `backend-mentor`): botão "Estudar" no card "Último deck estudado" da Home (só com deck válido); CTA secundário sempre visível na Home levando pra `/decks`, com texto condicional; botão "Estudar" em cada item de `/decks`, ao lado de "Abrir deck". Menu lateral **não muda** — evita dois itens de navegação com o mesmo destino.
 
 *Critérios de aceite relevantes: 1 (isolamento — já garantido pela API), 12 (consistência visual).*
 
