@@ -55,12 +55,10 @@
   background: var(--color-accent);
   border: 2px solid var(--color-text-primary);
   border-radius: var(--radius-card);
-  box-shadow: 4px 4px 0 var(--color-white);
   color: var(--color-text-primary);
   cursor: pointer;
   font-family: var(--font-family);
   transition:
-    box-shadow 0.15s ease,
     transform 0.15s ease;
 }
 
@@ -81,12 +79,10 @@
 }
 
 .sidebar__toggle:hover {
-  box-shadow: 2px 2px 0 var(--color-white);
   transform: translate(2px, 2px);
 }
 
 .sidebar__toggle:active {
-  box-shadow: none;
   transform: translate(4px, 4px);
 }
 

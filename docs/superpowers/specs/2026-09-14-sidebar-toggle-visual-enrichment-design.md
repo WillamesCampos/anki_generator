@@ -23,7 +23,7 @@ A direção aprovada é **Contraste expressivo**: transformar somente esse contr
 
 ## Direção visual aprovada
 
-O toggle passa a ser um botão quadrado de `44px × 44px`, com `box-sizing: border-box`, fundo `var(--color-accent)`, ícone em `var(--color-text-primary)`, borda preta sólida de `2px` e cantos em `var(--radius-card)`. Uma sombra sólida branca de `4px 4px 0 var(--color-white)` cria separação clara contra a Sidebar preta.
+O toggle passa a ser um botão quadrado de `44px × 44px`, com `box-sizing: border-box`, fundo `var(--color-accent)`, ícone em `var(--color-text-primary)`, borda preta sólida de `2px` e cantos em `var(--radius-card)`. O controle não possui sombra, mantendo sua geometria contida na Sidebar preta.
 
 Os glifos `«` e `»` são substituídos por um único SVG inline de chevron duplo apontando para a esquerda no estado expandido. O mesmo SVG recebe rotação de `180deg` quando a Sidebar está colapsada, apontando para a direção da expansão. O SVG é puramente decorativo: `aria-hidden="true"` e `focusable="false"`; os nomes acessíveis continuam vindo dos `aria-label` atuais, `Recolher menu` e `Expandir menu`.
 
@@ -31,15 +31,15 @@ Os glifos `«` e `»` são substituídos por um único SVG inline de chevron dup
 
 - O botão expõe `aria-expanded="true"` enquanto a Sidebar está expandida e `aria-expanded="false"` enquanto está colapsada.
 - `aria-controls="sidebar-navigation-list"` referencia o `id="sidebar-navigation-list"` aplicado à lista `<ul>` existente.
-- `:hover` desloca o botão em `2px` nos dois eixos e reduz a sombra para `2px`, criando resposta tátil.
-- `:active` desloca o botão em `4px` e remove a sombra, simulando pressão.
+- `:hover` desloca o botão em `2px` nos dois eixos, criando resposta tátil sem sombra.
+- `:active` desloca o botão em `4px`, simulando pressão sem sombra.
 - `:focus-visible` usa outline branco de `3px` com `3px` de afastamento, visível sobre o fundo preto e distinto da borda.
 - O SVG acompanha a cor preta via `currentColor`, não recebe eventos do ponteiro e não cria nome ou parada de foco adicional.
-- Em `prefers-reduced-motion: reduce`, as transições da largura da Sidebar, do botão e do ícone são removidas, assim como os transforms de hover/active. A orientação de estado do ícone permanece, mas muda instantaneamente, sem animação. A redução de sombra continua distinguindo hover e active; largura, conteúdo da marca, nome acessível dinâmico e `aria-expanded` também comunicam o estado sem movimento.
+- Em `prefers-reduced-motion: reduce`, as transições da largura da Sidebar, do botão e do ícone são removidas, assim como os transforms de hover/active. A orientação de estado do ícone permanece, mas muda instantaneamente, sem animação; largura, conteúdo da marca, nome acessível dinâmico e `aria-expanded` também comunicam o estado sem movimento.
 
 ## Encaixe na Sidebar colapsada
 
-Com `72px` de largura total e o padding horizontal atual de `15px`, a área interna desktop tem apenas `42px`, insuficiente para o novo botão. A variante `.sidebar--collapsed` passa a usar `var(--space-xs)` (`10px`) em cada lateral, resultando em `52px` úteis. O header colapsado remove seu padding horizontal próprio, acomodando os `44px` do botão e os `4px` da sombra sem alterar a largura da Sidebar.
+Com `72px` de largura total e o padding horizontal atual de `15px`, a área interna desktop tem apenas `42px`, insuficiente para o novo botão. A variante `.sidebar--collapsed` passa a usar `var(--space-xs)` (`10px`) em cada lateral, resultando em `52px` úteis. O header colapsado remove seu padding horizontal próprio, acomodando os `44px` do botão sem alterar a largura da Sidebar.
 
 O header expandido, a ordem marca/toggle e o empilhamento atual do header colapsado permanecem os mesmos. O media query de `1024px` continua válido e não muda o comportamento funcional.
 

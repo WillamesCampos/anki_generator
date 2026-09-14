@@ -1,5 +1,7 @@
 # Sidebar Toggle Visual Enrichment Implementation Plan
 
+> **Nota de 2026-09-14:** o pedido explícito do usuário pela ausência de sombra no botão substitui toda exigência ou exemplo histórico de sombra branca neste plano.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Apply the approved “Contraste expressivo” treatment to the Sidebar collapse/expand control while preserving its state, persistence, routes, logout, and responsive behavior.
@@ -14,12 +16,12 @@
 - Preserve `COLLAPSED_KEY = "anki_generator_sidebar_collapsed"` and `TABLET_MEDIA_QUERY = "(max-width: 1024px)"` exactly.
 - Preserve the current initialization, `matchMedia` listener, manual toggle persistence, logout, links, routes, link labels, and responsive behavior.
 - Keep the Sidebar widths at `240px` expanded and `72px` collapsed.
-- The local toggle must be exactly `44px × 44px`, orange with a black icon, `var(--radius-card)`, a `2px` black border, and a solid light offset shadow legible on the black Sidebar.
+- The local toggle must be exactly `44px × 44px`, orange with a black icon, `var(--radius-card)`, and a `2px` black border, with no box shadow in base, hover, or active states.
 - Replace `«`/`»` with one inline double-chevron SVG; it points left when expanded and rotates `180deg` when collapsed.
 - The SVG must be decorative and non-focusable with `aria-hidden="true"` and `focusable="false"`.
 - The toggle must expose `aria-expanded={!collapsed}` and `aria-controls="sidebar-navigation-list"`; the existing list must expose `id="sidebar-navigation-list"`.
 - Keep the current dynamic `aria-label` and `title` values: `Recolher menu` when expanded and `Expandir menu` when collapsed.
-- Provide distinct tactile `:hover`, `:active`, and `:focus-visible` states.
+- Provide distinct tactile `:hover`, `:active`, and `:focus-visible` states without a box shadow.
 - Under `prefers-reduced-motion: reduce`, remove transitions and hover/active transforms while retaining the collapsed icon orientation as an instantaneous state change.
 - Adjust only the collapsed Sidebar/header horizontal padding needed to fit the control within `72px`.
 - Use only existing tokens; do not modify `frontend/src/tokens/tokens.css` or add dependencies.
