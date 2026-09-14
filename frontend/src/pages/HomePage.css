@@ -14,6 +14,101 @@
   gap: var(--space-md);
 }
 
+.home-page__summary-grid .ui-card {
+  height: 100%;
+  border: 2px solid var(--color-text-primary);
+}
+
+.home-page__goal-card,
+.home-page__goal-card > .ui-card {
+  height: 100%;
+}
+
+.home-page__goal-card > .ui-card {
+  background: var(--color-white);
+  box-shadow: 4px 4px 0 var(--color-accent);
+}
+
+.home-page__goal-card .ui-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-primary);
+}
+
+.home-page__goal-card .ui-card__title::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-circle);
+  background: var(--color-accent);
+}
+
+.home-page__goal-overview {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.home-page__goal-count,
+.home-page__goal-label,
+.home-page__goal-helper {
+  margin: 0;
+}
+
+.home-page__goal-count {
+  display: flex;
+  align-items: baseline;
+  color: var(--color-text-primary);
+}
+
+.home-page__goal-count strong {
+  font-size: var(--font-size-xl);
+  line-height: 1;
+}
+
+.home-page__goal-count span,
+.home-page__goal-label,
+.home-page__goal-helper {
+  color: var(--color-text-secondary);
+}
+
+.home-page__goal-percent {
+  padding: 4px var(--space-xs);
+  color: var(--color-text-primary);
+  background: var(--color-accent);
+  border: 2px solid var(--color-text-primary);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.home-page__goal-progress {
+  height: 14px;
+  margin-top: var(--space-sm);
+  overflow: hidden;
+  background: var(--color-bg-light);
+  border: 2px solid var(--color-text-primary);
+  border-radius: var(--radius-pill);
+}
+
+.home-page__goal-progress-fill {
+  display: block;
+  width: var(--goal-progress);
+  height: 100%;
+  background: var(--color-accent);
+  transition: width 0.25s ease;
+}
+
+.home-page__goal-helper {
+  margin-top: var(--space-xs);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
 .home-page__deck-title {
   margin: 0;
   font-weight: 600;
@@ -220,6 +315,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .home-page__goal-progress-fill {
+    transition: none;
+  }
+
   .home-page [data-home-action="continue"],
   .home-page [data-home-action="decks"] {
     transition: none;

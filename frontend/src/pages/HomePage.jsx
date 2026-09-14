@@ -76,6 +76,8 @@ export default function HomePage() {
 
   const allReviews = reviews ? (reviews.results ?? reviews) : [];
   const goalProgress = computeGoalProgress(allReviews, getDailyGoal());
+  const remainingGoal = Math.max(goalProgress.goal - goalProgress.reviewedToday, 0);
+  const goalComplete = goalProgress.percentage >= 100;
   const ratingDistribution = deckStatistics?.rating_distribution ?? {};
   const distribution = {
     labels: RATING_LABELS,
@@ -184,11 +186,41 @@ export default function HomePage() {
           )}
         </Card>
 
-        <Card title="Meta de estudo">
-          <p>
-            {goalProgress.reviewedToday} / {goalProgress.goal} cards hoje ({goalProgress.percentage}%)
-          </p>
-        </Card>
+        <div className="home-page__goal-card">
+          <Card title="Meta de estudo">
+            <div className="home-page__goal-overview">
+              <div>
+                <p className="home-page__goal-count">
+                  <strong>{goalProgress.reviewedToday}</strong>
+                  <span> / {goalProgress.goal}</span>
+                </p>
+                <p className="home-page__goal-label">cards hoje</p>
+              </div>
+              <span className="home-page__goal-percent" aria-hidden="true">
+                {goalProgress.percentage}%
+              </span>
+            </div>
+            <div
+              className="home-page__goal-progress"
+              role="progressbar"
+              aria-label="Progresso da meta diária"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={goalProgress.percentage}
+              aria-valuetext={`${goalProgress.reviewedToday} de ${goalProgress.goal} cards revisados hoje`}
+            >
+              <span
+                className="home-page__goal-progress-fill"
+                style={{ "--goal-progress": `${goalProgress.percentage}%` }}
+              />
+            </div>
+            <p className="home-page__goal-helper">
+              {goalComplete
+                ? "Meta concluída hoje!"
+                : `${remainingGoal} ${remainingGoal === 1 ? "card" : "cards"} para concluir sua meta`}
+            </p>
+          </Card>
+        </div>
       </div>
 
       {!reviewsLoading && (

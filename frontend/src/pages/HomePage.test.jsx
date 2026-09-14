@@ -195,3 +195,64 @@ describe("caminhos até a tela de estudo", () => {
     expect(screen.getByText("Escolha um deck pra começar a estudar!")).toBeInTheDocument();
   });
 });
+
+describe("meta de estudo da Home", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    fetchReviews.mockResolvedValue({ results: [] });
+  });
+
+  test("mostra a meta inicial como progresso acessível", async () => {
+    renderHome();
+    await screen.findByText("Você ainda não revisou nenhum card.");
+
+    const progress = screen.getByRole("progressbar", { name: "Progresso da meta diária" });
+    expect(progress).toHaveAttribute("aria-valuemin", "0");
+    expect(progress).toHaveAttribute("aria-valuemax", "100");
+    expect(progress).toHaveAttribute("aria-valuenow", "0");
+    expect(progress).toHaveAttribute("aria-valuetext", "0 de 20 cards revisados hoje");
+    expect(screen.getByText("20 cards para concluir sua meta")).toBeInTheDocument();
+    expect(screen.getByText("0%", { selector: ".home-page__goal-percent" })).toBeInTheDocument();
+  });
+
+  test("calcula o progresso parcial com as revisões de hoje", async () => {
+    const today = new Date().toISOString();
+    fetchReviews.mockResolvedValue({
+      results: Array.from({ length: 5 }, (_, index) => ({
+        id: `review-${index}`,
+        deck_id: "deck-last",
+        rating: "good",
+        reviewed_at: today,
+      })),
+    });
+    fetchDeck.mockResolvedValue(LAST_DECK);
+    fetchDeckStatistics.mockResolvedValue({ rating_distribution: {} });
+
+    renderHome();
+
+    const progress = screen.getByRole("progressbar", { name: "Progresso da meta diária" });
+    await waitFor(() => expect(progress).toHaveAttribute("aria-valuenow", "25"));
+    expect(progress).toHaveAttribute("aria-valuetext", "5 de 20 cards revisados hoje");
+    expect(screen.getByText("15 cards para concluir sua meta")).toBeInTheDocument();
+  });
+
+  test("mostra a conclusão quando a meta diária é atingida", async () => {
+    const today = new Date().toISOString();
+    fetchReviews.mockResolvedValue({
+      results: Array.from({ length: 20 }, (_, index) => ({
+        id: `review-${index}`,
+        deck_id: "deck-last",
+        rating: "easy",
+        reviewed_at: today,
+      })),
+    });
+    fetchDeck.mockResolvedValue(LAST_DECK);
+    fetchDeckStatistics.mockResolvedValue({ rating_distribution: {} });
+
+    renderHome();
+
+    const progress = screen.getByRole("progressbar", { name: "Progresso da meta diária" });
+    await waitFor(() => expect(progress).toHaveAttribute("aria-valuenow", "100"));
+    expect(screen.getByText("Meta concluída hoje!")).toBeInTheDocument();
+  });
+});
