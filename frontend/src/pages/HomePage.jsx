@@ -143,7 +143,7 @@ export default function HomePage() {
 
       {!reviewsLoading && (
         <div className="home-page__study-cta">
-          <p>
+          <p className="home-page__study-cta-copy">
             {hasValidLastDeck
               ? "Não é o deck que deseja estudar agora? Escolha o seu deck!"
               : "Escolha um deck pra começar a estudar!"}

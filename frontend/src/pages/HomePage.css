@@ -28,13 +28,21 @@
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  gap: var(--space-md);
   margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-accent);
+  border: 2px solid var(--color-text-primary);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--color-text-primary);
 }
 
-.home-page__study-cta p {
+.home-page__study-cta-copy {
   margin: 0;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  font-weight: 700;
+  line-height: var(--line-height-base);
 }
 
 .home-page [data-home-action="continue"],
@@ -131,6 +139,7 @@
   .home-page__study-cta {
     align-items: stretch;
     flex-direction: column;
+    padding: var(--space-sm);
   }
 
   .home-page [data-home-action="decks"] {

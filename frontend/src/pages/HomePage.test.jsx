@@ -113,9 +113,9 @@ describe("caminhos até a tela de estudo", () => {
     expect(continueLink).toHaveClass("ui-button", "ui-button--primary");
     expect(continueLink).toHaveAttribute("data-home-action", "continue");
 
-    expect(
-      screen.getByText("Não é o deck que deseja estudar agora? Escolha o seu deck!"),
-    ).toBeInTheDocument();
+    const ctaCopy = screen.getByText("Não é o deck que deseja estudar agora? Escolha o seu deck!");
+    expect(ctaCopy).toBeInTheDocument();
+    expect(ctaCopy).toHaveClass("home-page__study-cta-copy");
     const decksLink = screen.getByRole("link", { name: "Ver meus decks" });
     expect(decksLink).toHaveAttribute("href", "/decks");
     expect(decksLink).toHaveClass("ui-button", "ui-button--secondary");

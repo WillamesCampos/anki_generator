@@ -38,6 +38,10 @@ O botão mantém o texto **“Ver meus decks”**, com fundo preto, texto branco
 
 Apesar do contraste alto, sua área menor e sua posição fora do card preservam a prioridade visual de “Continuar estudando”. O texto condicional atual ao lado do botão não muda.
 
+### Faixa de descoberta
+
+O bloco que acompanha “Ver meus decks” ganha presença própria com fundo laranja, borda preta de `2px`, cantos de `var(--radius-card)` e sombra preta deslocada. Sua frase usa peso forte, tamanho médio e cor preta para funcionar como uma faixa de orientação visual, enquanto o botão e o olho aberto preservam integralmente seu visual e comportamento atuais.
+
 ## Interação e acessibilidade
 
 - `:hover`: o botão se desloca na direção da sombra e a sombra diminui, produzindo feedback físico curto.

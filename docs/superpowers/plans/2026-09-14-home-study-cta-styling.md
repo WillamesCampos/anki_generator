@@ -4,6 +4,8 @@
 
 > **Amendment — 2026-09-14:** A pedido do usuário, o botão secundário usa um olho aberto decorativo inline no lugar da seta diagonal. Esta decisão substitui todas as referências e exemplos anteriores à seta diagonal; o play da CTA primária continua sendo um pseudo-elemento CSS.
 
+> **Amendment — 2026-09-14 (faixa da CTA):** O pedido do usuário substitui o tratamento anteriormente neutro do container `.home-page__study-cta`: ele agora recebe uma faixa laranja com borda, sombra e copy em negrito. O Button secundário e o olho permanecem inalterados.
+
 **Goal:** Apply the approved “Contraste expressivo” visual hierarchy to the Home study CTAs while preserving their existing destinations and rendering rules.
 
 **Architecture:** Keep the global `Button` component unchanged and scope every visual rule to the two Home-specific classes. Change only the primary CTA copy in JSX, use empty CSS pseudo-elements for decorative symbols, and preserve all existing data loading, conditional rendering, error handling, and navigation.
