@@ -58,6 +58,13 @@ Card "Último deck estudado" (Home): o botão "Continuar estudando" só é rende
 
 **Achado à parte, fora de escopo**: `DeckListPage` busca `/decks/` sem paginação nem controles de página — acima de `PAGE_SIZE` (20) decks, os excedentes ficam invisíveis nessa tela. Baixo risco pra escala de portfólio; registrado aqui porque essa mudança torna `/decks` o hub principal de descoberta pra estudo, tornando o gap mais visível. Não corrigido nesta sprint.
 
+### D7 — Gráfico da Home tem contraste tokenizado, resumo semântico e respeita redução de movimento
+O gráfico de distribuição do último deck mantém os mesmos dados e a mesma referência usada para exportação (`distribution.labels`, `distribution.values` e `chartRef`), mas passa a declarar sua apresentação inteiramente com os tokens existentes: barras laranja com borda preta, estados hover, tooltip escuro e eixos legíveis. A escala Y começa em zero e usa valores inteiros; a grade X é removida para priorizar os quatro resultados.
+
+Além do canvas, uma lista associada por `aria-describedby` apresenta cada rótulo e valor, tornando a distribuição disponível a tecnologias assistivas sem depender da renderização do Chart.js. Quando `prefers-reduced-motion: reduce` está ativo, a opção `animation` do gráfico é desabilitada. O CSS é estritamente escopado a `.home-page__statistics`, sem alterar `Card`, `Button`, a faixa CTA ou a Sidebar.
+
+- **Alternativa descartada**: criar tokens ou modificar os componentes globais. Rejeitada porque os tokens atuais cobrem todas as cores, raios e tipografia necessários, e a personalização é específica às estatísticas da Home.
+
 ## Risks / Trade-offs
 
 - **[Risco]** Sem sessão persistida, se o usuário fechar a aba no meio do estudo, perde a noção de progresso da sessão (mas não perde nenhuma revisão já feita — cada avaliação já foi persistida via `POST /review/` no momento em que aconteceu). → **Mitigação**: nenhuma nesta sprint, aceito como trade-off da v1.

@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { forwardRef } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { fetchDeck, fetchDeckStatistics } from "../api/decks";
 import { fetchReviews } from "../api/reviews";
+import { colors, radius } from "../tokens/tokens";
 import HomePage from "./HomePage";
 
 vi.mock("../api/decks", () => ({
@@ -16,13 +18,23 @@ vi.mock("../api/reviews", () => ({
 }));
 
 vi.mock("react-chartjs-2", () => ({
-  Bar: ({ data }) => (
+  Bar: forwardRef(function Bar({ data, options, ...chartProps }, ref) {
+    return (
     <div
+      {...chartProps}
+      ref={ref}
       role="img"
-      aria-label="Distribuição das classificações da Home"
       data-values={data.datasets[0].data.join(",")}
+      data-border-color={data.datasets[0].borderColor}
+      data-hover-background={data.datasets[0].hoverBackgroundColor}
+      data-border-radius={data.datasets[0].borderRadius}
+      data-x-grid={String(options.scales.x.grid.display)}
+      data-y-begin-at-zero={String(options.scales.y.beginAtZero)}
+      data-tooltip-background={options.plugins.tooltip.backgroundColor}
+      data-animation={options.animation === false ? "disabled" : "default"}
     />
-  ),
+    );
+  }),
 }));
 
 const LAST_DECK = {
@@ -40,6 +52,10 @@ function renderHome() {
 }
 
 describe("estatísticas da Home", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     fetchReviews.mockResolvedValue({
@@ -64,6 +80,31 @@ describe("estatísticas da Home", () => {
 
     expect(fetchDeckStatistics).toHaveBeenCalledWith("deck-last");
     expect(chart).toHaveAttribute("data-values", "3,4,3,2");
+    expect(chart).toHaveAttribute("aria-describedby", "home-rating-summary");
+    expect(chart).toHaveAttribute("data-border-color", colors.textPrimary);
+    expect(chart).toHaveAttribute("data-hover-background", colors.bgDark);
+    expect(chart).toHaveAttribute("data-border-radius", String(Number.parseFloat(radius.card)));
+    expect(chart).toHaveAttribute("data-x-grid", "false");
+    expect(chart).toHaveAttribute("data-y-begin-at-zero", "true");
+    expect(chart).toHaveAttribute("data-tooltip-background", colors.bgDark);
+
+    const summary = screen.getByRole("list", { name: "Resumo das classificações" });
+    expect(summary).toHaveAttribute("id", "home-rating-summary");
+    expect(summary).toHaveTextContent("Errou3");
+    expect(summary).toHaveTextContent("Difícil4");
+    expect(summary).toHaveTextContent("Bom3");
+    expect(summary).toHaveTextContent("Fácil2");
+  });
+
+  test("desativa a animação do gráfico quando o usuário prefere movimento reduzido", async () => {
+    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }));
+
+    renderHome();
+
+    const chart = await screen.findByRole("img", {
+      name: "Distribuição das classificações da Home",
+    });
+    expect(chart).toHaveAttribute("data-animation", "disabled");
   });
 
   test("mantém o card do último deck quando a consulta de estatísticas falha", async () => {

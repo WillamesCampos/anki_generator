@@ -45,3 +45,4 @@
   Botão "Estudar" presente em cada item de `DeckListPage`.
 - [x] 7.6 Atualizar `PRD.md`/`CHANGELOG.md` com essa extensão da Sprint 9
 - [x] 7.7 HomePage.css: estilizar "Continuar estudando" e "Ver meus decks" na direção “Contraste expressivo”, com estados hover/active/focus, layout móvel e redução de movimento
+- [x] 7.8 `HomePage.jsx`/`HomePage.css`: enriquecer o gráfico de estatísticas com opções e dataset tokenizados, resumo acessível associado, responsividade e redução de movimento; `HomePage.test.jsx` cobre a configuração observável e a preferência do usuário, sem alterar CTA, Sidebar, `Card` ou `Button`

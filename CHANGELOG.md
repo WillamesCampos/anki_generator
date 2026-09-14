@@ -20,6 +20,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - Testes automatizados: backend (filtro por deck em `find_due`, endpoint combinado, isolamento multi-tenant; envio de e-mail com link correto, não-vazamento de existência de conta, confirmação troca a senha, token reusado/adulterado rejeitado) e frontend (fluxo completo de estudo — revelar/avaliar/avançar, estado vazio, fim de sessão — e recuperação de senha — solicitação, link inválido, sucesso, erro).
 - **Caminhos de descoberta até a tela de estudo** (gap levantado via `backend-mentor` depois da entrega inicial — a tela só era alcançável digitando a URL ou pelo detalhe de um deck específico): `HomePage.jsx` ganha um botão "Continuar estudando" dentro do card "Último deck estudado" (só quando há um deck válido) e um CTA secundário "Ver meus decks" sempre visível levando pra `/decks`; ambos recebem a direção visual “Contraste expressivo”, com hierarquia, estados de interação, responsividade e redução de movimento. O CTA secundário usa um olho aberto decorativo inline, oculto da árvore acessível, e a faixa que o acompanha agora usa fundo laranja, borda/sombra pretas e texto forte. Menu lateral (`Sidebar.jsx`) **não muda** — decisão explícita para não duplicar o destino do item "Decks" já existente.
   `DeckListPage.jsx` ganha um botão "Estudar" em cada item, ao lado de "Abrir deck", sem checar cards devidos antes de navegar (a própria tela de estudo trata o estado vazio).
+- **Estatísticas da Home**: o gráfico do último deck ganha dataset e opções tokenizados (barras com borda/hover, tooltip escuro e eixos de valores inteiros), respeita `prefers-reduced-motion` e expõe uma lista resumida associada ao gráfico para leitura por tecnologias assistivas. O ajuste visual permanece local ao card de estatísticas; Sidebar, componentes globais e a faixa CTA são preservados.
 
 ### Corrigido
 - `django.contrib.sites` (`SITE_ID=1`) nunca tinha sido configurado desde o Sprint 0/1 — aparecia literalmente como "example.com" no e-mail de recuperação de senha. Migration de dados corrige pra "Anki Generator" (`apps/accounts/migrations/0003_site_name.py`), usando `update_or_create` em vez de `filter().update()` — a linha default do `Site` é criada por um signal `post_migrate` que roda depois de todas as migrations, então um `update()` simples seria um no-op silencioso.
@@ -27,7 +28,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - `ForgotPasswordPage`: `try/finally` sem `catch` gerava uma rejeição de Promise não tratada sempre que a solicitação falhasse (silencioso nos testes, mas poluiria o console/ferramentas de monitoramento em produção).
 
 ### Validado
-- Suíte completa: 77 testes de backend, 47 de frontend, `black --check` e `eslint` limpos.
+- Suíte completa: 77 testes de backend, 48 de frontend, `black --check` e `eslint` limpos.
 - Fluxo real testado com a API key de produção do Resend: e-mail de recuperação entregue com sucesso na caixa de entrada do usuário, link com `uid`/`token` corretos.
 
 ### Fora de escopo (decisão explícita)
