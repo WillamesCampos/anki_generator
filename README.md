@@ -55,7 +55,7 @@ flowchart TB
 Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz — `django/` (o backend principal), `microservices/<nome>/` (cada microsserviço FastAPI, um por pasta) e `frontend/` (SPA React, Sprint 3). `docker-compose.yml` e `Makefile` ficam na raiz e orquestram todas elas.
 
 - **Backend principal**: Django + DRF, multi-tenant, URLs versionadas (`/api/v1/`).
-- **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
+- **Autenticação**: JWT (`simplejwt`) com refresh token revogável via blocklist no Redis + login Google OAuth (`django-allauth` + `dj-rest-auth`) + recuperação de senha por e-mail (Resend) — `django/apps/accounts/`. Multi-tenant = isolamento por usuário (`TenantOwnedModel`), sem entidade `Organization` separada.
 - **Domínio de deck/card**: `django/apps/decks/` — entities (`Deck`/`Category`/`Card`/`CardReview`), value objects e repositórios Mongo (via `pymongo`, síncrono). Isolamento multi-tenant aqui é `owner_id` obrigatório embutido em toda query do repositório (mecanismo próprio, já que não há ORM do Django sobre Mongo). CRUD via Generic Views do DRF com serializers manuais; repetição espaçada via FSRS (pacote `fsrs`).
 - **Frontend**: `frontend/` — SPA React (Vite), consumindo a API do Django. Tokens de design extraídos por auditoria real de `refs/Ashley_files/style.css` (ver `frontend/src/tokens/`), não importados diretamente — o `design_system/design-system.html` documenta um template comercial de portfólio, não um design system de app pronto. Home dashboard responsiva para tablet, login por e-mail/senha ou Google, gráfico Chart.js com exportação PDF sob demanda e fallback global de erro. A fundação de testes usa Vitest + React Testing Library.
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
@@ -69,6 +69,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 |---|---|
 | Backend principal | Django 6 + Django REST Framework, Python 3.13, Poetry |
 | Autenticação | JWT (`djangorestframework-simplejwt`) + Google OAuth (`django-allauth` + `dj-rest-auth`) |
+| E-mail transacional | Resend (SMTP) — console backend em dev, recuperação de senha em produção |
 | Repetição espaçada | FSRS (pacote `fsrs`) |
 | Testes | pytest + pytest-django |
 | Microsserviços | FastAPI, `venv`/`requirements.txt` por serviço |
@@ -169,7 +170,7 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 6 — Ciclo de vida de Deck/Card (edição, soft delete com retenção de 7 dias em Deck/Card/Category, meta por deck)
 - [x] Sprint 7 — Gerenciamento de Decks & Cards no frontend (tela `/decks` real, criar/editar/excluir deck e card, categorias)
 - [x] Sprint 8 — Pipeline de testes & CI/CD (lint + testes de backend/frontend, GitHub Actions, gate em PR e em merge na main)
-- [ ] Sprint 9 — Tela de estudo (revisar card, avaliar again/hard/good/easy, por deck)
+- [x] Sprint 9 — Tela de estudo (revisar card, avaliar again/hard/good/easy, por deck) + recuperação de senha por e-mail (Resend)
 - [ ] Sprint 10 — Estatísticas por deck (endpoint dedicado + dropdown na Home)
 - [ ] Sprint 11 — Exportação Anki & microsserviço de documentos (integração completa)
 - [ ] Sprint 12 — Agente de IA (LangChain/LangGraph)
