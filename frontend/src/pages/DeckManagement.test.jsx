@@ -65,6 +65,10 @@ describe("gerenciamento de decks", () => {
       "href",
       "/decks/deck-1",
     );
+    expect(screen.getByRole("link", { name: "Estudar deck Inglês técnico" })).toHaveAttribute(
+      "href",
+      "/decks/deck-1/estudar",
+    );
   });
 
   test("cria um deck válido e navega para o detalhe", async () => {

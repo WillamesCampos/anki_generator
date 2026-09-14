@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { fetchDeck, fetchDeckStatistics } from "../api/decks";
@@ -30,6 +31,14 @@ const LAST_DECK = {
   description: "Vocabulário de viagem",
 };
 
+function renderHome() {
+  return render(
+    <MemoryRouter>
+      <HomePage />
+    </MemoryRouter>,
+  );
+}
+
 describe("estatísticas da Home", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -46,7 +55,7 @@ describe("estatísticas da Home", () => {
   });
 
   test("usa o histórico completo do último deck em vez de somar revisões de outros decks", async () => {
-    render(<HomePage />);
+    renderHome();
 
     expect(await screen.findByText("Hospedagem e Transporte")).toBeInTheDocument();
     const chart = await screen.findByRole("img", {
@@ -60,7 +69,7 @@ describe("estatísticas da Home", () => {
   test("mantém o card do último deck quando a consulta de estatísticas falha", async () => {
     fetchDeckStatistics.mockRejectedValue(new Error("offline"));
 
-    render(<HomePage />);
+    renderHome();
 
     expect(await screen.findByText("Hospedagem e Transporte")).toBeInTheDocument();
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -71,9 +80,67 @@ describe("estatísticas da Home", () => {
   test("não consulta estatísticas de deck quando ainda não há revisões", async () => {
     fetchReviews.mockResolvedValue({ results: [] });
 
-    render(<HomePage />);
+    renderHome();
 
     expect(await screen.findByText("Você ainda não revisou nenhum card.")).toBeInTheDocument();
     await waitFor(() => expect(fetchDeckStatistics).not.toHaveBeenCalled());
+  });
+});
+
+describe("caminhos até a tela de estudo", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("com último deck válido: botão 'Estudar' do card aponta pro deck, e o CTA convida a trocar de deck", async () => {
+    fetchReviews.mockResolvedValue({
+      results: [
+        { id: "review-1", deck_id: "deck-last", rating: "again", reviewed_at: "2026-08-31T12:00:00Z" },
+      ],
+    });
+    fetchDeck.mockResolvedValue(LAST_DECK);
+    fetchDeckStatistics.mockResolvedValue({ rating_distribution: {} });
+
+    renderHome();
+
+    await screen.findByText("Hospedagem e Transporte");
+
+    const studyButtons = screen.getAllByRole("link", { name: "Estudar" });
+    expect(studyButtons).toHaveLength(1);
+    expect(studyButtons[0]).toHaveAttribute("href", "/decks/deck-last/estudar");
+
+    expect(
+      screen.getByText("Não é o deck que deseja estudar agora? Escolha o seu deck!"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver meus decks" })).toHaveAttribute("href", "/decks");
+  });
+
+  test("sem nenhuma revisão: sem botão 'Estudar' do card, CTA convida a escolher um deck", async () => {
+    fetchReviews.mockResolvedValue({ results: [] });
+
+    renderHome();
+
+    await screen.findByText("Você ainda não revisou nenhum card.");
+
+    expect(screen.queryByRole("link", { name: "Estudar" })).not.toBeInTheDocument();
+    expect(screen.getByText("Escolha um deck pra começar a estudar!")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver meus decks" })).toHaveAttribute("href", "/decks");
+  });
+
+  test("deck da revisão mais recente não está mais acessível: sem botão 'Estudar' do card, CTA neutro", async () => {
+    fetchReviews.mockResolvedValue({
+      results: [
+        { id: "review-1", deck_id: "deck-deleted", rating: "again", reviewed_at: "2026-08-31T12:00:00Z" },
+      ],
+    });
+    fetchDeck.mockRejectedValue({ status: 404, message: "Not found" });
+
+    renderHome();
+
+    await waitFor(() => expect(fetchDeck).toHaveBeenCalledWith("deck-deleted"));
+    await waitFor(() =>
+      expect(screen.queryByRole("link", { name: "Estudar" })).not.toBeInTheDocument(),
+    );
+    expect(screen.getByText("Escolha um deck pra começar a estudar!")).toBeInTheDocument();
   });
 });

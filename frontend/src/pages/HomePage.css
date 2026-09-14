@@ -23,6 +23,24 @@
   margin: var(--space-xs) 0 0;
 }
 
+.home-page__deck-study-button {
+  margin-top: var(--space-sm);
+}
+
+.home-page__study-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.home-page__study-cta p {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
 .home-page__statistics {
   margin-top: var(--space-md);
 }

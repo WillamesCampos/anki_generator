@@ -40,6 +40,12 @@
   margin: 0 0 var(--space-md);
 }
 
+.deck-page__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
 @media (max-width: 1024px) {
   .deck-page__header {
     align-items: flex-start;

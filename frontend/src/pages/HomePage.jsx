@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from "chart.js";
 
@@ -81,6 +82,9 @@ export default function HomePage() {
     values: RATING_KEYS.map((rating) => ratingDistribution[rating] ?? 0),
   };
   const chartLoading = reviewsLoading || (Boolean(recentReview) && statisticsLoading);
+  const hasValidLastDeck = Boolean(
+    !reviewsLoading && recentReview && !lastDeckLoading && !lastDeckError && lastDeck,
+  );
 
   const chartData = {
     labels: distribution.labels,
@@ -118,6 +122,9 @@ export default function HomePage() {
             <>
               <p className="home-page__deck-title">{lastDeck.title}</p>
               {lastDeck.description && <p className="home-page__deck-description">{lastDeck.description}</p>}
+              <Button as={Link} to={`/decks/${lastDeck.id}/estudar`} className="home-page__deck-study-button">
+                Estudar
+              </Button>
             </>
           )}
         </Card>
@@ -128,6 +135,19 @@ export default function HomePage() {
           </p>
         </Card>
       </div>
+
+      {!reviewsLoading && (
+        <div className="home-page__study-cta">
+          <p>
+            {hasValidLastDeck
+              ? "Não é o deck que deseja estudar agora? Escolha o seu deck!"
+              : "Escolha um deck pra começar a estudar!"}
+          </p>
+          <Button as={Link} variant="secondary" to="/decks">
+            Ver meus decks
+          </Button>
+        </div>
+      )}
 
       <div className="home-page__statistics">
         <Card title="Estatísticas">

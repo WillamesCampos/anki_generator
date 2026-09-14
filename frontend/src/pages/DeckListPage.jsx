@@ -45,14 +45,23 @@ export default function DeckListPage() {
               <p className="deck-page__description">
                 {deck.description || "Deck sem descrição."}
               </p>
-              <Button
-                as={Link}
-                variant="secondary"
-                to={`/decks/${deck.id}`}
-                aria-label={`Abrir deck ${deck.title}`}
-              >
-                Abrir deck
-              </Button>
+              <div className="deck-page__card-actions">
+                <Button
+                  as={Link}
+                  variant="secondary"
+                  to={`/decks/${deck.id}`}
+                  aria-label={`Abrir deck ${deck.title}`}
+                >
+                  Abrir deck
+                </Button>
+                <Button
+                  as={Link}
+                  to={`/decks/${deck.id}/estudar`}
+                  aria-label={`Estudar deck ${deck.title}`}
+                >
+                  Estudar
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
