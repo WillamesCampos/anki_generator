@@ -46,7 +46,7 @@ O bloco que acompanha “Ver meus decks” ganha presença própria com fundo la
 
 - `:hover`: o botão se desloca na direção da sombra e a sombra diminui, produzindo feedback físico curto.
 - `:active`: o deslocamento aumenta e a sombra se aproxima de zero.
-- `:focus-visible`: outline preto no botão laranja e outline laranja no botão preto, ambos com distância suficiente para não se confundirem com a sombra.
+- `:focus-visible`: outline preto nos dois botões, ambos com distância suficiente para não se confundirem com a sombra; no botão preto, essa escolha mantém o foco visível sobre a faixa laranja que o envolve.
 - `prefers-reduced-motion: reduce`: remove transições e transformações dos dois CTAs.
 - O símbolo de play continua sendo um pseudo-elemento CSS. O olho aberto é um SVG inline decorativo, com `aria-hidden="true"` e `focusable="false"`; nenhum dos dois altera os nomes acessíveis usados nos testes ou por leitores de tela.
 - O contraste de texto permanece alto: preto sobre laranja e branco sobre preto.
