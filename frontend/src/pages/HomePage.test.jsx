@@ -1,4 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { forwardRef } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
@@ -7,6 +9,8 @@ import { fetchDeck, fetchDeckStatistics } from "../api/decks";
 import { fetchReviews } from "../api/reviews";
 import { colors, radius } from "../tokens/tokens";
 import HomePage from "./HomePage";
+
+const homeStyles = readFileSync(resolve("src/pages/HomePage.css"), "utf8");
 
 vi.mock("../api/decks", () => ({
   fetchDeck: vi.fn(),
@@ -254,5 +258,16 @@ describe("meta de estudo da Home", () => {
     const progress = screen.getByRole("progressbar", { name: "Progresso da meta diária" });
     await waitFor(() => expect(progress).toHaveAttribute("aria-valuenow", "100"));
     expect(screen.getByText("Meta concluída hoje!")).toBeInTheDocument();
+  });
+
+  test("usa a mesma sombra preta nos dois cards de resumo", () => {
+    expect(homeStyles).toContain(`.home-page__summary-grid .ui-card {
+  height: 100%;
+  border: 2px solid var(--color-text-primary);
+  box-shadow: 4px 4px 0 var(--color-text-primary);
+}`);
+    expect(homeStyles).not.toMatch(
+      /\.home-page__goal-card > \.ui-card\s*\{[^}]*box-shadow:/,
+    );
   });
 });

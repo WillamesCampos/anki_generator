@@ -17,6 +17,7 @@
 .home-page__summary-grid .ui-card {
   height: 100%;
   border: 2px solid var(--color-text-primary);
+  box-shadow: 4px 4px 0 var(--color-text-primary);
 }
 
 .home-page__goal-card,
@@ -26,7 +27,6 @@
 
 .home-page__goal-card > .ui-card {
   background: var(--color-white);
-  box-shadow: 4px 4px 0 var(--color-accent);
 }
 
 .home-page__goal-card .ui-card__title {

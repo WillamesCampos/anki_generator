@@ -6,7 +6,7 @@
 
 **Architecture:** Keep the existing markup and global `Card` unchanged. Define the border and black shadow once on `.home-page__summary-grid .ui-card`; retain only the white background in the goal-specific surface rule.
 
-**Tech Stack:** React 18, Vitest, Vite raw CSS import, CSS custom properties.
+**Tech Stack:** React 18, Vitest, Node filesystem API in tests, CSS custom properties.
 
 ## Global Constraints
 
@@ -31,30 +31,33 @@
 - Consumes: `.home-page__summary-grid .ui-card` and `.home-page__goal-card > .ui-card`.
 - Produces: one shared black-shadow declaration for both summary cards.
 
-- [ ] **Step 1: Add the failing visual-contract test**
+- [x] **Step 1: Add the failing visual-contract test**
 
-Add the raw stylesheet import to `HomePage.test.jsx`:
+Add the filesystem import and stylesheet fixture to `HomePage.test.jsx`:
 
 ```jsx
-import homeStyles from "./HomePage.css?raw";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const homeStyles = readFileSync(resolve("src/pages/HomePage.css"), "utf8");
 ```
 
 Add this test to `describe("meta de estudo da Home", ...)`:
 
 ```jsx
 test("usa a mesma sombra preta nos dois cards de resumo", () => {
-  const sharedRule = homeStyles.match(
-    /\.home-page__summary-grid \.ui-card\s*\{(?<body>[^}]*)\}/,
-  )?.groups?.body;
-
-  expect(sharedRule).toContain("box-shadow: 4px 4px 0 var(--color-text-primary);");
+  expect(homeStyles).toContain(`.home-page__summary-grid .ui-card {
+  height: 100%;
+  border: 2px solid var(--color-text-primary);
+  box-shadow: 4px 4px 0 var(--color-text-primary);
+}`);
   expect(homeStyles).not.toMatch(
     /\.home-page__goal-card > \.ui-card\s*\{[^}]*box-shadow:/,
   );
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -65,7 +68,7 @@ npm test -- HomePage.test.jsx
 
 Expected: the new test fails because the shared rule has no shadow and the goal-specific rule declares an orange shadow.
 
-- [ ] **Step 3: Apply the minimal CSS correction**
+- [x] **Step 3: Apply the minimal CSS correction**
 
 Change the two rules in `HomePage.css` to exactly:
 
@@ -81,7 +84,7 @@ Change the two rules in `HomePage.css` to exactly:
 }
 ```
 
-- [ ] **Step 4: Run GREEN and regressions**
+- [x] **Step 4: Run GREEN and regressions**
 
 Run:
 
@@ -97,7 +100,7 @@ git diff --check
 
 Expected: 11 Home tests and 55 total frontend tests pass; lint, build, and diff check exit 0.
 
-- [ ] **Step 5: Update Sprint records and commit**
+- [x] **Step 5: Update Sprint records and commit**
 
 In `design.md`, clarify D8 with the shared black shadow. Add task 7.12 and update the Sprint 9 CHANGELOG bullet plus frontend test count. Commit only the five listed files and this completed plan:
 

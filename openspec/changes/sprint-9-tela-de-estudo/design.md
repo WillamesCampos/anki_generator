@@ -66,7 +66,7 @@ Além do canvas, uma lista associada por `aria-describedby` apresenta cada rótu
 - **Alternativa descartada**: criar tokens ou modificar os componentes globais. Rejeitada porque os tokens atuais cobrem todas as cores, raios e tipografia necessários, e a personalização é específica às estatísticas da Home.
 
 ### D8 — Meta diária vira um painel de progresso local e acessível
-Os dois cards superiores da Home recebem a mesma borda preta de 2 px usada nas estatísticas, sem alterar o componente global `Card`. O card “Meta de estudo” mantém fundo branco e ganha hierarquia própria: contagem revisada/meta em destaque, percentual em selo laranja, barra de progresso e mensagem contextual para meta pendente ou concluída.
+Os dois cards superiores da Home recebem a mesma borda preta de 2 px e a mesma sombra preta deslocada `4px 4px 0` usadas nas estatísticas, sem alterar o componente global `Card`. O card “Meta de estudo” mantém fundo branco e ganha hierarquia própria: contagem revisada/meta em destaque, percentual em selo laranja, barra de progresso e mensagem contextual para meta pendente ou concluída. O laranja fica restrito a esses destaques internos e não substitui a sombra externa compartilhada.
 
 A barra expõe `role="progressbar"`, escala de 0 a 100 e descrição textual com quantidade revisada e meta, evitando depender apenas de cor ou largura. A animação da largura é removida quando o usuário prefere movimento reduzido. Toda a apresentação permanece escopada a `HomePage.css`; cálculo da meta, APIs, CTAs e gráfico não mudam.
 
