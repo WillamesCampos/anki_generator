@@ -9,6 +9,7 @@ Transformar o card simples “Meta de estudo” da Home em um painel de progress
 
 ## Direção visual
 
+- Aplicar aos dois cards da grade superior da Home a mesma borda preta de `2px` usada no card de estatísticas. A regra fica limitada a `.home-page__summary-grid` e não altera o componente global `Card`.
 - Manter o fundo branco escolhido pelo usuário.
 - Dar presença ao card com borda preta de `2px`, cantos existentes de card e sombra sólida laranja deslocada.
 - Destacar o título com um pequeno marcador circular laranja, sem alterar o texto “Meta de estudo”.
@@ -20,7 +21,7 @@ Transformar o card simples “Meta de estudo” da Home em um painel de progress
 
 ## Estrutura e isolamento
 
-`HomePage.jsx` envolve apenas o segundo `Card` da grade com `.home-page__goal-card`. O componente global `Card` não recebe novas props nem alterações. O conteúdo interno usa classes locais:
+`HomePage.jsx` envolve apenas o segundo `Card` da grade com `.home-page__goal-card`. O componente global `Card` não recebe novas props nem alterações. A borda compartilhada usa `.home-page__summary-grid .ui-card`, alcançando somente os dois cards superiores. O conteúdo interno usa classes locais:
 
 - `.home-page__goal-overview` para número e percentual;
 - `.home-page__goal-count` e `.home-page__goal-label` para a leitura principal;
@@ -48,7 +49,7 @@ O badge repete visualmente o percentual, mas não substitui os valores textuais.
 - Com zero revisões, mostra `0 / meta`, `0%` e a meta inteira como restante.
 - Com progresso parcial, mostra o restante calculado por `Math.max(goal - reviewedToday, 0)`.
 - Com meta atingida ou superada, mostra `100%` e a mensagem de conclusão.
-- Meta, histórico, `localStorage`, APIs, cards vizinhos, CTAs e gráfico permanecem inalterados.
+- Meta, histórico, `localStorage`, APIs, conteúdo do card de último deck, CTAs e gráfico permanecem inalterados.
 - Nenhum token ou componente global será criado ou modificado.
 
 ## Verificação
