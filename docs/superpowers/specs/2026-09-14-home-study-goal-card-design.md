@@ -9,9 +9,9 @@ Transformar o card simples “Meta de estudo” da Home em um painel de progress
 
 ## Direção visual
 
-- Aplicar aos dois cards da grade superior da Home a mesma borda preta de `2px` usada no card de estatísticas. A regra fica limitada a `.home-page__summary-grid` e não altera o componente global `Card`.
+- Aplicar aos dois cards da grade superior da Home a mesma borda preta de `2px` e a mesma sombra preta deslocada `4px 4px 0` usadas no card de estatísticas. A regra fica limitada a `.home-page__summary-grid` e não altera o componente global `Card`.
 - Manter o fundo branco escolhido pelo usuário.
-- Dar presença ao card com borda preta de `2px`, cantos existentes de card e sombra sólida laranja deslocada.
+- Manter o laranja somente nos elementos de destaque do card da meta — marcador, badge e preenchimento da barra — sem usá-lo na sombra externa.
 - Destacar o título com um pequeno marcador circular laranja, sem alterar o texto “Meta de estudo”.
 - Exibir a quantidade revisada e a meta no formato visual `0 / 20`, com o primeiro número maior e mais forte.
 - Manter “cards hoje” como legenda curta.
@@ -21,7 +21,7 @@ Transformar o card simples “Meta de estudo” da Home em um painel de progress
 
 ## Estrutura e isolamento
 
-`HomePage.jsx` envolve apenas o segundo `Card` da grade com `.home-page__goal-card`. O componente global `Card` não recebe novas props nem alterações. A borda compartilhada usa `.home-page__summary-grid .ui-card`, alcançando somente os dois cards superiores. O conteúdo interno usa classes locais:
+`HomePage.jsx` envolve apenas o segundo `Card` da grade com `.home-page__goal-card`. O componente global `Card` não recebe novas props nem alterações. A borda e a sombra compartilhadas usam `.home-page__summary-grid .ui-card`, alcançando somente os dois cards superiores; a regra específica de `.home-page__goal-card > .ui-card` não sobrescreve a sombra. O conteúdo interno usa classes locais:
 
 - `.home-page__goal-overview` para número e percentual;
 - `.home-page__goal-count` e `.home-page__goal-label` para a leitura principal;
@@ -57,4 +57,5 @@ O badge repete visualmente o percentual, mas não substitui os valores textuais.
 - Teste inicial: `0 / 20`, `0%`, restante 20 e atributos ARIA da barra.
 - Teste parcial: números, percentual e restante usam o resultado real de `computeGoalProgress`.
 - Teste concluído: percentual limitado a 100 e mensagem de conclusão.
+- Teste visual de contrato: a regra compartilhada da grade define a sombra preta e nenhuma regra específica do card da meta volta a aplicar sombra laranja.
 - Executar testes focados da Home, suíte frontend, lint, build, diff check e inspeção responsiva.
