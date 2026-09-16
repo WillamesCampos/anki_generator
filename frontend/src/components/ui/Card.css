@@ -1,17 +1,36 @@
 .ui-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
   padding: var(--space-md);
+  background: var(--color-white);
+  border: 2px solid var(--color-text-primary);
+  border-radius: var(--radius-card);
+  box-shadow: 4px 4px 0 var(--color-text-primary);
 }
 
 .ui-card__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
   margin: 0 0 var(--space-sm);
-  font-size: var(--font-size-md);
-  font-weight: 600;
   color: var(--color-text-primary);
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.ui-card__title::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  background: var(--color-accent);
+  border-radius: var(--radius-circle);
 }
 
 .ui-card__body {
   color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .ui-card {
+    padding: var(--space-sm);
+  }
 }

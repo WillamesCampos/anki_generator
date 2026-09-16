@@ -16,33 +16,11 @@
 
 .home-page__summary-grid .ui-card {
   height: 100%;
-  border: 2px solid var(--color-text-primary);
-  box-shadow: 4px 4px 0 var(--color-text-primary);
 }
 
 .home-page__goal-card,
 .home-page__goal-card > .ui-card {
   height: 100%;
-}
-
-.home-page__goal-card > .ui-card {
-  background: var(--color-white);
-}
-
-.home-page__goal-card .ui-card__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-text-primary);
-}
-
-.home-page__goal-card .ui-card__title::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  flex: 0 0 auto;
-  border-radius: var(--radius-circle);
-  background: var(--color-accent);
 }
 
 .home-page__goal-overview {
@@ -215,27 +193,6 @@
   margin-top: var(--space-md);
 }
 
-.home-page__statistics > .ui-card {
-  border: 2px solid var(--color-text-primary);
-  box-shadow: 4px 4px 0 var(--color-text-primary);
-}
-
-.home-page__statistics .ui-card__title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-size: var(--font-size-lg);
-}
-
-.home-page__statistics .ui-card__title::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  flex: 0 0 auto;
-  border-radius: var(--radius-circle);
-  background: var(--color-accent);
-}
-
 .home-page__chart {
   position: relative;
   min-height: 320px;
@@ -293,10 +250,6 @@
 
   .home-page [data-home-action="decks"] {
     width: 100%;
-  }
-
-  .home-page__statistics > .ui-card {
-    padding: var(--space-sm);
   }
 
   .home-page__chart {
