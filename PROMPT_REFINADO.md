@@ -468,7 +468,11 @@ Sprint 10 (nova, inserida após a Sprint 3, empurrando as demais; renumerada mai
 </decisao_resolvida>
 
 <decisao_resolvida id="dropdown-deck-home">
-Um dropdown acima do gráfico de estatísticas da Home permite selecionar qualquer deck do usuário — o gráfico (via `estatisticas-por-deck-endpoint`) passa a refletir esse deck. Sem seleção manual, o default é o deck mais recentemente estudado (mesmo comportamento e card que já existe hoje como "Último deck estudado" — nome + descrição). Quando o usuário seleciona manualmente um deck no dropdown, o título do card muda de "Último deck estudado" para "Deck estudado", já que deixa de ser necessariamente o mais recente.
+**Revisado (change `sprint-10-estatisticas-por-deck`, pós-Sprint 9)**: dropdown descartado. A Sprint 9 introduziu o componente `RatingDistributionChart`, compartilhado entre a Home e `DeckDetailPage` — isso já entrega "ver estatísticas de qualquer deck do usuário" por um caminho de navegação diferente (Home → `/decks` → abrir deck), sem precisar de um dropdown novo na Home. Sem seleção manual, a Home continua mostrando o deck mais recentemente estudado (comportamento já existente desde a Sprint 3, sem mudança).
+
+Histórico (decisão original, mantida como registro): um dropdown acima do gráfico de estatísticas da Home permitiria selecionar qualquer deck do usuário — o gráfico (via `estatisticas-por-deck-endpoint`) passaria a refletir esse deck. Quando o usuário selecionasse manualmente um deck no dropdown, o título do card mudaria de "Último deck estudado" para "Deck estudado".
+
+Motivo da reversão: mesmo padrão de "navegação duplicada para o mesmo destino" já identificado e rejeitado na Sprint 9 para o item "Estudar" do menu lateral (ver 9.9 em `PRD.md`) — o dropdown resolveria um problema que a Sprint 9 já resolveu por outro caminho, sem ganho de capacidade real, só mais um componente/estado/teste pra manter. Trade-off reconhecido: perde-se a conveniência de trocar de deck sem sair da Home — aceitável sem indício de demanda concreta por isso; revisitar se aparecer um caso de uso real. Ver `openspec/changes/sprint-10-estatisticas-por-deck/design.md` (D6).
 </decisao_resolvida>
 
 <decisao_resolvida id="cards-revisados-hoje-sem-campo-novo">
@@ -608,7 +612,7 @@ Levantamento de gaps de arquitetura conduzido via `/opsx:propose` em `openspec/c
 - [x] **Tela de estudo** (Sprint 9, renumerada de 8 pra 9 quando a Sprint 8 de pipeline de testes/CI foi antecipada): estudo por deck específico, sessão sem persistência, filtro `due`+`deck_id` novo no backend — ver `tela-de-estudo`. Fecha o gap mais fundamental do produto (revisar um card e avaliar).
 - [x] **Recuperação de senha via Resend** (Sprint 9, ampliada a pedido do usuário): `EMAIL_BACKEND` configurado (console em dev, SMTP do Resend em produção), fluxo de "esqueci minha senha" completo (backend + frontend), `Site` corrigido de "example.com" pra "Anki Generator" — ver `recuperacao-de-senha-resend`. Fecha os itens 1 e 4 de `PRD.md` §7.1.
 - [x] **Endpoint de estatísticas por deck** (Sprint 10, renumerada mais de uma vez conforme sprints novas foram inseridas): `GET /api/v1/decks/{deck_id}/statistics/`, distribuição por rating + revisados hoje + progresso da meta, calculado via agregação Mongo — ver `estatisticas-por-deck-endpoint`. Formalizado em `PRD.md`/openspec (Sprint 10).
-- [x] **Dropdown de deck na Home** (Sprint 10): filtra o gráfico por deck, default é o mais recente estudado, título do card muda para "Deck estudado" quando há seleção manual — ver `dropdown-deck-home`.
+- [x] **Dropdown de deck na Home** (Sprint 10): descartado na reconciliação pós-Sprint 9 — `DeckDetailPage` + gráfico compartilhado já cobrem o mesmo caso de uso por outro caminho — ver `dropdown-deck-home`.
 - [x] **"Cards revisados hoje" sem campo novo no Deck** (Sprint 10): já derivável de `CardReview.reviewed_at`+`deck_id`, sem job de reset diário — ver `cards-revisados-hoje-sem-campo-novo`.
 
 ### Itens que ainda dependem de decisão explícita do usuário

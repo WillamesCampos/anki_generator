@@ -34,6 +34,15 @@ Sem seleção manual, a Home continua mostrando o deck mais recentemente estudad
 ### D5 — Separação visual: padding + borda, sem componente novo
 Ajuste puramente CSS no layout já existente da Home (`HomePage.jsx`/tokens) — espaço entre o grid superior (último deck + meta) e o card de Estatísticas, borda mais grossa nos `ui-card`. Não introduz componente novo, só tokens de espaçamento/borda já existentes ou levemente ajustados.
 
+### D6 — Revisão (pós-Sprint 9): dropdown (D4) descartado
+**Histórico**: D4 (acima) foi decidido antes da Sprint 9 existir, quando a única forma de ver estatísticas de um deck específico fora do "mais recente" seria um dropdown novo na Home.
+
+**Motivo da reversão**: a Sprint 9 introduziu o componente `RatingDistributionChart`, compartilhado entre a Home e `DeckDetailPage` (Sprint 7). Isso significa que hoje, sem nenhum código novo, já existe um caminho para ver o gráfico de qualquer deck do usuário: Home → `/decks` → abrir o deck → ver as estatísticas dele ali, com o mesmo componente visual. O dropdown proposto em D4 resolveria o mesmo problema por um caminho a mais (sem sair da Home) — mas é o mesmo tipo de "navegação duplicada para o mesmo destino" já identificado e rejeitado na Sprint 9 para o item "Estudar" do menu lateral (ver Sprint 9, tarefa 9.9, e `design.md` daquela sprint).
+
+**Trade-off reconhecido, não escondido**: descartar o dropdown custa uma conveniência real, ainda que pequena — ver estatísticas de outro deck sem sair da Home. Não há indício de demanda concreta por essa conveniência (nenhum uso real do produto expôs essa necessidade); se aparecer depois, revisitar como sprint própria, e não reabrir esta decisão sem um caso de uso real.
+
+**Decisão**: 3.2/3.4/3.5 do `tasks.md` (dropdown, troca de deck, troca de título) descartados. 3.3 (default = deck mais recente) permanece como comportamento já existente, não como tarefa nova. D4 permanece registrada acima como histórico da decisão original, agora superada por esta.
+
 ## Risks / Trade-offs
 
 - **[Risco]** "Revisado hoje" no card de Estatísticas (novo, calculado no servidor em UTC) pode divergir por algumas horas do "cards hoje" do card de Meta de estudo (ainda client-side, usa `toDateString()` no fuso do navegador) — um usuário em fuso muito distante de UTC pode ver os dois números discordarem perto da virada do dia. → **Mitigação**: aceitável para esta sprint (ambos os cards já eram calculados de formas diferentes antes); documentar aqui a inconsistência para revisitar se virar uma reclamação real de usuário — não vale unificar timezone agora sem um caso de uso concreto.

@@ -259,12 +259,20 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 **Objetivo**: gap encontrado testando a Home da Sprint 3 — o gráfico de estatísticas mistura todos os decks do usuário, sem forma de filtrar por um deck específico, e "cards revisados hoje" é calculado inteiro no cliente a partir de `GET /api/v1/reviews/`, o que não escala. Decisões já fechadas em `PROMPT_REFINADO.md` (`estatisticas-por-deck-endpoint`, `dropdown-deck-home`, `cards-revisados-hoje-sem-campo-novo`). **Depende da Sprint 6**: a agregação precisa excluir registros com `deleted_at` (soft delete) e a resposta passa a incluir progresso contra `daily_review_goal`, ambos campos que só existem a partir dali.
 
-- [ ] 10.1 `GET /api/v1/decks/{deck_id}/statistics/` — distribuição de revisões por rating (again/hard/good/easy), quantidade revisada hoje e progresso contra `daily_review_goal`, tudo escopado a `deck_id` e `owner_id`, excluindo cards/decks com `deleted_at` preenchido; calculado via agregação Mongo (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python
-- [ ] 10.2 Dropdown na Home, acima do gráfico de Estatísticas, listando os decks do usuário (`GET /api/v1/decks/`) e disparando o novo endpoint ao selecionar
-- [ ] 10.3 Sem seleção manual no dropdown, o deck exibido (card + gráfico) é o mais recentemente estudado — mesmo comportamento hoje existente em "Último deck estudado", reaproveitado como default
-- [ ] 10.4 Título do card muda de "Último deck estudado" para "Deck estudado" quando o usuário seleciona manualmente um deck no dropdown (deixa de ser necessariamente o mais recente)
-- [ ] 10.5 Separação visual entre o grid superior (último deck estudado/meta de estudo) e o card de Estatísticas — padding entre as bordas, bordas mais grossas
-- [ ] 10.6 Testes automatizados (pytest) cobrindo a agregação/endpoint de estatísticas por deck, incluindo isolamento multi-tenant e exclusão de registros soft-deletados
+**Reconciliação (via `backend-mentor`, pós-Sprint 9)**: auditoria do código encontrou 10.1/10.3/10.5/10.6 já implementados em sessões anteriores, sem o checklist nunca ter sido fechado. O dropdown (10.2) e a troca de título dependente dele (10.4) foram revisados e **descartados**: a Sprint 9 introduziu o componente `RatingDistributionChart` compartilhado entre a Home e `DeckDetailPage`, que já cobre "ver estatísticas de qualquer deck" por um caminho diferente (Home → `/decks` → abrir deck) — o mesmo padrão de navegação duplicada já rejeitado para o item "Estudar" do menu lateral (ver 9.9). Decisão `dropdown-deck-home` em `PROMPT_REFINADO.md` marcada como revisada.
+
+- [x] 10.1 `GET /api/v1/decks/{deck_id}/statistics/` — distribuição de revisões por rating (again/hard/good/easy), quantidade revisada hoje e progresso contra `daily_review_goal`, tudo escopado a `deck_id` e `owner_id`, excluindo cards/decks com `deleted_at` preenchido; calculado via agregação Mongo (`$match`/`$group`), não trazendo os documentos crus pra API e somando em Python.
+  **Resolvido**: `DeckStatisticsView` (`apps/decks/views.py`) + `CardReviewRepository.get_deck_statistics` (agregação `$facet`).
+- [x] ~~10.2 Dropdown na Home, acima do gráfico de Estatísticas, listando os decks do usuário (`GET /api/v1/decks/`) e disparando o novo endpoint ao selecionar~~
+  **Descartado** — ver nota de reconciliação acima.
+- [x] 10.3 Sem seleção manual no dropdown, o deck exibido (card + gráfico) é o mais recentemente estudado — mesmo comportamento hoje existente em "Último deck estudado", reaproveitado como default.
+  **Resolvido**: comportamento já existente desde a Sprint 3, reaproveitado sem mudança.
+- [x] ~~10.4 Título do card muda de "Último deck estudado" para "Deck estudado" quando o usuário seleciona manualmente um deck no dropdown~~
+  **Descartado** — dependia diretamente de 10.2.
+- [x] 10.5 Separação visual entre o grid superior (último deck estudado/meta de estudo) e o card de Estatísticas — padding entre as bordas, bordas mais grossas.
+  **Resolvido** como efeito colateral do design system global da Sprint 9: `Card.css` globalizado (borda 2px + sombra deslocada) e `HomePage.css` já espaçam o grid superior do card de Estatísticas.
+- [x] 10.6 Testes automatizados (pytest) cobrindo a agregação/endpoint de estatísticas por deck, incluindo isolamento multi-tenant e exclusão de registros soft-deletados.
+  **Resolvido**: `apps/decks/tests/test_deck_statistics_api.py` (distribuição, zerado, isolamento multi-tenant, exclusão soft-deleted, cobertura de índice).
 
 *Critérios de aceite relevantes: 1 (isolamento multi-tenant), 12 (consistência visual).*
 
