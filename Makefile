@@ -37,6 +37,9 @@ up:
 down:
 	docker compose down
 
+prune:
+	docker container prune -f
+
 logs:
 	docker compose logs -f
 
