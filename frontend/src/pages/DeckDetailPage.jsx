@@ -1,22 +1,15 @@
 import { useEffect, useState } from "react";
-import { Bar } from "react-chartjs-2";
-import { BarElement, CategoryScale, Chart as ChartJS, LinearScale, Tooltip } from "chart.js";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { fetchCardCount } from "../api/cards";
 import { deleteDeck, fetchDeck, fetchDeckStatistics, updateDeck } from "../api/decks";
+import RatingDistributionChart from "../components/charts/RatingDistributionChart";
 import DeckForm from "../components/decks/DeckForm";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
-import { colors } from "../tokens/tokens";
 import "./DeckManagement.css";
 import "./DeckDetailPage.css";
-
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
-
-const RATING_LABELS = ["Errou", "Difícil", "Bom", "Fácil"];
-const RATING_KEYS = ["again", "hard", "good", "easy"];
 const EMPTY_DISTRIBUTION = { again: 0, hard: 0, good: 0, easy: 0 };
 
 function requestError(error, fallback) {
@@ -131,17 +124,6 @@ export default function DeckDetailPage() {
   if (deckError) return <p role="alert">{deckError}</p>;
   if (!deck) return null;
 
-  const ratingValues = RATING_KEYS.map((rating) => ratingDistribution[rating]);
-  const chartData = {
-    labels: RATING_LABELS,
-    datasets: [{
-      label: "Revisões por classificação",
-      data: ratingValues,
-      backgroundColor: colors.accent,
-      borderRadius: 8,
-    }],
-  };
-
   return (
     <section className="deck-page deck-detail">
       <header className="deck-page__header">
@@ -213,20 +195,12 @@ export default function DeckDetailPage() {
           {statisticsLoading && <p>Carregando estatísticas…</p>}
           {!statisticsLoading && statisticsError && <p role="alert">{statisticsError}</p>}
           {!statisticsLoading && !statisticsError && (
-            <>
-              <div className="deck-detail__chart">
-                <Bar
-                  aria-label="Distribuição das classificações do deck"
-                  data={chartData}
-                  options={{ maintainAspectRatio: false, responsive: true }}
-                />
-              </div>
-              <ul className="deck-detail__statistics-values">
-                {RATING_LABELS.map((label, index) => (
-                  <li key={RATING_KEYS[index]}>{label}: {ratingValues[index]}</li>
-                ))}
-              </ul>
-            </>
+            <RatingDistributionChart
+              distribution={ratingDistribution}
+              ariaLabel="Distribuição das classificações do deck"
+              summaryId="deck-rating-summary"
+              datasetLabel="Revisões por classificação"
+            />
           )}
         </Card>
       </section>

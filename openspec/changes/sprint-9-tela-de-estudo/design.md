@@ -86,6 +86,13 @@ Cada ação preserva o mesmo valor enviado à API, mas expõe esse valor em `dat
 
 - **Alternativa descartada**: criar variantes globais no `Button`. Rejeitada porque as quatro cores representam a semântica específica da avaliação FSRS e não um padrão genérico de ação da aplicação.
 
+### D11 — Card global e gráfico de classificações compartilhado
+`Card.css` passa a ser a fonte única da superfície branca com borda preta de 2 px, sombra preta deslocada e título com marcador laranja. O padrão alcança listas, formulários, estados vazios, diálogos, Home, detalhe e sessão de estudo; CSS de página mantém somente composição local. Não há hover global porque nem todo card é interativo.
+
+Home e detalhe do deck passam a consumir `RatingDistributionChart`, que normaliza `again`/`hard`/`good`/`easy`, concentra dataset/opções tokenizados, resumo textual associado e redução de movimento. Requests, loading e erros continuam nas páginas; somente a Home fornece `chartRef` para exportação PDF.
+
+- **Alternativa descartada**: copiar o CSS/configuração da Home para o detalhe. Rejeitada porque manteria duas fontes de verdade e permitiria nova divergência visual.
+
 ## Risks / Trade-offs
 
 - **[Risco]** Sem sessão persistida, se o usuário fechar a aba no meio do estudo, perde a noção de progresso da sessão (mas não perde nenhuma revisão já feita — cada avaliação já foi persistida via `POST /review/` no momento em que aconteceu). → **Mitigação**: nenhuma nesta sprint, aceito como trade-off da v1.

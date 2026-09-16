@@ -193,52 +193,8 @@
   margin-top: var(--space-md);
 }
 
-.home-page__chart {
-  position: relative;
-  min-height: 320px;
-  padding: var(--space-sm);
-  overflow: hidden;
-  background: var(--color-bg-light);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-card);
-}
-
-.home-page__statistics-values {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-xs);
-  margin: var(--space-sm) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.home-page__statistics-values li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-xs);
-  min-width: 0;
-  padding: var(--space-xs);
-  color: var(--color-text-primary);
-  background: var(--color-white);
-  border: 1px solid var(--color-border);
-  border-left: 4px solid var(--color-accent);
-  border-radius: var(--radius-card);
-  font-size: var(--font-size-sm);
-}
-
-.home-page__statistics-values strong {
-  font-size: var(--font-size-md);
-}
-
 .home-page__actions {
   margin-top: var(--space-sm);
-}
-
-@media (max-width: 1024px) {
-  .home-page__chart {
-    min-height: 260px;
-  }
 }
 
 @media (max-width: 640px) {
@@ -250,20 +206,6 @@
 
   .home-page [data-home-action="decks"] {
     width: 100%;
-  }
-
-  .home-page__chart {
-    min-height: 240px;
-    padding: var(--space-xs);
-  }
-
-  .home-page__statistics-values {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .home-page__statistics-values li {
-    align-items: flex-start;
-    flex-direction: column;
   }
 }
 

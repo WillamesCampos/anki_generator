@@ -35,7 +35,7 @@
 - Consumes: existing `.ui-card`, `.ui-card__title`, and `.ui-card__body` markup from `Card.jsx`.
 - Produces: one global visual contract inherited by every existing `Card` consumer.
 
-- [ ] **Step 1: Write the failing global-card contract test**
+- [x] **Step 1: Write the failing global-card contract test**
 
 Create `Card.test.jsx` with:
 
@@ -68,7 +68,7 @@ test("define a superfície, o título e o padding móvel no CSS global", () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -79,7 +79,7 @@ npm test -- src/components/ui/Card.test.jsx
 
 Expected: the rendering test passes and the CSS contract fails because the current card still uses a neutral 1px border, no shadow, smaller title, and no marker/mobile rule.
 
-- [ ] **Step 3: Replace `Card.css` with the global surface**
+- [x] **Step 3: Replace `Card.css` with the global surface**
 
 Use this complete content:
 
@@ -122,7 +122,7 @@ Use this complete content:
 }
 ```
 
-- [ ] **Step 4: Remove obsolete Home card-surface rules and its local CSS test**
+- [x] **Step 4: Remove obsolete Home card-surface rules and its local CSS test**
 
 In `HomePage.css`, keep only the height behavior:
 
@@ -150,7 +150,7 @@ Delete these selectors and their declarations entirely:
 
 Also delete the mobile `.home-page__statistics > .ui-card` padding rule. In `HomePage.test.jsx`, remove `readFileSync`, `resolve`, `homeStyles`, and the test named `usa a mesma sombra preta nos dois cards de resumo`; the new `Card.test.jsx` owns this global contract.
 
-- [ ] **Step 5: Remove obsolete StudySession surface overrides**
+- [x] **Step 5: Remove obsolete StudySession surface overrides**
 
 Replace the two card selectors with:
 
@@ -168,7 +168,7 @@ Replace the two card selectors with:
 
 Delete `.study-session > .ui-card` and delete the mobile padding override for that selector. Do not change the progress or rating-button rules.
 
-- [ ] **Step 6: Run GREEN and focused regressions**
+- [x] **Step 6: Run GREEN and focused regressions**
 
 Run:
 
@@ -182,7 +182,7 @@ git diff --check
 
 Expected: all focused tests, lint, and diff check exit 0.
 
-- [ ] **Step 7: Commit the card foundation**
+- [x] **Step 7: Commit the card foundation**
 
 ```bash
 git add frontend/src/components/ui/Card.test.jsx frontend/src/components/ui/Card.css frontend/src/pages/HomePage.test.jsx frontend/src/pages/HomePage.css frontend/src/pages/StudySessionPage.css
@@ -202,7 +202,7 @@ git commit -m "feat(frontend): standardize global card surface"
 - Consumes props: `distribution`, `ariaLabel`, `summaryId`, `datasetLabel`, optional `chartRef`.
 - Produces: Chart.js `Bar`, `.rating-chart__canvas`, and an accessible `.rating-chart__summary` list in fixed FSRS order.
 
-- [ ] **Step 1: Write failing component tests**
+- [x] **Step 1: Write failing component tests**
 
 Create `RatingDistributionChart.test.jsx`:
 
@@ -317,7 +317,7 @@ test("define o layout responsivo compartilhado", () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 Run:
 
@@ -328,7 +328,7 @@ npm test -- src/components/charts/RatingDistributionChart.test.jsx
 
 Expected: FAIL because `RatingDistributionChart.jsx` does not exist.
 
-- [ ] **Step 3: Create the component**
+- [x] **Step 3: Create the component**
 
 Create `RatingDistributionChart.jsx`:
 
@@ -446,7 +446,7 @@ export default function RatingDistributionChart({
 }
 ```
 
-- [ ] **Step 4: Create the shared chart CSS**
+- [x] **Step 4: Create the shared chart CSS**
 
 Create `RatingDistributionChart.css`:
 
@@ -512,7 +512,7 @@ Create `RatingDistributionChart.css`:
 }
 ```
 
-- [ ] **Step 5: Run GREEN and commit**
+- [x] **Step 5: Run GREEN and commit**
 
 Run:
 
@@ -549,7 +549,7 @@ Expected: four component tests pass; lint and diff check exit 0.
 - Consumes: `RatingDistributionChart` from Task 2 and the global `Card` surface from Task 1.
 - Produces: identical rating-chart presentation on Home and deck detail while preserving each page's data source and errors.
 
-- [ ] **Step 1: Strengthen the deck-detail chart test before migration**
+- [x] **Step 1: Strengthen the deck-detail chart test before migration**
 
 Change the `react-chartjs-2` mock in `DeckDetailPage.test.jsx` to expose the shared configuration:
 
@@ -588,7 +588,7 @@ expect(summary).toHaveTextContent("Bom5");
 expect(summary).toHaveTextContent("Fácil7");
 ```
 
-- [ ] **Step 2: Run the deck-detail RED test**
+- [x] **Step 2: Run the deck-detail RED test**
 
 Run:
 
@@ -599,7 +599,7 @@ npm test -- DeckDetailPage.test.jsx
 
 Expected: the historical-distribution test fails because the current deck chart has no shared tokenized options, no `aria-describedby`, and no labeled summary list.
 
-- [ ] **Step 3: Migrate `HomePage.jsx`**
+- [x] **Step 3: Migrate `HomePage.jsx`**
 
 Remove direct imports from `react-chartjs-2`, `chart.js`, and `colors`, `radius`, `typography`. Remove `ChartJS.register`, `RATING_KEYS`, `RATING_LABELS`, `distribution`, `prefersReducedMotion`, `chartData`, and `chartOptions`.
 
@@ -627,7 +627,7 @@ Replace the chart wrapper and summary list with:
 />
 ```
 
-- [ ] **Step 4: Remove chart-only rules from `HomePage.css`**
+- [x] **Step 4: Remove chart-only rules from `HomePage.css`**
 
 Delete these selectors and their media overrides:
 
@@ -640,7 +640,7 @@ Delete these selectors and their media overrides:
 
 Do not alter `.home-page__actions`, CTAs, goal progress, or reduced-motion rules for CTA/progress.
 
-- [ ] **Step 5: Migrate `DeckDetailPage.jsx`**
+- [x] **Step 5: Migrate `DeckDetailPage.jsx`**
 
 Remove direct imports from `react-chartjs-2`, `chart.js`, and `colors`; remove `ChartJS.register`, `RATING_LABELS`, `RATING_KEYS`, `ratingValues`, and `chartData`.
 
@@ -661,7 +661,7 @@ Replace the chart wrapper and summary list with:
 />
 ```
 
-- [ ] **Step 6: Remove chart-only rules from `DeckDetailPage.css`**
+- [x] **Step 6: Remove chart-only rules from `DeckDetailPage.css`**
 
 Delete these selectors and their media overrides:
 
@@ -672,7 +672,7 @@ Delete these selectors and their media overrides:
 
 Preserve header, card-list, pagination, form, error, and responsive navigation rules.
 
-- [ ] **Step 7: Run page GREEN tests**
+- [x] **Step 7: Run page GREEN tests**
 
 Run:
 
@@ -683,7 +683,7 @@ npm test -- HomePage.test.jsx DeckDetailPage.test.jsx src/components/charts/Rati
 
 Expected: all Home, deck-detail, and shared-component tests pass.
 
-- [ ] **Step 8: Update Sprint 9 documentation**
+- [x] **Step 8: Update Sprint 9 documentation**
 
 Append this decision to `design.md`:
 
@@ -718,7 +718,7 @@ Change the Sprint 9 validation count from `55 de frontend` to `60 de frontend` a
 - A auditoria automatizada de cores, a suíte completa, o lint e o build foram reexecutados após a remoção das regras duplicadas.
 ```
 
-- [ ] **Step 9: Run full verification**
+- [x] **Step 9: Run full verification**
 
 Run:
 
@@ -734,7 +734,7 @@ git diff --check
 
 Expected: lint, all frontend tests, build, color audit, and diff check exit 0; the color audit prints no application matches.
 
-- [ ] **Step 10: Complete the plan and commit**
+- [x] **Step 10: Complete the plan and commit**
 
 Mark every checkbox in this plan complete, then run:
 

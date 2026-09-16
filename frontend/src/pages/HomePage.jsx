@@ -1,23 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from "chart.js";
 
 import { fetchReviews } from "../api/reviews";
 import { fetchDeck, fetchDeckStatistics } from "../api/decks";
 import { useApiResource } from "../api/hooks";
+import RatingDistributionChart from "../components/charts/RatingDistributionChart";
 import { computeGoalProgress, getDailyGoal } from "../lib/goal";
 import { exportChartToPdf } from "../lib/exportPdf";
 import { mostRecentReview } from "../lib/stats";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import { colors, radius, typography } from "../tokens/tokens";
 import "./HomePage.css";
-
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
-
-const RATING_KEYS = ["again", "hard", "good", "easy"];
-const RATING_LABELS = ["Errou", "Difícil", "Bom", "Fácil"];
 
 function useLastStudiedDeck(mostRecent) {
   const [deck, setDeck] = useState(null);
@@ -79,76 +72,10 @@ export default function HomePage() {
   const remainingGoal = Math.max(goalProgress.goal - goalProgress.reviewedToday, 0);
   const goalComplete = goalProgress.percentage >= 100;
   const ratingDistribution = deckStatistics?.rating_distribution ?? {};
-  const distribution = {
-    labels: RATING_LABELS,
-    values: RATING_KEYS.map((rating) => ratingDistribution[rating] ?? 0),
-  };
   const chartLoading = reviewsLoading || (Boolean(recentReview) && statisticsLoading);
   const hasValidLastDeck = Boolean(
     !reviewsLoading && recentReview && !lastDeckLoading && !lastDeckError && lastDeck,
   );
-  const prefersReducedMotion = Boolean(
-    typeof window !== "undefined"
-    && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
-  );
-
-  const chartData = {
-    labels: distribution.labels,
-    datasets: [
-      {
-        label: "Revisões por resultado",
-        data: distribution.values,
-        backgroundColor: colors.accent,
-        hoverBackgroundColor: colors.bgDark,
-        borderColor: colors.textPrimary,
-        hoverBorderColor: colors.accent,
-        borderWidth: 2,
-        borderSkipped: false,
-        borderRadius: Number.parseFloat(radius.card),
-        maxBarThickness: 64,
-      },
-    ],
-  };
-
-  const chartOptions = {
-    maintainAspectRatio: false,
-    responsive: true,
-    animation: prefersReducedMotion ? false : undefined,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: colors.bgDark,
-        titleColor: colors.textOnDark,
-        bodyColor: colors.textOnDark,
-        borderColor: colors.accent,
-        borderWidth: 1,
-        displayColors: false,
-        padding: 12,
-        titleFont: { family: typography.fontFamily, weight: "600" },
-        bodyFont: { family: typography.fontFamily },
-      },
-    },
-    scales: {
-      x: {
-        grid: { display: false },
-        ticks: {
-          color: colors.textPrimary,
-          font: { family: typography.fontFamily, weight: "600" },
-          maxRotation: 0,
-          minRotation: 0,
-        },
-      },
-      y: {
-        beginAtZero: true,
-        grid: { color: colors.border },
-        ticks: {
-          color: colors.textSecondary,
-          font: { family: typography.fontFamily },
-          precision: 0,
-        },
-      },
-    },
-  };
 
   async function handleExportPdf() {
     await exportChartToPdf(chartRef.current);
@@ -263,27 +190,13 @@ export default function HomePage() {
           )}
           {!chartLoading && (!recentReview || !statisticsError) && (
             <>
-              <div className="home-page__chart">
-                <Bar
-                  ref={chartRef}
-                  aria-label="Distribuição das classificações da Home"
-                  aria-describedby="home-rating-summary"
-                  data={chartData}
-                  options={chartOptions}
-                />
-              </div>
-              <ul
-                id="home-rating-summary"
-                className="home-page__statistics-values"
-                aria-label="Resumo das classificações"
-              >
-                {distribution.labels.map((label, index) => (
-                  <li key={RATING_KEYS[index]}>
-                    <span>{label}</span>
-                    <strong>{distribution.values[index]}</strong>
-                  </li>
-                ))}
-              </ul>
+              <RatingDistributionChart
+                distribution={ratingDistribution}
+                ariaLabel="Distribuição das classificações da Home"
+                summaryId="home-rating-summary"
+                datasetLabel="Revisões por resultado"
+                chartRef={chartRef}
+              />
               <div className="home-page__actions">
                 <Button onClick={handleExportPdf}>Exportar PDF</Button>
               </div>

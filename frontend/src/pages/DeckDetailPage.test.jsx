@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { fetchCardCount } from "../api/cards";
 import { fetchCategories } from "../api/categories";
 import { deleteDeck, fetchDeck, fetchDeckStatistics, fetchDecks, updateDeck } from "../api/decks";
+import { colors } from "../tokens/tokens";
 import DeckDetailPage from "./DeckDetailPage";
 import DeckListPage from "./DeckListPage";
 
@@ -27,11 +28,16 @@ vi.mock("../api/decks", () => ({
 }));
 
 vi.mock("react-chartjs-2", () => ({
-  Bar: ({ data }) => (
+  Bar: ({ data, options, ...chartProps }) => (
     <div
+      {...chartProps}
       role="img"
-      aria-label="Distribuição das classificações do deck"
       data-values={data.datasets[0].data.join(",")}
+      data-border-color={data.datasets[0].borderColor}
+      data-hover-background={data.datasets[0].hoverBackgroundColor}
+      data-x-grid={String(options.scales.x.grid.display)}
+      data-y-begin-at-zero={String(options.scales.y.beginAtZero)}
+      data-tooltip-background={options.plugins.tooltip.backgroundColor}
     />
   ),
 }));
@@ -111,10 +117,19 @@ describe("detalhe do deck", () => {
 
     const chart = await screen.findByRole("img", { name: "Distribuição das classificações do deck" });
     expect(chart).toHaveAttribute("data-values", "2,3,5,7");
-    expect(screen.getByText("Errou: 2")).toBeInTheDocument();
-    expect(screen.getByText("Difícil: 3")).toBeInTheDocument();
-    expect(screen.getByText("Bom: 5")).toBeInTheDocument();
-    expect(screen.getByText("Fácil: 7")).toBeInTheDocument();
+    expect(chart).toHaveAttribute("aria-describedby", "deck-rating-summary");
+    expect(chart).toHaveAttribute("data-border-color", colors.textPrimary);
+    expect(chart).toHaveAttribute("data-hover-background", colors.bgDark);
+    expect(chart).toHaveAttribute("data-x-grid", "false");
+    expect(chart).toHaveAttribute("data-y-begin-at-zero", "true");
+    expect(chart).toHaveAttribute("data-tooltip-background", colors.bgDark);
+
+    const summary = screen.getByRole("list", { name: "Resumo das classificações" });
+    expect(summary).toHaveAttribute("id", "deck-rating-summary");
+    expect(summary).toHaveTextContent("Errou2");
+    expect(summary).toHaveTextContent("Difícil3");
+    expect(summary).toHaveTextContent("Bom5");
+    expect(summary).toHaveTextContent("Fácil7");
     expect(fetchDeckStatistics).toHaveBeenCalledWith("deck-1");
   });
 

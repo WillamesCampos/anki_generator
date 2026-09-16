@@ -48,3 +48,9 @@ Reexecutar este checklist sempre que uma tela nova for adicionada (Sprint 4+).
 - A sessão de estudo usa quatro novos pares de tokens semânticos em `tokens.css` e `tokens.js`: `rating-again`/`ratingAgain` (vermelho), `rating-hard`/`ratingHard` (âmbar), `rating-good`/`ratingGood` (azul) e `rating-easy`/`ratingEasy` (verde).
 - Esses tokens são consumidos apenas pelos botões de avaliação de `StudySessionPage.css`; cores de texto permanecem nos tokens existentes `white` e `text-primary` para manter contraste em cada fundo.
 - O card de estudo, os botões e seus estados de interação não introduzem cores literais fora dos arquivos de tokens.
+
+## Revalidação — Sprint 9 (cards e gráficos globais)
+
+- `Card.css` é a fonte única de fundo, borda, sombra, título e marcador para todas as superfícies `ui-card`; páginas mantêm apenas layout contextual.
+- `RatingDistributionChart.css` concentra canvas, resumo textual e breakpoints dos gráficos da Home e do detalhe, sem cores literais fora dos tokens.
+- A auditoria automatizada de cores, a suíte completa, o lint e o build foram reexecutados após a remoção das regras duplicadas.
