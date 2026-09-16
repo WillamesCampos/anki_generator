@@ -171,7 +171,7 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 7 — Gerenciamento de Decks & Cards no frontend (tela `/decks` real, criar/editar/excluir deck e card, categorias)
 - [x] Sprint 8 — Pipeline de testes & CI/CD (lint + testes de backend/frontend, GitHub Actions, gate em PR e em merge na main)
 - [x] Sprint 9 — Tela de estudo (revisar card, avaliar again/hard/good/easy, por deck) + recuperação de senha por e-mail (Resend) + identidade visual (Card/gráfico globais, ícones Lucide na navegação)
-- [ ] Sprint 10 — Estatísticas por deck (endpoint dedicado + dropdown na Home)
+- [x] Sprint 10 — Estatísticas por deck (endpoint dedicado; dropdown na Home descartado — ver CHANGELOG)
 - [ ] Sprint 11 — Exportação Anki & microsserviço de documentos (integração completa)
 - [ ] Sprint 12 — Agente de IA (LangChain/LangGraph)
 - [ ] Sprint 13 — Notificações WhatsApp (Evolution API)

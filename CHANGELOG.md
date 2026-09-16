@@ -2,6 +2,19 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 10] Estatísticas por Deck — 2026-09-16
+
+Sprint planejada antes da Sprint 9 existir, cujo `tasks.md` nunca tinha sido fechado. Reconciliação via `backend-mentor` (branch `sprint_10`, main já com a Sprint 9 mergeada) encontrou a maior parte do trabalho já entregue em sessões anteriores, sem documentação nunca atualizada — e o dropdown de seleção de deck na Home, revisado e descartado por ser redundante com o que a Sprint 9 já entrega. Sem código novo nesta sprint. Ver `openspec/changes/sprint-10-estatisticas-por-deck/`.
+
+### Já entregue, agora reconciliado na documentação
+- `GET /api/v1/decks/{deck_id}/statistics/` (`DeckStatisticsView`): distribuição de revisões por rating (again/hard/good/easy), quantidade revisada hoje e progresso contra `daily_review_goal`, escopado por `owner_id`+`deck_id` via agregação MongoDB (`$facet`), excluindo registros soft-deletados (Sprint 6). 404 (não vazamento de existência) se o deck não existe ou não pertence ao usuário.
+- Índice composto `(owner_id, deck_id, reviewed_at)` em `CARD_REVIEWS_INDEXES` (`schemas.py`), cobrindo a query do endpoint.
+- Testes automatizados (`apps/decks/tests/test_deck_statistics_api.py`): distribuição correta, zerado sem reviews, isolamento multi-tenant, exclusão de soft-deleted, cobertura de índice.
+- Default sem seleção manual (deck mais recentemente estudado) e separação visual entre o grid superior e o card de Estatísticas — ambos efeitos colaterais de trabalho já feito nas Sprints 3 e 9 (design system global de `Card.css`), não desta sprint.
+
+### Descartado (decisão explícita)
+- Dropdown de seleção de deck na Home e a troca de título dependente dele ("Último deck estudado" → "Deck estudado"). A Sprint 9 já cobre o mesmo caso de uso — ver estatísticas de qualquer deck do usuário — por outro caminho de navegação (Home → `/decks` → abrir deck → `DeckDetailPage`, usando o `RatingDistributionChart` compartilhado com a Home). Construir o dropdown duplicaria esse caminho sem ganho de capacidade, o mesmo padrão já rejeitado na Sprint 9 para o item "Estudar" do menu lateral. Trade-off reconhecido: perde-se a conveniência de trocar de deck sem sair da Home; revisitar só se houver demanda real de uso. Ver `dropdown-deck-home` em `PROMPT_REFINADO.md` e D6 em `openspec/changes/sprint-10-estatisticas-por-deck/design.md`.
+
 ## [Sprint 9] Tela de Estudo — 2026-09-10
 
 Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria pré-Sprint 6 e formalizado via `backend-mentor`: nenhuma sprint do roadmap jamais construiu a tela que mostra um card e permite avaliá-lo (`again`/`hard`/`good`/`easy`) — a Home só lia histórico de revisão (`GET /api/v1/reviews/`), nunca criava um novo. O backend já tinha quase tudo desde a Sprint 2 (`POST /api/v1/cards/{card_id}/review/`, FSRS); faltava a UI e um ajuste pontual de backend (a busca de cards devidos não filtrava por deck). Ampliada, a pedido do usuário, pra também fechar os itens 1 e 4 de `PRD.md` §7.1 (`EMAIL_BACKEND` nunca configurado, fluxo de "esqueci minha senha"). Ver `openspec/changes/sprint-9-tela-de-estudo/`.
