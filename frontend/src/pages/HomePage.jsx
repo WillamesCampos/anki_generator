@@ -1,22 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from "chart.js";
+import { Link } from "react-router-dom";
 
 import { fetchReviews } from "../api/reviews";
 import { fetchDeck, fetchDeckStatistics } from "../api/decks";
 import { useApiResource } from "../api/hooks";
+import RatingDistributionChart from "../components/charts/RatingDistributionChart";
 import { computeGoalProgress, getDailyGoal } from "../lib/goal";
 import { exportChartToPdf } from "../lib/exportPdf";
 import { mostRecentReview } from "../lib/stats";
 import Card from "../components/ui/Card";
 import Button from "../components/ui/Button";
-import { colors } from "../tokens/tokens";
 import "./HomePage.css";
-
-ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
-
-const RATING_KEYS = ["again", "hard", "good", "easy"];
-const RATING_LABELS = ["Errou", "Difícil", "Bom", "Fácil"];
 
 function useLastStudiedDeck(mostRecent) {
   const [deck, setDeck] = useState(null);
@@ -75,24 +69,13 @@ export default function HomePage() {
 
   const allReviews = reviews ? (reviews.results ?? reviews) : [];
   const goalProgress = computeGoalProgress(allReviews, getDailyGoal());
+  const remainingGoal = Math.max(goalProgress.goal - goalProgress.reviewedToday, 0);
+  const goalComplete = goalProgress.percentage >= 100;
   const ratingDistribution = deckStatistics?.rating_distribution ?? {};
-  const distribution = {
-    labels: RATING_LABELS,
-    values: RATING_KEYS.map((rating) => ratingDistribution[rating] ?? 0),
-  };
   const chartLoading = reviewsLoading || (Boolean(recentReview) && statisticsLoading);
-
-  const chartData = {
-    labels: distribution.labels,
-    datasets: [
-      {
-        label: "Revisões por resultado",
-        data: distribution.values,
-        backgroundColor: colors.accent,
-        borderRadius: 8,
-      },
-    ],
-  };
+  const hasValidLastDeck = Boolean(
+    !reviewsLoading && recentReview && !lastDeckLoading && !lastDeckError && lastDeck,
+  );
 
   async function handleExportPdf() {
     await exportChartToPdf(chartRef.current);
@@ -118,16 +101,86 @@ export default function HomePage() {
             <>
               <p className="home-page__deck-title">{lastDeck.title}</p>
               {lastDeck.description && <p className="home-page__deck-description">{lastDeck.description}</p>}
+              <Button
+                as={Link}
+                variant="primary"
+                to={`/decks/${lastDeck.id}/estudar`}
+                data-home-action="continue"
+              >
+                Continuar estudando
+              </Button>
             </>
           )}
         </Card>
 
-        <Card title="Meta de estudo">
-          <p>
-            {goalProgress.reviewedToday} / {goalProgress.goal} cards hoje ({goalProgress.percentage}%)
-          </p>
-        </Card>
+        <div className="home-page__goal-card">
+          <Card title="Meta de estudo">
+            <div className="home-page__goal-overview">
+              <div>
+                <p className="home-page__goal-count">
+                  <strong>{goalProgress.reviewedToday}</strong>
+                  <span> / {goalProgress.goal}</span>
+                </p>
+                <p className="home-page__goal-label">cards hoje</p>
+              </div>
+              <span className="home-page__goal-percent" aria-hidden="true">
+                {goalProgress.percentage}%
+              </span>
+            </div>
+            <div
+              className="home-page__goal-progress"
+              role="progressbar"
+              aria-label="Progresso da meta diária"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              aria-valuenow={goalProgress.percentage}
+              aria-valuetext={`${goalProgress.reviewedToday} de ${goalProgress.goal} cards revisados hoje`}
+            >
+              <span
+                className="home-page__goal-progress-fill"
+                style={{ "--goal-progress": `${goalProgress.percentage}%` }}
+              />
+            </div>
+            <p className="home-page__goal-helper">
+              {goalComplete
+                ? "Meta concluída hoje!"
+                : `${remainingGoal} ${remainingGoal === 1 ? "card" : "cards"} para concluir sua meta`}
+            </p>
+          </Card>
+        </div>
       </div>
+
+      {!reviewsLoading && (
+        <div className="home-page__study-cta">
+          <p className="home-page__study-cta-copy">
+            {hasValidLastDeck
+              ? "Não é o deck que deseja estudar agora? Escolha o seu deck!"
+              : "Escolha um deck pra começar a estudar!"}
+          </p>
+          <Button
+            as={Link}
+            variant="secondary"
+            to="/decks"
+            data-home-action="decks"
+          >
+            Ver meus decks
+            <svg
+              className="home-page__decks-eye-icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </Button>
+        </div>
+      )}
 
       <div className="home-page__statistics">
         <Card title="Estatísticas">
@@ -137,14 +190,13 @@ export default function HomePage() {
           )}
           {!chartLoading && (!recentReview || !statisticsError) && (
             <>
-              <div className="home-page__chart">
-                <Bar
-                  ref={chartRef}
-                  aria-label="Distribuição das classificações da Home"
-                  data={chartData}
-                  options={{ maintainAspectRatio: false, responsive: true }}
-                />
-              </div>
+              <RatingDistributionChart
+                distribution={ratingDistribution}
+                ariaLabel="Distribuição das classificações da Home"
+                summaryId="home-rating-summary"
+                datasetLabel="Revisões por resultado"
+                chartRef={chartRef}
+              />
               <div className="home-page__actions">
                 <Button onClick={handleExportPdf}>Exportar PDF</Button>
               </div>

@@ -187,18 +187,23 @@ class CardRepository(ICardRepository):
             raise RepositoryError(f"Failed to find duplicates: {e}")
 
     def find_due(
-        self, owner_id: str, due_before: Optional[datetime] = None
+        self,
+        owner_id: str,
+        deck_id: Optional[uuid.UUID] = None,
+        due_before: Optional[datetime] = None,
     ) -> List[Card]:
         try:
             collection = self._get_collection()
             due_before = due_before or datetime.now(timezone.utc)
 
-            cursor = collection.find(
-                {
-                    **base_filter(owner_id),
-                    "due_at": {"$lte": due_before},
-                }
-            ).sort("due_at", 1)
+            query = {
+                **base_filter(owner_id),
+                "due_at": {"$lte": due_before},
+            }
+            if deck_id:
+                query["deck_id"] = uuid_to_object_id(deck_id)
+
+            cursor = collection.find(query).sort("due_at", 1)
             documents = list(cursor)
 
             return [Card.from_dict(CardSchema.from_document(doc)) for doc in documents]

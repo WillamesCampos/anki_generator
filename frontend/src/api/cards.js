@@ -4,8 +4,9 @@ export function fetchCard(cardId) {
   return apiFetch(`/cards/${cardId}/`);
 }
 
-export function fetchDueCards() {
-  return apiFetch("/cards/?due=true");
+export function fetchDueCards(deckId) {
+  const query = deckId ? `&deck_id=${deckId}` : "";
+  return apiFetch(`/cards/?due=true${query}`);
 }
 
 export function fetchCardsByDeck(deckId, page = 1) {

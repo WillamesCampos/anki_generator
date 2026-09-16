@@ -86,22 +86,6 @@
   font-size: var(--font-size-sm);
 }
 
-.deck-detail__chart {
-  position: relative;
-  min-height: 320px;
-}
-
-.deck-detail__statistics-values {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-sm);
-  margin: var(--space-md) 0 0;
-  padding: 0;
-  list-style: none;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
 .deck-detail__form-title {
   margin-bottom: var(--space-md);
   color: var(--color-text-primary);
@@ -125,13 +109,5 @@
 
   .deck-detail__pagination p {
     text-align: center;
-  }
-
-  .deck-detail__chart {
-    min-height: 260px;
-  }
-
-  .deck-detail__statistics-values {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

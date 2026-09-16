@@ -99,3 +99,61 @@ def test_due_cards_only_returns_owned_and_due(owner_a, owner_b):
     assert str(due_card.id) in due_ids
     assert str(future_card.id) not in due_ids
     assert str(other_owner_due_card.id) not in due_ids
+
+
+@pytest.mark.django_db
+def test_due_cards_filtered_by_deck(owner_a):
+    owner_id = str(owner_a.id)
+    deck_x = DeckRepository().save(Deck(title="Deck X", owner_id=owner_id))
+    deck_y = DeckRepository().save(Deck(title="Deck Y", owner_id=owner_id))
+
+    due_in_x = _build_card(owner_id, deck_x.id, front="duex")
+    due_in_x.due_at = datetime.now(timezone.utc) - timedelta(days=1)
+    due_in_x = CardRepository().save(due_in_x)
+
+    due_in_y = _build_card(owner_id, deck_y.id, front="duey")
+    due_in_y.due_at = datetime.now(timezone.utc) - timedelta(days=1)
+    due_in_y = CardRepository().save(due_in_y)
+
+    due_ids = {
+        str(c.id) for c in CardRepository().find_due(owner_id, deck_id=deck_x.id)
+    }
+
+    assert str(due_in_x.id) in due_ids
+    assert str(due_in_y.id) not in due_ids
+
+
+@pytest.mark.django_db
+def test_due_cards_api_combines_due_and_deck_filters(client_a, owner_a):
+    owner_id = str(owner_a.id)
+    deck_x = DeckRepository().save(Deck(title="Deck X API", owner_id=owner_id))
+    deck_y = DeckRepository().save(Deck(title="Deck Y API", owner_id=owner_id))
+
+    due_in_x = _build_card(owner_id, deck_x.id, front="apiduex")
+    due_in_x.due_at = datetime.now(timezone.utc) - timedelta(days=1)
+    due_in_x = CardRepository().save(due_in_x)
+
+    due_in_y = _build_card(owner_id, deck_y.id, front="apiduey")
+    due_in_y.due_at = datetime.now(timezone.utc) - timedelta(days=1)
+    CardRepository().save(due_in_y)
+
+    response = client_a.get(f"/api/v1/cards/?due=true&deck_id={deck_x.id}")
+
+    assert response.status_code == 200
+    returned_ids = {card["id"] for card in response.data["results"]}
+    assert returned_ids == {str(due_in_x.id)}
+
+
+@pytest.mark.django_db
+def test_due_cards_api_another_owners_deck_returns_empty(client_a, owner_b):
+    owner_id_b = str(owner_b.id)
+    deck_b = DeckRepository().save(Deck(title="Deck B API", owner_id=owner_id_b))
+
+    due_card_b = _build_card(owner_id_b, deck_b.id, front="apiotherowner")
+    due_card_b.due_at = datetime.now(timezone.utc) - timedelta(days=1)
+    CardRepository().save(due_card_b)
+
+    response = client_a.get(f"/api/v1/cards/?due=true&deck_id={deck_b.id}")
+
+    assert response.status_code == 200
+    assert response.data["results"] == []

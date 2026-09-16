@@ -12,6 +12,10 @@ export const colors = {
   bgDark: "rgb(0, 0, 0)",
   white: "rgb(255, 255, 255)",
   overlay: "rgba(0, 0, 0, 0.5)",
+  ratingAgain: "rgb(220, 38, 38)",
+  ratingHard: "rgb(245, 158, 11)",
+  ratingGood: "rgb(37, 99, 235)",
+  ratingEasy: "rgb(21, 128, 61)",
 };
 
 export const typography = {

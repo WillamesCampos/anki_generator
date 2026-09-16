@@ -126,15 +126,16 @@ class CardListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         owner_id = _owner_id(self.request)
         card_repo = CardRepository()
+        raw_deck_id = self.request.query_params.get("deck_id")
+        deck_id = uuid.UUID(raw_deck_id) if raw_deck_id else None
 
         if self.request.query_params.get("due") == "true":
-            return card_repo.find_due(owner_id)
+            return card_repo.find_due(owner_id, deck_id=deck_id)
 
-        deck_id = self.request.query_params.get("deck_id")
         if not deck_id:
             return []
 
-        return card_repo.find_by_deck_id(uuid.UUID(deck_id), owner_id)
+        return card_repo.find_by_deck_id(deck_id, owner_id)
 
 
 class CardCountView(APIView):

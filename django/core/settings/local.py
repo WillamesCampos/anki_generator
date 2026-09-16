@@ -19,3 +19,8 @@ CORS_ALLOWED_ORIGINS = [
 
 # Habilita o comando de seed (Sprint 2) e demais ferramentas de desenvolvimento.
 DEMO_DATA_ENABLED = True
+
+# E-mail (recuperação de senha, PRD.md §7.1): backend de console em dev —
+# imprime o e-mail no terminal em vez de enviar de verdade. Não depende de
+# conta no Resend nem de domínio próprio pra testar o fluxo localmente.
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"

@@ -6,6 +6,8 @@ import userEvent from '@testing-library/user-event'
 import { AuthProvider } from '../../context/AuthContext'
 import Sidebar from './Sidebar'
 
+const NAV_LABELS = ['Home', 'Decks', 'Categorias', 'Relatórios', 'Chat com IA']
+
 function installMatchMedia(matches) {
   const listeners = new Set()
   const mediaQuery = {
@@ -61,17 +63,65 @@ describe('Sidebar responsiva', () => {
     expect(screen.getByRole('navigation')).toHaveClass('sidebar--collapsed')
   })
 
-  test('preserva e atualiza a preferência manual em viewport de tablet', async () => {
+  test('expõe o estado acessível e preserva a preferência manual ao alternar', async () => {
     const user = userEvent.setup()
     localStorage.setItem('anki_generator_sidebar_collapsed', 'false')
     installMatchMedia(true)
     renderSidebar()
 
-    expect(screen.getByRole('navigation')).not.toHaveClass('sidebar--collapsed')
+    const navigation = screen.getByRole('navigation')
+    const toggle = screen.getByRole('button', { name: 'Recolher menu' })
+    const navigationList = document.getElementById('sidebar-navigation-list')
+    const icon = toggle.querySelector('svg')
 
-    await user.click(screen.getByRole('button', { name: 'Recolher menu' }))
+    expect(navigation).not.toHaveClass('sidebar--collapsed')
+    expect(navigationList).toBeInTheDocument()
+    expect(navigationList?.tagName).toBe('UL')
+    expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    expect(toggle).toHaveAttribute('aria-controls', 'sidebar-navigation-list')
+    expect(toggle).toHaveAttribute('title', 'Recolher menu')
+    expect(icon).toHaveAttribute('aria-hidden', 'true')
+    expect(icon).toHaveAttribute('focusable', 'false')
+    expect(icon).toHaveClass('lucide-chevrons-left')
 
-    expect(screen.getByRole('navigation')).toHaveClass('sidebar--collapsed')
+    await user.click(toggle)
+
+    expect(navigation).toHaveClass('sidebar--collapsed')
+    expect(screen.getByRole('button', { name: 'Expandir menu' })).toBe(toggle)
+    expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(toggle).toHaveAttribute('title', 'Expandir menu')
+    expect(toggle.querySelector('svg')).toHaveClass('lucide-chevrons-right')
     expect(localStorage.getItem('anki_generator_sidebar_collapsed')).toBe('true')
+  })
+
+  test('mostra ícone e nome em todos os itens quando o menu está aberto', () => {
+    localStorage.setItem('anki_generator_sidebar_collapsed', 'false')
+    installMatchMedia(false)
+    renderSidebar()
+
+    NAV_LABELS.forEach((label) => {
+      const link = screen.getByRole('link', { name: label })
+      expect(link.querySelector('.sidebar__item-icon')).toHaveAttribute('aria-hidden', 'true')
+      expect(link.querySelector('.sidebar__link-label')).toHaveTextContent(label)
+    })
+
+    const logoutButton = screen.getByRole('button', { name: 'Sair' })
+    expect(logoutButton.querySelector('.sidebar__item-icon')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  test('mantém nomes completos e tooltips no menu recolhido', () => {
+    localStorage.setItem('anki_generator_sidebar_collapsed', 'true')
+    installMatchMedia(false)
+    renderSidebar()
+
+    NAV_LABELS.forEach((label) => {
+      const link = screen.getByRole('link', { name: label })
+      expect(link).toHaveAttribute('aria-label', label)
+      expect(link.querySelector('.sidebar__item-icon')).toBeInTheDocument()
+      expect(link.querySelector('.sidebar__tooltip')).toHaveTextContent(label)
+      expect(link.querySelector('.sidebar__tooltip')).toHaveAttribute('aria-hidden', 'true')
+    })
+
+    expect(screen.getByRole('button', { name: 'Sair' })).toHaveAttribute('aria-label', 'Sair')
   })
 })
