@@ -299,7 +299,7 @@ CELERY_BEAT_SCHEDULE = {
 EXPORT_MAX_CARDS = int(os.environ.get("EXPORT_MAX_CARDS", "100"))
 # TTLs do registro Redis da exportação. Completed = 6 dias (1 dia abaixo da
 # lifecycle de 7 dias do S3, pra o ponteiro nunca sobreviver ao objeto).
-# Pending = 900 s: VALOR PROPOSTO, ainda a confirmar com o usuário — deve
+# Pending = 900 s (confirmado pelo usuário) — deve
 # ficar acima do `time_limit` da task (design.md, Open Question 2).
 EXPORT_PENDING_TTL_SECONDS = int(os.environ.get("EXPORT_PENDING_TTL_SECONDS", "900"))
 EXPORT_COMPLETED_TTL_SECONDS = int(
@@ -307,10 +307,23 @@ EXPORT_COMPLETED_TTL_SECONDS = int(
 )
 EXPORT_FAILED_TTL_SECONDS = int(os.environ.get("EXPORT_FAILED_TTL_SECONDS", "3600"))
 
+# Resiliência das chamadas Django -> microsserviço (Sprint 11, D3; critério de
+# aceite 9). Valores confirmados pelo usuário: 2 tentativas, backoff exponencial
+# com jitter (5 s inicial, 30 s máx), breaker abre com 3 operações falhas
+# consecutivas e testa recuperação após 120 s. Estado do breaker no Redis.
+SERVICE_RETRY_ATTEMPTS = int(os.environ.get("SERVICE_RETRY_ATTEMPTS", "2"))
+SERVICE_RETRY_WAIT_INITIAL = float(os.environ.get("SERVICE_RETRY_WAIT_INITIAL", "5"))
+SERVICE_RETRY_WAIT_MAX = float(os.environ.get("SERVICE_RETRY_WAIT_MAX", "30"))
+SERVICE_RETRY_JITTER = float(os.environ.get("SERVICE_RETRY_JITTER", "1"))
+SERVICE_BREAKER_FAIL_MAX = int(os.environ.get("SERVICE_BREAKER_FAIL_MAX", "3"))
+SERVICE_BREAKER_RESET_TIMEOUT = int(
+    os.environ.get("SERVICE_BREAKER_RESET_TIMEOUT", "120")
+)
+
 # Chamada Django -> document-generator na exportação (Sprint 11, D3): política
 # PRÓPRIA da exportação, bem maior que a das demais chamadas — 100 cards de gTTS
 # sequenciais levam 81-114 s e o serviço só responde quando termina. Leitura
-# 300 s: decidido pelo usuário. Conexão 5 s: valor proposto, a confirmar.
+# 300 s e conexão 5 s: decididos pelo usuário.
 DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT = int(
     os.environ.get("DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT", "5")
 )
@@ -318,7 +331,7 @@ DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT = int(
     os.environ.get("DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT", "300")
 )
 # Limites da task de exportação: acima do pior caso (2 x 300 s + backoff ≈ 606 s).
-# VALORES PROPOSTOS (660/720 s), a confirmar — design.md, Open Question 2.
+# 660/720 s confirmados pelo usuário — design.md, Open Question 2.
 EXPORT_TASK_SOFT_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_SOFT_TIME_LIMIT", "660"))
 EXPORT_TASK_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_TIME_LIMIT", "720"))
 
@@ -335,9 +348,12 @@ EXPORT_DOWNLOAD_URL_TTL_SECONDS = int(
     os.environ.get("EXPORT_DOWNLOAD_URL_TTL_SECONDS", "900")
 )
 
+# Redis do cache do Django e do estado do circuit breaker (`core/resilience.py`).
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/1")
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379/1"),
+        "LOCATION": REDIS_URL,
     }
 }

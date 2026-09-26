@@ -106,7 +106,7 @@ jobs:
 
       - name: pytest
         working-directory: django
-        run: poetry run pytest apps/
+        run: poetry run pytest apps/ core/
 
   # Testes do microsserviço de documentos (Sprint 11): cobrem o isolamento de
   # arquivos entre tenants, IDs estáveis do Anki e o teto de cards. Sem serviços
