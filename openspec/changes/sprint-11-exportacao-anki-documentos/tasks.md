@@ -65,3 +65,14 @@
 - [x] 8.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 11]`
 - [x] 8.3 Documentar o contrato de payload/resposta Django ↔ `document-generator` (header de autenticação incluso) — coberto pelos specs desta change, revisar se precisa de nota adicional fora do openspec
 - [x] 8.4 Remover comentários desatualizados em `core/service_clients.py` ("Sprint 9") e `document-generator/app/generator.py` ("Sprint 4") que apontam pra sprint errada
+
+## 9. Cache de áudio por texto (`document-generator`) — PLANEJADO, adiado dentro da sprint
+
+> Não iniciar antes da decisão 9.1 (Open Question 4 em `design.md`): sem política de retenção definida com o usuário, o cache cresceria sem limite. Quando iniciar, seguir TDD.
+
+- [ ] 9.1 **Decidir com o usuário a política de retenção** do cache (dias sem uso e/ou teto de tamanho) — sem default implícito
+- [ ] 9.2 Cache persistente de áudio, fora dos diretórios de trabalho por requisição: chave `sha256(texto + idioma + tld + AUDIO_FORMAT_VERSION)`; hit devolve os mesmos bytes; miss chama o gTTS, grava em arquivo temporário e faz `rename` atômico (D11)
+- [ ] 9.3 Retenção conforme a 9.1: remoção do que expirou/excedeu o teto, sem apagar arquivo em uso por uma exportação em andamento
+- [ ] 9.4 Testes (TDD): hit não chama o gTTS; duas exportações do mesmo texto produzem bytes idênticos; falha do gTTS ou escrita concorrente não deixam arquivo parcial no cache; chave muda com idioma/versão; retenção remove o expirado e preserva o recente
+- [ ] 9.5 Validar com o importador oficial do Anki (pacote `anki`): reimportar a v2 não gera mídia órfã (mídias = número de textos únicos); medir o tempo de reexportar um deck de 100 cards com 1 card editado e comparar com os 81–114 s atuais
+- [ ] 9.6 Atualizar CHANGELOG/PRD/design com a medição e a política adotada

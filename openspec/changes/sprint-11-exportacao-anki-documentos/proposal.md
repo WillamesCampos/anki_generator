@@ -10,6 +10,7 @@ O microsserviço `document-generator` já gera `.apkg` compatível com o Anki (`
 - Upload do `.apkg` pra um bucket S3 privado, feito pelo Celery worker (nunca pelo `document-generator`) — D1/D2. Mantém o S3 por decisão do usuário, o que **revisa** a regra `s3-frontend-confirmado` de `PROMPT_REFINADO.md`.
 - Endpoint Django `GET /api/v1/decks/export/{export_id}/status/`: status (`pending`/`completed`/`failed`) lido de um **registro Redis criado no disparo** (posse checável mesmo em `pending`; `404` indistinguível pra id desconhecido, expirado ou de outro tenant) e, se concluído, presigned URL de 15 min assinada a cada consulta (D5/D6). Sem webhook (D4).
 - **`document-generator`**: `/decks/export` ganha `deck_id`/`id` de card no contrato e passa a gerar **IDs estáveis** (deck, modelo, notas) pra reimportar atualizar o deck no Anki em vez de duplicar (D8); teto de 100 cards; diretório de trabalho único por requisição (corrige colisão entre tenants) e geração fora do event loop (D9/D10).
+- **(Planejado, adiado dentro da sprint — grupo 9 / D11)** Cache de áudio por texto no `document-generator`: o gTTS devolve bytes diferentes a cada chamada, então cada reimportação no Anki deixa mídia órfã e toda exportação de deck editado regenera o áudio de todos os cards. Não iniciado; depende da política de retenção.
 - Geração de PDF genérico no `document-generator` (`POST /document-generator/v1/documents/pdf`), reaproveitada na Sprint 15 — mesma proteção JWT, sem lógica de relatório nesta sprint.
 - Contrato de payload/resposta entre Django e `document-generator` documentado nos specs, incluindo o header de autenticação existente.
 - Validação manual (critério de aceite 7): abrir um `.apkg` gerado pelo fluxo completo no Anki real, **e** reexportar após editar um card e reimportar pra confirmar que atualiza em vez de duplicar. Não é código, é checklist.
@@ -18,7 +19,7 @@ O microsserviço `document-generator` já gera `.apkg` compatível com o Anki (`
 
 ### New Capabilities
 - `deck-anki-export`: endpoints assíncronos de exportação e status, task Celery, cache por hash de conteúdo, armazenamento em S3 e isolamento multi-tenant.
-- `document-generator-anki-export`: geração de `.apkg` no microsserviço com IDs estáveis, teto de 100 cards, isolamento de arquivos por requisição e geração fora do event loop.
+- `document-generator-anki-export`: geração de `.apkg` no microsserviço com IDs estáveis, teto de 100 cards, isolamento de arquivos por requisição, geração fora do event loop e (planejado) cache de áudio por texto.
 - `microservice-call-resilience`: circuit breaker + retry exponencial reutilizável em chamadas Django → microsserviços (primeira aplicação: `call_document_generator`), testável simulando indisponibilidade.
 - `document-generator-pdf-export`: geração de PDF genérico no `document-generator`, sem consumidor Django nesta sprint (consumida na Sprint 15).
 

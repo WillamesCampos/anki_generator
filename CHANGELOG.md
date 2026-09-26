@@ -37,11 +37,13 @@ Liga o `document-generator` ao Django de ponta a ponta. A change foi revisada co
 ### Pendente de validação manual (fora do código)
 - Abrir o `.apkg` no Anki real e reimportar uma versão editada (critério de aceite 7; tarefas 7.1 e 7.2). Arquivos prontos em `~/Downloads/anki-generator-teste/` (`v1`/`v2` do mesmo deck e um gerado pelo pipeline completo com o S3 real).
 
+### Planejado dentro da sprint, ainda não iniciado
+- **Cache de áudio por texto no `document-generator`** (D11, grupo 9 do `tasks.md`): o gTTS devolve bytes diferentes a cada chamada para o mesmo texto, então cada reimportação no Anki deixa cópias órfãs da mídia (as notas atualizam normalmente; medido com o importador oficial do Anki) e toda exportação de deck editado regenera o áudio de todos os cards (81–114 s por 100). Depende de decidir com o usuário a política de retenção do cache.
+
 ### Infraestrutura criada na AWS (conta de estudo)
 - Bucket privado `anki-generator-exports-willames-4821` em `us-east-1` (a região mais barata; S3 Standard US$ 0,023/GB-mês): Block Public Access, ACLs desativadas, SSE-S3, política que nega tráfego sem TLS e lifecycle de 7 dias em `exports/`. Usuário IAM `anki-generator-exports`, sem acesso ao console, com política de menor privilégio (`s3:PutObject`/`GetObject`/`DeleteObject` só em `exports/*`). Validado com `check_export_storage` e com um export ponta a ponta passando pelo S3 real.
 
 ### Achados fora do escopo (registrados em `PRD.md` §7.1)
-- Áudio do gTTS não é estável entre exportações (bytes diferentes para o mesmo texto): cada reimportação no Anki deixa cópias órfãs da mídia (as notas atualizam normalmente). Solução natural: cache de áudio por texto no `document-generator`.
 - A regra `Word` do domínio só aceita letras, espaços e hífens no `front` do card: frases naturais com apóstrofo, pontuação ou dígitos (`I'm`, `Let's`, `Could you...?`) são recusadas.
 - Essa recusa (`DomainValidationError`) chega ao cliente como erro 500, e não como 400.
 

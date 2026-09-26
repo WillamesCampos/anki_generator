@@ -35,3 +35,23 @@ The export route SHALL run the (synchronous, network-bound) generation outside t
 #### Scenario: Health check during a long generation
 - **WHEN** an export is being generated
 - **THEN** a concurrent request to the health route is answered without waiting for the export to finish
+
+### Requirement: Generated audio is cached by text so repeated exports reuse identical bytes (planned — not yet implemented)
+The `document-generator` SHALL keep a persistent audio cache, separate from per-request working directories, keyed by the card front text together with the TTS language, accent and an audio-format version. An export SHALL reuse a cached audio file instead of calling the TTS service again, so the same text yields byte-identical audio across exports. Cache writes SHALL be atomic. A retention policy (to be decided with the product owner) SHALL bound the cache size.
+
+#### Scenario: Cache hit avoids the TTS call
+- **WHEN** a card front text already has cached audio
+- **THEN** the export uses the cached bytes and makes no TTS call for it
+
+#### Scenario: Same text yields identical audio across exports
+- **WHEN** the same deck is exported twice, the second time after editing one card
+- **THEN** every unchanged card's audio file is byte-identical in both packages, and only the edited card's text triggers a TTS call
+
+#### Scenario: A failed or concurrent write never leaves a partial cache entry
+- **WHEN** the TTS call fails or two exports write the same text at the same time
+- **THEN** the cache contains either a complete file or nothing for that text
+
+#### Scenario: Changing language or format never reuses old audio
+- **WHEN** the TTS language, accent or audio-format version changes
+- **THEN** the cache key differs and the audio is generated again
+
