@@ -60,7 +60,7 @@ Estrutura de pastas: cada unidade implantável é uma pasta própria na raiz —
 - **Frontend**: `frontend/` — SPA React (Vite), consumindo a API do Django. Tokens de design extraídos por auditoria real de `refs/Ashley_files/style.css` (ver `frontend/src/tokens/`), não importados diretamente — o `design_system/design-system.html` documenta um template comercial de portfólio, não um design system de app pronto. Home dashboard responsiva para tablet, login por e-mail/senha ou Google, recuperação de senha, tela de estudo por deck (revisar card e avaliar `again`/`hard`/`good`/`easy`), gráfico Chart.js com exportação PDF sob demanda e fallback global de erro. Superfície global de `Card` (borda preta 2 px + sombra deslocada, "contraste expressivo") e `RatingDistributionChart` compartilhado entre Home e detalhe do deck; navegação lateral com ícones `lucide-react`. A fundação de testes usa Vitest + React Testing Library.
 - **Microsserviço de documentos**: `microservices/document-generator/` — FastAPI, gera `.apkg` (genanki + gTTS) e relatórios PDF.
 - **Mensageria**: RabbitMQ (broker do Celery) + Redis (result backend/cache).
-- **Deploy real**: VPS (Docker Compose) — não AWS. O único uso de AWS é o bucket S3 do frontend estático.
+- **Deploy real**: VPS (Docker Compose) — não AWS. A AWS é usada só para S3: o bucket do frontend estático e (a partir da Sprint 11) o bucket privado de exportações `.apkg`.
 - **Observabilidade**: logs estruturados → Prometheus/Grafana → node_exporter → exporter RabbitMQ/Celery (ordem de instrumentação já decidida, ver PROMPT_REFINADO.md).
 
 ## 🛠️ Stack
@@ -173,12 +173,13 @@ Roadmap completo, em sprints, com checklist detalhado: **[PRD.md](./PRD.md)**.
 - [x] Sprint 9 — Tela de estudo (revisar card, avaliar again/hard/good/easy, por deck) + recuperação de senha por e-mail (Resend) + identidade visual (Card/gráfico globais, ícones Lucide na navegação)
 - [x] Sprint 10 — Estatísticas por deck (endpoint dedicado; dropdown na Home descartado — ver CHANGELOG)
 - [ ] Sprint 11 — Exportação Anki & microsserviço de documentos (integração completa)
-- [ ] Sprint 12 — Agente de IA (LangChain/LangGraph)
-- [ ] Sprint 13 — Notificações WhatsApp (Evolution API)
-- [ ] Sprint 14 — Relatório semanal por e-mail
-- [ ] Sprint 15 — Deploy real (VPS + S3 + domínio)
-- [ ] Sprint 16 — Observabilidade
-- [ ] Sprint 17 — Hardening & revisão final
+- [ ] Sprint 12 — UI de exportação Anki (botão, polling, download, notificação in-app) , página de cadastro com storytelling e pendências de conta (Google OAuth real, vínculo Google/e-mail, verificação de e-mail)
+- [ ] Sprint 13 — Agente de IA (LangChain/LangGraph)
+- [ ] Sprint 14 — Notificações WhatsApp (Evolution API)
+- [ ] Sprint 15 — Relatório semanal por e-mail
+- [ ] Sprint 16 — Deploy real (VPS + S3 + domínio)
+- [ ] Sprint 17 — Observabilidade
+- [ ] Sprint 18 — Hardening & revisão final
 
 ## 🤝 Contribuindo
 

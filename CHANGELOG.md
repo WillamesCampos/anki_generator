@@ -52,7 +52,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - Estudo global (todos os decks numa sessão só) — estudo é sempre por deck específico, entrado a partir da tela de detalhe do deck.
 - Sessão retomável (estado persistido de "onde o usuário parou") — mais simples, sem conceito novo de "sessão" no backend; revisitável se virar reclamação recorrente de uso real.
 - Requeue de cards avaliados como "again" dentro da mesma sessão — consequência direta do item anterior: sem estado de sessão, o card só reaparece numa sessão futura.
-- `django-anymail` — sem domínio próprio verificado, webhooks de entrega/abertura/clique não são testáveis de ponta a ponta ainda; relay SMTP nativo do Resend já resolve o caso de uso atual. Revisitar no deploy real (Sprint 15).
+- `django-anymail` — sem domínio próprio verificado, webhooks de entrega/abertura/clique não são testáveis de ponta a ponta ainda; relay SMTP nativo do Resend já resolve o caso de uso atual. Revisitar no deploy real (Sprint 16).
 - Paginação em `/decks` — `DeckListPage` busca todos os decks sem controles de página; acima de `PAGE_SIZE` (20), os excedentes ficam invisíveis. Achado ao revisar os caminhos de descoberta até a tela de estudo (essa mudança torna `/decks` o hub principal); baixo risco pra escala de portfólio, não corrigido nesta sprint.
 - Vínculo de conta Google+e-mail/senha e `ACCOUNT_EMAIL_VERIFICATION="mandatory"` — itens 2 e 3 de `PRD.md` §7.1, continuam em aberto.
 
@@ -116,7 +116,7 @@ Fora do ciclo de sprints: fecha a regra mandatória `cicd` (`PROMPT_REFINADO.md`
 
 ### Fora de escopo (decisão explícita)
 - Versionamento independente por serviço (django vs. document-generator) — optou-se por uma versão global única do projeto, coerente com este próprio `CHANGELOG.md` ser por projeto, não por serviço.
-- Consumir essas imagens versionadas no deploy real da VPS (troca de `docker compose build` local por `docker compose pull` de uma tag fixa do GHCR) — fica para o Sprint 15 (Deploy real).
+- Consumir essas imagens versionadas no deploy real da VPS (troca de `docker compose build` local por `docker compose pull` de uma tag fixa do GHCR) — fica para o Sprint 16 (Deploy real).
 - Corte do primeiro release (`v0.0.1`) — esta entrada só adiciona a ferramenta; a decisão de quando cortar a primeira tag fica para depois do merge.
 
 ## [Infraestrutura] Gate de CHANGELOG obrigatório em PRs — 2026-09-08
@@ -151,7 +151,7 @@ Nenhuma sprint até aqui (0-7) foi mesclada na `main` com gate automatizado — 
 
 ### Fora de escopo (decisão explícita)
 - Ampliar a cobertura de testes existente (a pipeline roda o que já existe; cobertura cresce organicamente a cada sprint futura).
-- CD de verdade (deploy automatizado a partir do merge em `main`) — decisão de como o deploy pra VPS acontece fica pra Sprint 15.
+- CD de verdade (deploy automatizado a partir do merge em `main`) — decisão de como o deploy pra VPS acontece fica pra Sprint 16.
 - `ruff`/`flake8` além do `black` — não pedido pela regra mandatória.
 
 ### Validado

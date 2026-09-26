@@ -157,7 +157,7 @@ criaremos fluxo de deploy baseado em tags via github actions.
   processar vídeo.
 - Assistente de consulta read-only sobre decks/cards, via tool calling —
   ideia levantada com o `backend-mentor` como prática de backend+IA antes
-  da Sprint 12 (Agente de IA completo, LangChain/LangGraph). Endpoint
+  da Sprint 13 (Agente de IA completo, LangChain/LangGraph). Endpoint
   novo e desacoplado (ex.: `POST /api/v1/ai/ask/`) que recebe uma
   pergunta em linguagem natural (ex.: "quantos cards tenho pra revisar no
   deck de Francês?") e responde chamando a API do LLM diretamente (sem
@@ -174,7 +174,7 @@ criaremos fluxo de deploy baseado em tags via github actions.
   não existe nada disso no projeto (cada serviço loga isolado, sem jeito
   de seguir uma requisição de ponta a ponta). Um ID gerado na entrada da
   requisição, propagado no header/contexto da task, sem precisar de
-  tracing completo (OpenTelemetry). Serve de base pra Sprint 16
+  tracing completo (OpenTelemetry). Serve de base pra Sprint 17
   (observabilidade/Grafana) — sem isso, os dashboards não conseguem
   responder "essa falha veio de onde". Ainda precisa de refinamento: qual
   lib (structlog?), onde o ID é gerado/propagado exatamente, em que
@@ -191,7 +191,7 @@ criaremos fluxo de deploy baseado em tags via github actions.
   que sprint entra.
 - Estratégia de backup/restore de Mongo + Postgres — ideia levantada com
   o `backend-mentor`, mais devops que código. Faz mais sentido perto da
-  Sprint 15 (deploy real na VPS), antes disso não há produção de verdade
+  Sprint 16 (deploy real na VPS), antes disso não há produção de verdade
   pra proteger. Ainda precisa de refinamento: frequência, retenção, onde
   o backup fica armazenado, teste de restore de verdade (não só o
   backup rodar sem erro).
@@ -209,7 +209,7 @@ criaremos fluxo de deploy baseado em tags via github actions.
   bolo é fora de escopo, ver seção "agente de IA" acima). Um teste
   automatizado (pytest) que roda um conjunto fixo dessas perguntas contra
   o modelo e verifica se ele recusa o que deveria recusar, antes da
-  Sprint 12 chegar e essa restrição só ser validada na mão. Ainda precisa
+  Sprint 13 chegar e essa restrição só ser validada na mão. Ainda precisa
   de refinamento: conjunto de perguntas de teste, critério de "passou"
   (match exato? outro LLM avaliando a resposta?), roda em CI ou só local.
 - Streaming da resposta do LLM via SSE — ideia levantada com o
