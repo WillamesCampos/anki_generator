@@ -5,10 +5,10 @@
 - [ ] 1.1 Criar bucket S3 privado (`sa-east-1`), sem acesso público
 - [ ] 1.2 Criar usuário IAM dedicado com policy restrita ao bucket (`s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`)
 - [ ] 1.3 Configurar lifecycle rule expirando objetos sob `exports/` após 7 dias
-- [ ] 1.4 Adicionar credenciais/nome do bucket/região/`EXPORT_MAX_CARDS` como variáveis de ambiente (`.env`, `config.example.env`, `docker-compose.yml` do `web`/`celery-worker`)
+- [x] 1.4 Adicionar credenciais/nome do bucket/região/`EXPORT_MAX_CARDS` como variáveis de ambiente (`.env`, `config.example.env`, `docker-compose.yml` do `web`/`celery-worker`)
 - [x] 1.5 Adicionar `boto3` como dependência do Django (`pyproject.toml`)
 - [x] 1.6 S3 nos testes: `moto` como dependência de dev do Django, fixture pytest que sobe um S3 falso com o bucket criado — usada localmente e no CI (sem credencial AWS nem serviço extra no CI)
-- [ ] 1.7 S3 em desenvolvimento local: serviço MinIO no `docker-compose.yml` atrás de um perfil só de dev, usuário não-root (critério 10), bucket criado na subida, `AWS_S3_ENDPOINT_URL` (interno, `put_object`) e endpoint público separado pra assinar presigned URLs alcançáveis pelo navegador; vazio em produção → AWS real
+- [x] 1.7 S3 em desenvolvimento local: serviço `s3-local` (`moto` em modo servidor — o MinIO decidido antes ficou indisponível, imagens oficiais retiradas) no `docker-compose.yml` atrás do perfil `s3-local`, só dev, usuário não-root (critério 10), bucket criado na subida pelo `s3-local-init`, `AWS_S3_ENDPOINT_URL` (interno, `put_object`) e endpoint público separado pra assinar presigned URLs alcançáveis pelo navegador; vazio em produção → AWS real
 - [x] 1.8 Revisar a regra `s3-frontend-confirmado` e as menções de "AWS só pro frontend" em `PROMPT_REFINADO.md`, `PRD.md` e `README.md`
 
 ## 2. Resiliência reutilizável (circuit breaker + retry)
@@ -57,7 +57,7 @@
 
 - [ ] 7.1 Disparar uma exportação ponta a ponta (endpoint → task → S3 → status → download) e abrir o `.apkg` resultante no Anki real (critério de aceite 7)
 - [ ] 7.2 Editar um card, reexportar e reimportar no Anki: o deck e as notas existentes são **atualizados**, não duplicados (D8)
-- [ ] 7.3 Exportar duas vezes sem editar nada: a segunda responde `200` sem nova geração (confirmar nos logs que o `document-generator` não foi chamado)
+- [x] 7.3 Exportar duas vezes sem editar nada: a segunda responde `200` sem nova geração (confirmar nos logs que o `document-generator` não foi chamado) — validado ponta a ponta com containers reais em 2026-09-26 (2 chamadas ao gerador para 4 exports, 2 deles cache hit)
 
 ## 8. Documentação
 

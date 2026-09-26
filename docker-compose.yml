@@ -116,6 +116,44 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  # S3 local só pra desenvolvimento/validação offline das exportações (Sprint 11,
+  # D2): o `moto` em modo servidor (o mesmo usado nos testes). Fora do compose de
+  # produção de propósito: perfil `s3-local`, só sobe com
+  # `docker compose --profile s3-local up -d s3-local s3-local-init`. Sem estado
+  # (em memória — o s3-local-init recria o bucket a cada subida) e não-root
+  # (critério 10). MinIO foi descartado: as imagens oficiais saíram do Docker Hub
+  # e do quay.io em 2025.
+  s3-local:
+    image: motoserver/moto:latest
+    profiles: ["s3-local"]
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:9000:5000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/moto-api/')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  s3-local-init:
+    image: amazon/aws-cli:latest
+    profiles: ["s3-local"]
+    depends_on:
+      s3-local:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: ${AWS_S3_REGION_NAME:-sa-east-1}
+      BUCKET: ${AWS_S3_EXPORT_BUCKET:-anki-exports-dev}
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        aws --endpoint-url http://s3-local:5000 s3api create-bucket
+        --bucket $$BUCKET
+        --create-bucket-configuration LocationConstraint=$$AWS_DEFAULT_REGION
+
   document-generator:
     build:
       context: ./microservices/document-generator

@@ -30,7 +30,7 @@ O microsserviço `document-generator` já gera `.apkg` compatível com o Anki (`
 - Backend Django: nova view + serializer + urls em `apps/decks/`, builder de payload + hash, helpers do registro Redis, nova task Celery (`apps/decks/tasks.py`), dependências novas (`pybreaker`, `tenacity`, `boto3`), variáveis de ambiente novas (credenciais AWS do usuário IAM dedicado, nome/região do bucket, `EXPORT_MAX_CARDS`, TTLs).
 - `document-generator`: contrato de `/decks/export` muda (campos novos obrigatórios; Django é o único chamador), `generator.py` reescrito em IDs/paths, nova rota `POST /documents/pdf` com o mesmo `require_service_jwt`.
 - Infra: bucket S3 privado novo (usuário IAM com policy restrita, lifecycle de 7 dias). **AWS antecipada da Sprint 16 pra Sprint 11** — `PROMPT_REFINADO.md`, `PRD.md` e `README.md` atualizados.
-- Dev/CI sem AWS: `moto` nos testes (pytest e CI) e um MinIO no `docker-compose.yml`, só em dev, pra desenvolvimento local e validação manual offline.
+- Dev/CI sem AWS: `moto` nos testes (pytest e CI) e o `moto` em modo servidor no `docker-compose.yml` (perfil `s3-local`, só em dev), pra desenvolvimento local e validação manual offline — no lugar do MinIO decidido antes, cujas imagens oficiais foram retiradas do Docker Hub/quay.io.
 - Redis: passa a guardar registros de exportação (chaves `export:*`, com TTL) além do result backend/cache já existentes.
 - Nenhuma mudança de schema em `Deck`/`Card` (o hash substitui um contador de versão — ver D7).
 - Fora de escopo, registrado em `PRD.md` §7.1: **UI de exportação no frontend** (**Sprint 12**, imediatamente depois desta).
