@@ -28,7 +28,7 @@ Fonte de verdade completa: `<stack_tecnologica>` e `<arquitetura>` em `PROMPT_RE
 - **Microsserviços FastAPI** (MVC), em `microservices/<nome>/`: geração de documentos/exportação Anki → agente de IA (LangChain/LangGraph) → WhatsApp (Evolution API) — nessa ordem.
 - **Estrutura do monorepo**: `django/` (backend principal), `microservices/<nome>/` (um por serviço), `frontend/` (SPA React) — cada unidade implantável em sua própria pasta na raiz; `docker-compose.yml`/`Makefile` orquestram todas elas a partir da raiz.
 - **Assincronismo**: Celery + RabbitMQ (broker) + Redis (result backend/cache) — nada bloqueia o ciclo request/response.
-- **Frontend**: SPA React, build estático hospedado em AWS S3.
+- **Frontend**: SPA React, build estático hospedado em AWS S3. A AWS também guarda as exportações `.apkg` num bucket S3 privado (Sprint 11, ver `exportacao-anki-s3-cache`) — sem nenhum outro recurso AWS.
 - **Gráficos**: client-side no React, sem microsserviço dedicado.
 - **Deploy real**: VPS Hostinger, Docker Compose (não Kubernetes, não Terraform/AWS — ver seção 10).
 - **Observabilidade**: logs estruturados → Prometheus/Grafana → node_exporter → exporter RabbitMQ/Celery.
@@ -59,6 +59,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 | Banco relacional Django | PostgreSQL (containerizado local e prod) |
 | Stack de gráficos | Client-side React |
 | Hospedagem frontend | AWS S3 |
+| Armazenamento das exportações `.apkg` | Bucket S3 privado (Sprint 11 — revisa `s3-frontend-confirmado`) |
 | Deploy real | VPS (não AWS) |
 | Terraform/AWS | Trilha de estudo separada, desacoplada |
 | Domínio | Cloudflare (registrador), sem pressa |
@@ -67,13 +68,13 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 | Observabilidade | logs → métricas → host → fila/DLQ |
 | Ordem microsserviços | Documentos → IA → WhatsApp |
 
-Únicas pendências reais: dashboards/alertas do Grafana (detalhamento fino, via `backend-mentor` na Sprint 16) e o mapeamento de idempotência (`<ponto_critico id="idempotencia-revisao">`, Sprint 17).
+Únicas pendências reais: dashboards/alertas do Grafana (detalhamento fino, via `backend-mentor` na Sprint 17) e o mapeamento de idempotência (`<ponto_critico id="idempotencia-revisao">`, Sprint 18).
 
 ---
 
 ## 7. Roadmap de Sprints
 
-> **Convenção de testes**: a partir da Sprint 1, toda sprint inclui uma tarefa final de testes automatizados (pytest/pytest-django no Django, pytest+httpx nos microsserviços FastAPI), escrita depois que as tarefas de feature da sprint estiverem implementadas — não TDD, testes ao final de cada leva de tarefas executadas. A Sprint 0 (fundação) ficou intencionalmente sem essa infraestrutura.
+> **Convenção de testes**: a partir da Sprint 1, toda sprint inclui uma tarefa final de testes automatizados (pytest/pytest-django no Django, pytest+httpx nos microsserviços FastAPI), escrita depois que as tarefas de feature da sprint estiverem implementadas — não TDD, testes ao final de cada leva de tarefas executadas. A Sprint 0 (fundação) ficou intencionalmente sem essa infraestrutura. **A partir da Sprint 11, TDD**: cada tarefa de comportamento começa por um teste que falha (RED, visto falhar pelo motivo certo), depois o código mínimo (GREEN) e o refactor — decisão do usuário, com a skill `test-driven-development` (obra/superpowers) instalada globalmente para Claude Code, Codex, Copilot e OpenCode. Os grupos de testes no fim dos `tasks.md` passam a ser o checklist do que precisa ficar coberto, não uma etapa posterior.
 
 ### Sprint 0 — Fundação de Arquitetura (Django + Domínio + Ambiente Local)
 
@@ -136,7 +137,7 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 - [x] 3.2 Consultar `design_system/design-system.html` e extrair os tokens antes de implementar qualquer tela — `design-system.html` documenta `refs/Ashley_files/style.css` (template de portfólio, não design system de app); tokens extraídos por auditoria real (`frontend/src/tokens/AUDIT.md`), não importados diretamente
 - [x] 3.3 Home: último deck estudado, meta de estudo + % alcançado, gráfico de estatísticas (client-side, consumindo API do Django) — meta de estudo é client-side (localStorage), sem endpoint de backend (não existia esse conceito); gráfico via Chart.js consumindo `GET /api/v1/reviews/` (endpoint novo, gap encontrado em implementação — Sprint 2 persistia `CardReview` sem expor leitura). **Segundo gap encontrado testando a Home**: `Deck.title` gerado pelo seed era um padrão genérico (`"Categoria — Deck N"`), sem servir como identificador amigável — corrigido no seed (ver nota na tarefa 2.6) e a Home agora também exibe `Deck.description` (campo já existente desde a Sprint 2, nunca populado) quando presente.
 - [x] 3.4 Exportação do gráfico da home para PDF — `jsPDF`, direto do canvas do Chart.js
-- [x] 3.5 Menu lateral: decks, categorias, geração de relatórios, chat com agente de IA (placeholder até Sprint 12) — `react-router`, chat IA sem nenhuma chamada de API; botão de recolher/expandir e "Sair" (logout) adicionados
+- [x] 3.5 Menu lateral: decks, categorias, geração de relatórios, chat com agente de IA (placeholder até Sprint 13) — `react-router`, chat IA sem nenhuma chamada de API; botão de recolher/expandir e "Sair" (logout) adicionados
 - [x] 3.6 Auditoria de consistência visual contra o design system — `frontend/src/tokens/VISUAL_AUDIT.md`, 2 desvios encontrados e corrigidos
 - [x] 3.7 Tela de login (Google OAuth + e-mail/senha) — gap encontrado testando a Sprint 3: não havia nenhum plano, em nenhuma sprint futura, para sair do fluxo manual de token colado no `localStorage`. `/login` (`LoginPage.jsx`) tem dois fluxos: Google OAuth2 "token client" do Google Identity Services (`access_token`, não o ID token do botão "Sign In" mais novo — incompatível com o `GoogleOAuth2Adapter` do backend), que depende de `GOOGLE_OAUTH_CLIENT_ID`/`SECRET` reais (Google Cloud Console) para validação ponta a ponta e por enquanto fica "implementado, validação real pendente"; e login por e-mail/senha (`dj_rest_auth.views.LoginView`, novo em `apps/accounts/urls.py`), **já validado ponta a ponta via seed** — exigiu duas correções de config do allauth (`ACCOUNT_LOGIN_METHODS`/`ACCOUNT_SIGNUP_FIELDS`, ver CHANGELOG) e um fix no comando de seed (senha `anki12345` agora é setada incondicionalmente em todo usuário seedado, antes ficava "usável" mas em branco em reruns). Cadastro de conta nova e vínculo de conta pelo mesmo e-mail continuam fora de escopo — ver 7.1
 - [x] 3.8 Fluxo de refresh de token no frontend + tratamento explícito de 401 (sessão expirada) — gap encontrado testando a Sprint 3: a SPA nunca guardava o refresh token nem tinha uma resposta clara a um access token expirado. `apiFetch` agora detecta 401, tenta `/auth/token/refresh/` automaticamente (com deduplicação de chamadas concorrentes) e repete a chamada original; se o refresh também falhar, dispara `auth:session-expired` (`AuthContext` redireciona pra `/login`)
@@ -165,11 +166,11 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 5 — Fundações Transversais: Auditoria & Permissões
 
-**Objetivo**: auditoria via `backend-mentor` encontrou que regras mandatórias declaradas em `PROMPT_REFINADO.md` desde a Sprint 0/1 (`permissoes-django`, `auditoria`) nunca foram de fato aplicadas — `DEFAULT_PERMISSION_CLASSES` é só `IsAuthenticated` em toda view, e `Deck`/`Card`/`Category`/`CardReview` não têm `created_by`/`updated_by` (o `AuditMixin` da Sprint 1 só existe no app `accounts`, nunca usado pelas entidades de produto). Fechar isso agora, enquanto a superfície (poucos endpoints) torna o retrofit barato — a Sprint 12 (Agente de IA) já exige `created_by`/`updated_by = "ai_agent_machine"`, campo que hoje nem existe. Escopo ampliado via `backend-mentor` pra também endurecer a autenticação **service-to-service** (Django→microsserviço), movida pra cá da sprint de Exportação Anki (hoje Sprint 11, era Sprint 9 no momento dessa decisão): hoje `document-generator` está com o endpoint de export sem autenticação nenhuma e a porta publicada pro host — ver `autenticacao-service-to-service-jwt`.
+**Objetivo**: auditoria via `backend-mentor` encontrou que regras mandatórias declaradas em `PROMPT_REFINADO.md` desde a Sprint 0/1 (`permissoes-django`, `auditoria`) nunca foram de fato aplicadas — `DEFAULT_PERMISSION_CLASSES` é só `IsAuthenticated` em toda view, e `Deck`/`Card`/`Category`/`CardReview` não têm `created_by`/`updated_by` (o `AuditMixin` da Sprint 1 só existe no app `accounts`, nunca usado pelas entidades de produto). Fechar isso agora, enquanto a superfície (poucos endpoints) torna o retrofit barato — a Sprint 13 (Agente de IA) já exige `created_by`/`updated_by = "ai_agent_machine"`, campo que hoje nem existe. Escopo ampliado via `backend-mentor` pra também endurecer a autenticação **service-to-service** (Django→microsserviço), movida pra cá da sprint de Exportação Anki (hoje Sprint 11, era Sprint 9 no momento dessa decisão): hoje `document-generator` está com o endpoint de export sem autenticação nenhuma e a porta publicada pro host — ver `autenticacao-service-to-service-jwt`.
 
 - [x] 5.1 `created_by`/`updated_by` em `Deck`, `Card`, `Category`, `CardReview` — preenchidos automaticamente pelos serializers a partir da request autenticada, nunca aceitos como input do cliente (mesmo princípio do `AuditSerializerMixin` da Sprint 1, adaptado aos serializers manuais do domínio Mongo, já que essas entidades não são `models.Model`)
 - [x] 5.2 Grupo `standard_user` (Django `Group` nativo) atribuído automaticamente a todo usuário no signup e no seed — `Permission` por model não se aplica aqui (`Deck`/`Card` não têm `ContentType`, por não serem `models.Model`); a checagem é por grupo, não por `Permission` granular. Implementado via `post_save` signal em `User` (`apps/accounts/signals.py`), único hook cobrindo Google, seed (`get_or_create`) e um futuro cadastro por e-mail/senha, mais uma data migration (`0002_standard_user_group.py`) que cria o grupo e faz backfill de usuários já existentes antes da migration
-- [x] 5.3 `permission_classes` customizado verificando pertencimento ao grupo, substituindo o `IsAuthenticated` puro nas views de decks/cards/categories/reviews — mecanismo pensado pra aceitar um grupo `ai_agent` na Sprint 12 sem mudar de estrutura (`apps/decks/permissions.py`, `HasAuthorizedGroup`)
+- [x] 5.3 `permission_classes` customizado verificando pertencimento ao grupo, substituindo o `IsAuthenticated` puro nas views de decks/cards/categories/reviews — mecanismo pensado pra aceitar um grupo `ai_agent` na Sprint 13 sem mudar de estrutura (`apps/decks/permissions.py`, `HasAuthorizedGroup`)
 - [x] 5.4 JWT de serviço (HS256) auto-assinado pelo Django em toda chamada ao `document-generator` — segredo compartilhado só entre esse par (não global), verificação local no FastAPI (sem introspection/round-trip), claim `iss` identificando a aplicação chamadora, expiração curta (30-60s), chave de assinatura separada do `SIMPLE_JWT`/`DJANGO_SECRET_KEY` de usuário (`core/service_auth.py` + `core/service_clients.py` no Django, `app/auth.py` no `document-generator`)
 - [x] 5.5 Rotação de chave de serviço via `kid` versionado no header do JWT — verificador aceita qualquer `kid` presente no seu mapa local de segredos, permitindo rotação sem downtime em dois redeploys (chave nova aceita → promovida a ativa → chave antiga removida). Validado manualmente ponta a ponta durante a sprint: janela de rotação com duas chaves simultâneas, depois remoção da antiga
 - [x] 5.6 Testes automatizados: audit fields preenchidos corretamente em create/update, protegidos contra input do cliente, grupo atribuído automaticamente a todo novo usuário, acesso negado fora do grupo, chamada ao `document-generator` rejeitada sem JWT de serviço válido (assinatura errada, expirado, `kid` desconhecido) — 43/43 testes Django (`pytest apps/`) + 9/9 testes FastAPI (`document-generator`, fundação de testes nova pro serviço, ver `requirements.txt`/`tests/`)
@@ -280,116 +281,145 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 ### Sprint 11 — Exportação Anki & Microsserviço de Documentos
 
-**Objetivo**: fechar o ciclo do microsserviço de documentos já reclassificado na Sprint 0, ligando-o de ponta a ponta. Autenticação service-to-service já resolvida na Sprint 5 (`autenticacao-service-to-service-jwt`) — esta sprint só consome o JWT de serviço já implementado, não define o mecanismo.
+**Objetivo**: fechar o ciclo do microsserviço de documentos já reclassificado na Sprint 0, ligando-o de ponta a ponta. Autenticação service-to-service já resolvida na Sprint 5 (`autenticacao-service-to-service-jwt`) — esta sprint só consome o JWT de serviço já implementado, não define o mecanismo. **Plano de execução detalhado** em `openspec/changes/sprint-11-exportacao-anki-documentos/` (design D1–D10, 4 specs, `tasks.md` com 8 grupos). **Escopo revisado antes de qualquer código** (revisão do trabalho contra o código real, decisões do usuário — ver `exportacao-anki-s3-cache` em `PROMPT_REFINADO.md`): S3 mantido pras exportações (revisa a regra "AWS só pro frontend"), cache por hash de conteúdo no Redis, IDs estáveis no `.apkg`, limite de 100 cards e endurecimento do `document-generator`. **Fora de escopo**: a UI de exportação (Sprint 12, ver abaixo e §7.1). Decidido: PDF via `reportlab`; timeout da exportação separado (e maior) que o das demais chamadas (política por chamada) — **300 s de leitura, 2 tentativas (retentando timeout, conexão e 5xx) e estado do circuit breaker compartilhado no Redis**; S3 em dev/CI com `moto` nos testes (pytest e CI) **e** o próprio `moto` em modo servidor no `docker-compose.yml` (perfil `s3-local`, só de dev) pro desenvolvimento local — o MinIO, escolha original, ficou indisponível (ver `exportacao-anki-s3-cache`). Medido: 100 cards com gTTS real levam 81 s (texto médio) a 114 s (100 caracteres). **Uma decisão aberta**: a política de retenção do cache de áudio (item 11.10, adiado dentro da sprint; sem default, perguntar ao usuário antes de iniciar). Confirmados pelo usuário (valores da resiliência — `fail_max=3`, `reset_timeout=120 s`, backoff exponencial com jitter 5–30 s, breaker compartilhado no Redis — e payload do PDF — `heading`/`paragraph`/`bullet_list`/`table`/`bar_chart` — confirmados pelo usuário).
 
-- [ ] 11.1 Endpoint Django que dispara (via Celery) a geração de `.apkg` no microsserviço de documentos, autenticando a chamada com o JWT de serviço da Sprint 5
-- [ ] 11.2 Circuit breaker + retry exponencial na chamada Django → microsserviço de documentos
-- [ ] 11.3 Contrato de payload/resposta documentado entre Django e o microsserviço, incluindo o header de autenticação
-- [ ] 11.4 Geração de PDF genérica no mesmo microsserviço (reaproveitada na Sprint 14)
-- [ ] 11.5 Validar `.apkg` gerado abrindo no Anki real
+- [ ] 11.1 Endpoint Django que dispara (via Celery) a geração de `.apkg` no microsserviço de documentos, autenticando a chamada com o JWT de serviço da Sprint 5 — `POST /api/v1/decks/{id}/export/` (`200` cache hit / `202` miss ou em andamento) + `GET /api/v1/decks/export/{export_id}/status/`, com upload em S3 privado e presigned URL de 15 min
+- [x] 11.2 Circuit breaker + retry exponencial na chamada Django → microsserviço de documentos (erros 4xx não retentados nem contados)
+- [x] 11.3 Contrato de payload/resposta documentado entre Django e o microsserviço, incluindo o header de autenticação (`deck_id`/`id` de card agora obrigatórios)
+- [x] 11.4 Geração de PDF genérica no mesmo microsserviço (reaproveitada na Sprint 15)
+- [ ] 11.5 Validar `.apkg` gerado abrindo no Anki real — inclui reexportar após editar e reimportar sem duplicar o deck
+- [x] 11.6 Cache de exportação por hash do conteúdo (sha256 do payload exportável, sem estado FSRS), com deduplicação de exportações em andamento e isolamento por tenant
+- [x] 11.7 `document-generator`: IDs estáveis (deck/modelo/notas), teto de 100 cards, diretório de trabalho único por requisição (corrige colisão de arquivo entre tenants) e geração fora do event loop
+- [x] 11.8 Infraestrutura S3 (bucket privado, IAM dedicado, lifecycle de 7 dias; `moto` nos testes e o próprio `moto` em modo servidor no compose, só em dev — MinIO ficou indisponível) e revisão da regra `s3-frontend-confirmado` nos docs (`PROMPT_REFINADO.md`, `PRD.md`, `README.md` — revisão de docs já feita)
+- [ ] 11.9 Testes automatizados (hash, endpoint, cache, status, resiliência, task, `document-generator`, PDF) e validação manual
+- [ ] 11.10 **Cache de áudio por texto no `document-generator` (planejado, adiado dentro da sprint — não iniciar sem decidir a política de retenção)**: o gTTS devolve bytes diferentes a cada chamada, então cada reimportação no Anki deixa mídia órfã (as notas atualizam certo) e toda exportação de deck editado regenera o áudio de todos os cards (81–114 s por 100). Cache persistente por hash do texto+idioma, escrita atômica, retenção a definir — ver D11 e grupo 9 em `openspec/changes/sprint-11-exportacao-anki-documentos/`
 
-*Critérios de aceite relevantes: 2, 7, 9.*
+*Critérios de aceite relevantes: 1, 2, 7, 9.*
 
 ---
 
-### Sprint 12 — Agente de IA (LangChain/LangGraph)
+### Sprint 12 — UI de Exportação Anki, Cadastro & Conta
+
+**Objetivo**: a Sprint 11 entrega só os endpoints de exportação (`POST /api/v1/decks/{id}/export/`, `GET /api/v1/decks/export/{export_id}/status/`); nenhum botão, loading, polling ou notificação existe — exportar só é acionável via API, o mesmo padrão de "backend sem tela" que originou as Sprints 7 e 9. Por decisão do usuário, esta é a sprint **imediatamente depois da 11** (roadmap renumerado: as antigas Sprints 12–17 viraram 13–18). **Depende da Sprint 11.** Requisitos herdados do contrato da Sprint 11: UX assíncrona do PRD §4 (loading no botão + aviso "você será notificado" + notificação in-app ao concluir), **timeout no polling** (um registro `pending` órfão vira `404` após o TTL de segurança), tratar `200` (cache hit — download imediato, sem espera) e `202` (aguardar) de forma distinta, `404` no status como estado terminal ("expirou, exporte de novo") e `400` (deck vazio ou acima de 100 cards) com mensagem clara.
+
+**Escopo adicional, por decisão do usuário: os pontos de refinamento em aberto do §7.1 entram nesta sprint** — além da própria UI de exportação, os dois itens de conta: **vínculo de conta quando Google e e-mail/senha usam o mesmo e-mail** e **`ACCOUNT_EMAIL_VERIFICATION` `"none"` vs `"mandatory"`** (ambos encontrados na Sprint 3; o segundo já está desbloqueado tecnicamente desde o Resend, na Sprint 9, e só falta a decisão de produto/segurança). São **decisões sem default**: antes de implementar, levantar as opções via `backend-mentor` e fechar com o usuário (`/opsx:propose`), sem escolher por conveniência — vínculo automático sem verificação de e-mail é um risco real de sequestro de conta. Ambos só fazem pleno sentido com **cadastro de conta nova por e-mail/senha**, que hoje não existe na SPA (fora de escopo desde a Sprint 3, tarefa 3.7) — por decisão do usuário, **o cadastro entra nesta sprint, como uma página com storytelling**; a narrativa, o conteúdo, a estrutura e o comportamento dessa página serão definidos no **levantamento de requisitos mais aprofundado ao iniciar a sprint**, sem default de conteúdo/copy. Entram também as **credenciais reais do Google OAuth** (o login Google está implementado desde as Sprints 1/3 mas nunca foi validado ponta a ponta). As tarefas abaixo são um esboço a refinar (não há hoje nenhuma infraestrutura de notificação in-app no frontend, então a 12.3 exige decisão de desenho):
+
+- [ ] 12.1 Botão "Exportar para Anki" na tela de detalhe do deck, com loading no botão e aviso "você será notificado"
+- [ ] 12.2 Cliente API + polling do status com timeout, distinguindo `200` de `202`
+- [ ] 12.3 Notificação in-app ao concluir + download via presigned URL; estados de falha e de exportação expirada (`404`)
+- [ ] 12.4 Mensagens para `400` (deck vazio / mais de 100 cards)
+- [ ] 12.5 Testes automatizados (Vitest + React Testing Library) e consistência visual com o design system
+- [ ] 12.6 Página de cadastro de conta nova (e-mail/senha) com storytelling — requisitos (narrativa, seções, CTAs, integração ao design system) levantados no início da sprint, via `backend-mentor`/`/opsx:propose`; sem conteúdo definido de antemão
+- [ ] 12.7 Credenciais reais do Google OAuth (Google Cloud Console → `GOOGLE_OAUTH_CLIENT_ID`/`SECRET`) e validação do login Google ponta a ponta — fecha a ressalva das tarefas 1.2 e 3.7
+- [ ] 12.8 Vínculo de conta quando Google e e-mail/senha usam o mesmo e-mail (encontrado na Sprint 3): decidir entre vínculo automático sem verificação (simples, risco de sequestro de conta), vínculo automático só com e-mail verificado (mais seguro, depende da 12.9), ou nenhum vínculo automático (contas separadas ou colisão recusada), e implementar
+- [ ] 12.9 `ACCOUNT_EMAIL_VERIFICATION` `"none"` vs `"mandatory"` (encontrado na Sprint 3; hoje `"none"`): decisão de produto/segurança — tecnicamente desbloqueada desde o `EMAIL_BACKEND` da Sprint 9 —, coerente com a 12.8, e aplicar
+- [ ] 12.10 Testes automatizados dos fluxos de conta e cadastro (incluindo a colisão de e-mail entre Google e senha)
+
+*Critérios de aceite relevantes: 12 (consistência visual), 1 (o `404` do status não pode vazar dado de outro tenant — já garantido pela API; o vínculo de conta não pode permitir acesso à conta de outro usuário).*
+
+---
+
+### Sprint 13 — Agente de IA (LangChain/LangGraph)
 
 **Objetivo**: a funcionalidade de maior risco/novidade técnica — só começa depois que decks/cards (Sprint 2) está sólido.
 
-- [ ] 12.1 Microsserviço FastAPI do agente (LangChain/LangGraph), padrão MVC
-- [ ] 12.2 Restrição de domínio fechado: só cards/decks/feedback de estudo — recusar qualquer pedido fora disso (ver `<escopo_agente_ia>`)
-- [ ] 12.3 Limite rígido de 100 caracteres por card gerado, com descarte automático acima disso
-- [ ] 12.4 Toda ação do agente passa pelas rotas de API existentes, autenticada com o grupo `ai_agent` (ver `permissoes-django`, Sprint 5) — nunca acesso direto ao banco
-- [ ] 12.5 `created_by`/`updated_by` = `"ai_agent_machine"` em todo recurso criado pelo agente
-- [ ] 12.6 Defesas contra prompt injection (redefinição de papel, extração de dados de outros tenants)
-- [ ] 12.7 Feedback diário na home + sugestão de novos cards/decks, sempre assíncrono via Celery
-- [ ] 12.8 Testes cobrindo os exemplos adequado/inadequado/uso indevido já definidos em `<exemplos_de_uso>`
+- [ ] 13.1 Microsserviço FastAPI do agente (LangChain/LangGraph), padrão MVC
+- [ ] 13.2 Restrição de domínio fechado: só cards/decks/feedback de estudo — recusar qualquer pedido fora disso (ver `<escopo_agente_ia>`)
+- [ ] 13.3 Limite rígido de 100 caracteres por card gerado, com descarte automático acima disso
+- [ ] 13.4 Toda ação do agente passa pelas rotas de API existentes, autenticada com o grupo `ai_agent` (ver `permissoes-django`, Sprint 5) — nunca acesso direto ao banco
+- [ ] 13.5 `created_by`/`updated_by` = `"ai_agent_machine"` em todo recurso criado pelo agente
+- [ ] 13.6 Defesas contra prompt injection (redefinição de papel, extração de dados de outros tenants)
+- [ ] 13.7 Feedback diário na home + sugestão de novos cards/decks, sempre assíncrono via Celery
+- [ ] 13.8 Testes cobrindo os exemplos adequado/inadequado/uso indevido já definidos em `<exemplos_de_uso>`
 
 *Critérios de aceite relevantes: 2, 3, 4, 5.*
 
 ---
 
-### Sprint 13 — Notificações WhatsApp (Evolution API)
+### Sprint 14 — Notificações WhatsApp (Evolution API)
 
 **Objetivo**: último microsserviço da ordem definida — mais desacoplado do resto, entra por último de propósito.
 
-- [ ] 13.1 Microsserviço FastAPI de integração com a Evolution API, padrão MVC
-- [ ] 13.2 Envio de lembrete de estudo respeitando a meta de tempo definida pelo usuário
-- [ ] 13.3 Disparo assíncrono via Celery (Celery Beat para agendamento periódico)
-- [ ] 13.4 Circuit breaker + retry + DLQ na comunicação com a Evolution API
+- [ ] 14.1 Microsserviço FastAPI de integração com a Evolution API, padrão MVC
+- [ ] 14.2 Envio de lembrete de estudo respeitando a meta de tempo definida pelo usuário
+- [ ] 14.3 Disparo assíncrono via Celery (Celery Beat para agendamento periódico)
+- [ ] 14.4 Circuit breaker + retry + DLQ na comunicação com a Evolution API
 
 *Critérios de aceite relevantes: 2, 9.*
 
 ---
 
-### Sprint 14 — Relatório Semanal por E-mail
+### Sprint 15 — Relatório Semanal por E-mail
 
 **Objetivo**: fecha o loop de feedback do produto, reaproveitando o gerador de documentos (Sprint 11) e as estatísticas (Sprint 2/Sprint 10).
 
-- [ ] 14.1 Task Celery Beat semanal que coleta estatísticas de estudo do período
-- [ ] 14.2 Geração do PDF do relatório via microsserviço de documentos
-- [ ] 14.3 Resumo textual de evolução (pode reaproveitar o agente de IA da Sprint 12, dentro do escopo permitido)
-- [ ] 14.4 Envio automático por e-mail, sem intervenção manual
+- [ ] 15.1 Task Celery Beat semanal que coleta estatísticas de estudo do período
+- [ ] 15.2 Geração do PDF do relatório via microsserviço de documentos
+- [ ] 15.3 Resumo textual de evolução (pode reaproveitar o agente de IA da Sprint 13, dentro do escopo permitido)
+- [ ] 15.4 Envio automático por e-mail, sem intervenção manual
 
 *Critérios de aceite relevantes: 2, 6.*
 
 ---
 
-### Sprint 15 — Deploy Real (VPS + S3 + Domínio)
+### Sprint 16 — Deploy Real (VPS + S3 + Domínio)
 
 **Objetivo**: tirar o sistema do "só roda local" e colocá-lo no ar de verdade.
 
-- [ ] 15.1 `docker-compose.yml` de produção + processo de deploy (SSH + compose) na VPS Hostinger
-- [ ] 15.2 Bucket S3 de hospedagem estática do frontend + pipeline de build/upload (GitHub Actions — reaproveita o job de frontend da Sprint 8)
-- [ ] 15.3 Compra do domínio via Cloudflare (sem pressa — só quando o usuário decidir) + configuração de DNS
-- [ ] 15.4 Fluxo de deploy baseado em tags via GitHub Actions
-- [ ] 15.5 Confirmar preço de renovação da Hostinger antes de qualquer contratação anual
+- [ ] 16.1 `docker-compose.yml` de produção + processo de deploy (SSH + compose) na VPS Hostinger
+- [ ] 16.2 Bucket S3 de hospedagem estática do frontend + pipeline de build/upload (GitHub Actions — reaproveita o job de frontend da Sprint 8)
+- [ ] 16.3 Compra do domínio via Cloudflare (sem pressa — só quando o usuário decidir) + configuração de DNS
+- [ ] 16.4 Fluxo de deploy baseado em tags via GitHub Actions
+- [ ] 16.5 Confirmar preço de renovação da Hostinger antes de qualquer contratação anual
 
 *Critérios de aceite relevantes: 10.*
 
 ---
 
-### Sprint 16 — Observabilidade
+### Sprint 17 — Observabilidade
 
 **Objetivo**: visibilidade operacional do sistema real em produção.
 
-- [ ] 16.1 Logs estruturados JSON com `request_id` propagado, no Django e nos microsserviços
-- [ ] 16.2 `django-prometheus` no Django + instrumentação equivalente em cada FastAPI
-- [ ] 16.3 `node_exporter` na VPS
-- [ ] 16.4 Exporter de RabbitMQ/Celery, com foco em profundidade de fila e de DLQ
-- [ ] 16.5 **Mentoria via `backend-mentor`**: decidir quais dashboards Grafana montar primeiro e a política de alertas (decisão ainda pendente — `dashboards-alertas-grafana`)
-- [ ] 16.6 Montar os dashboards e alertas decididos na 16.5
+- [ ] 17.1 Logs estruturados JSON com `request_id` propagado, no Django e nos microsserviços
+- [ ] 17.2 `django-prometheus` no Django + instrumentação equivalente em cada FastAPI
+- [ ] 17.3 `node_exporter` na VPS
+- [ ] 17.4 Exporter de RabbitMQ/Celery, com foco em profundidade de fila e de DLQ
+- [ ] 17.5 **Mentoria via `backend-mentor`**: decidir quais dashboards Grafana montar primeiro e a política de alertas (decisão ainda pendente — `dashboards-alertas-grafana`)
+- [ ] 17.6 Montar os dashboards e alertas decididos na 17.5
 
 *Critérios de aceite relevantes: nenhum específico, mas suporta a operação de todos os demais.*
 
 ---
 
-### Sprint 17 — Hardening & Revisão Final
+### Sprint 18 — Hardening & Revisão Final
 
 **Objetivo**: fechar as pontas soltas que só fazem sentido revisar com o sistema inteiro construído.
 
-- [ ] 17.1 Mapear quais operações precisam de garantia de idempotência (consumers de fila, tasks Celery, WhatsApp, geração de PDF) — resolve `<ponto_critico id="idempotencia-revisao">`
-- [ ] 17.2 Implementar as proteções de idempotência mapeadas em 17.1
-- [ ] 17.3 Auditoria final de isolamento multi-tenant em toda query/serializer/endpoint — inclui resolver os pontos ainda abertos em "Pontos de Refinamento Futuro" (seção 7.1)
-- [ ] 17.4 Testar circuit breaker + retry exponencial simulando indisponibilidade de cada microsserviço
-- [ ] 17.5 Checklist final contra os 12 itens de `<criterios_de_aceite>`
-- [ ] 17.6 Revisão de segurança: permissões de arquivos/mídia, segredos fora do código-fonte
+- [ ] 18.1 Mapear quais operações precisam de garantia de idempotência (consumers de fila, tasks Celery, WhatsApp, geração de PDF) — resolve `<ponto_critico id="idempotencia-revisao">`
+- [ ] 18.2 Implementar as proteções de idempotência mapeadas em 18.1
+- [ ] 18.3 Auditoria final de isolamento multi-tenant em toda query/serializer/endpoint — inclui resolver os pontos ainda abertos em "Pontos de Refinamento Futuro" (seção 7.1)
+- [ ] 18.4 Testar circuit breaker + retry exponencial simulando indisponibilidade de cada microsserviço
+- [ ] 18.5 Checklist final contra os 12 itens de `<criterios_de_aceite>`
+- [ ] 18.6 Revisão de segurança: permissões de arquivos/mídia, segredos fora do código-fonte
 
 ---
 
 ## 7.1 Pontos de Refinamento Futuro
 
-Gaps reais encontrados durante a implementação, deliberadamente adiados — não bloqueiam a sprint em que foram descobertos, mas precisam ser resolvidos antes do sistema ser considerado "pronto" (ver Sprint 17, tarefa 17.3). Cada item cita a sprint/contexto onde foi encontrado.
+Gaps reais encontrados durante a implementação, deliberadamente adiados — não bloqueiam a sprint em que foram descobertos, mas precisam ser resolvidos antes do sistema ser considerado "pronto" (ver Sprint 18, tarefa 18.3). Cada item cita a sprint/contexto onde foi encontrado.
 
 **Regra de processo**: sempre que uma nova sprint estiver prestes a começar, o modelo DEVE relembrar o usuário dos itens ainda em aberto nesta seção antes de iniciar o trabalho — não silenciosamente ignorar nem assumir que já foram resolvidos.
 
-**Nota**: login por e-mail/senha em si já está resolvido (ver tarefa 3.7) — os itens abaixo sobre e-mail/vínculo de conta são sobre **cadastro de conta nova** e **vínculo entre Google e senha no mesmo e-mail**, não sobre login de usuário já existente.
+**Nota**: itens em aberto que já têm sprint definida saem desta lista e passam a viver no bloco da sprint — os de cadastro/vínculo de conta/verificação de e-mail (encontrados na Sprint 3) e a UI de exportação foram para a **Sprint 12**. Login por e-mail/senha em si já está resolvido (ver tarefa 3.7).
 
 - [x] ~~Cascade delete de `CardReview`~~ **Resolvido na Sprint 6** (encontrado na Sprint 3): decidido via `backend-mentor` — soft delete cascateia de `Deck` pra `Card` (`deleted_at` em ambos), `CardReview` nunca é apagada (mantida como histórico "congelado"), só passa a ser excluída das estatísticas (Sprint 10) quando o `card_id`/`deck_id` associado está soft ou permanentemente deletado.
 - [x] ~~`EMAIL_BACKEND`/SMTP não configurado em lugar nenhum~~ **Resolvido na Sprint 9** (encontrado na Sprint 3): Resend como provedor (SMTP relay em produção, backend de console em dev) — decisão via `backend-mentor`, ver `PROMPT_REFINADO.md`. Ainda em sandbox (sem domínio próprio verificado) — `DEFAULT_FROM_EMAIL=onboarding@resend.dev` até o domínio existir.
-- [ ] **Vínculo de conta quando Google e e-mail/senha usam o mesmo e-mail** (encontrado na Sprint 3): decidir entre vínculo automático sem verificação (simples, risco de sequestro de conta), vínculo automático só com e-mail verificado (mais seguro, depende do item de e-mail acima), ou nenhum vínculo automático (contas separadas ou colisão recusada). Ver levantamento de requisitos completo na conversa da Sprint 3.
-- [ ] **`ACCOUNT_EMAIL_VERIFICATION`: `"none"` vs `"mandatory"`** (encontrado na Sprint 3): hoje desligado (`"none"`). Ativar depende do item de e-mail acima e trava a decisão de vínculo de conta. Nota: agora que `EMAIL_BACKEND` está configurado (item acima), esse item deixou de estar bloqueado tecnicamente — só falta a decisão de produto/segurança em si.
 - [x] ~~Fluxo de "esqueci minha senha"~~ **Resolvido na Sprint 9** (encontrado na Sprint 3): endpoints do `dj-rest-auth` (`password/reset/`, `password/reset/confirm/`) com `url_generator` customizado apontando pro frontend (`apps/accounts/serializers.py`). O e-mail usa templates próprios em texto + HTML, com a identidade visual “Dark premium” do Anki Generator e sem recursos externos; token, link da SPA e telas React permanecem inalterados. Páginas novas no frontend: `/esqueci-minha-senha` e `/redefinir-senha`.
+- [ ] **Paginação em `/decks`** (encontrado na Sprint 9): `DeckListPage` busca todos os decks sem controles de página; acima de `PAGE_SIZE` (20) os excedentes ficam invisíveis. Como `/decks` virou o hub principal (caminhos de descoberta até a tela de estudo), o risco cresce com o uso; baixo risco na escala de portfólio, sem sprint definida.
+- [ ] **Specs do OpenSpec nunca arquivados** (encontrado na revisão pré-Sprint 11): `openspec/specs/` e `openspec/changes/archive/` estão vazios — nenhuma das changes das Sprints 1–10 foi arquivada, então não existem capabilities canônicas pra alterar por delta (as changes seguintes só conseguem usar `ADDED`). Dívida de processo, sem sprint definida.
+- [ ] **Exportação de decks com mais de 100 cards** (limitação deliberada da Sprint 11): decks acima de 100 cards ativos são recusados (`400`), porque o áudio via gTTS é uma chamada de rede sequencial por card. Só vira trabalho se houver demanda real — caminhos possíveis: exportação em lotes ou cache de áudio por texto.
+- [ ] **Regra `Word` rejeita apóstrofo, pontuação e dígitos no `front`** (encontrado na validação ponta a ponta da Sprint 11): `apps/decks/domain/value_objects/word.py` só aceita letras, espaços e hífens (herança do protótipo de palavras isoladas). Frases naturais como `I'm looking forward to the weekend`, `Let's call it a day` ou `Could you give me a hand?` são recusadas, o que conflita com o uso real dos cards e com o agente de IA (Sprint 13), que gera frases de até 100 caracteres. Sem sprint definida.
+- [ ] **`DomainValidationError` vira erro 500 em vez de 400** (mesmo achado): a criação de card com `front`/`back` inválido levanta a exceção de domínio sem tratamento na view/serializer, e o cliente recebe 500. Sem sprint definida.
 - [x] ~~Tela de estudo (revisar card e avaliar)~~ **Resolvido na Sprint 9** (encontrado numa auditoria pré-Sprint 6 via `backend-mentor`): levantamento de requisitos feito via `backend-mentor` — estudo por deck específico (não global), sessão sem persistência (sempre recomeça buscando os cards ainda devidos). Backend ganha filtro `due`+`deck_id` combinado em `GET /api/v1/cards/`; o resto é UI nova consumindo `POST /api/v1/cards/{id}/review/`, que já existia desde a Sprint 2.
 
 ---
@@ -413,8 +443,8 @@ Sprint 0 (fundação) → Sprint 1 (auth/multi-tenant) → Sprint 2 (decks/cards
    → Sprint 7 (gerenciamento de decks & cards, frontend)
    → Sprint 8 (pipeline de testes & CI/CD) → Sprint 9 (tela de estudo)
    → Sprint 10 (estatísticas por deck) → Sprint 11 (exportação Anki/documentos)
-   → Sprint 12 (IA) → Sprint 13 (WhatsApp) → Sprint 14 (relatório semanal)
-   → Sprint 15 (deploy real) → Sprint 16 (observabilidade) → Sprint 17 (hardening)
+   → Sprint 12 (UI de exportação Anki, cadastro & conta) → Sprint 13 (IA) → Sprint 14 (WhatsApp) → Sprint 15 (relatório semanal)
+   → Sprint 16 (deploy real) → Sprint 17 (observabilidade) → Sprint 18 (hardening)
 ```
 
 Esta ordem segue `<instrucoes_de_execucao>` item 3 de `PROMPT_REFINADO.md` e a ordem de microsserviços já decidida (`ordem-microservicos`). Cada sprint DEVE ser entregue e validada antes de avançar para a próxima — nunca pular etapas de segurança em nome de velocidade. As Sprints 4-10 foram acrescentadas ao roadmap original conforme gaps reais foram encontrados, a maioria via `backend-mentor` (exceto a 8, decidida diretamente com o usuário): 4 fecha pontas reais da Sprint 3 (responsividade zero, sem error boundary, inconsistência de estilo, bundle sem code-splitting, sem favicon) antes que mais UI se acumule sobre esse frontend; 5 e 6 vieram de uma auditoria que achou regras mandatórias (`permissoes-django`, `auditoria`) declaradas desde a Sprint 0/1 mas nunca implementadas, e um ciclo de vida de Deck/Card incompleto (sem edição real, sem exclusão com retenção); 7 veio de uma auditoria pré-Sprint 6 que achou que nenhuma sprint jamais construiu uma tela real pra usar o CRUD de Deck/Card do backend (`/decks` é `PlaceholderPage` desde a Sprint 3) — sem essa sprint, a Sprint 6 entregaria capacidade de backend que ninguém consegue acionar pela UI; 8 (pipeline de testes & CI/CD) foi antecipada pro lugar da antiga Sprint 10 por decisão explícita do usuário — nenhuma sprint até a 7 foi mesclada na `main` com gate automatizado, e fecha também a regra mandatória de lint do backend (`black`/`pre-commit`) nunca implementada; 9 fecha o gap mais fundamental do produto — nenhuma sprint jamais construiu a tela que revisa um card e avalia (`again`/`hard`/`good`/`easy`), o motivo do produto existir; 10 é um gap encontrado testando a Home da Sprint 3.

@@ -56,7 +56,7 @@ seed:
 	poetry -C django run python manage.py seed_decks --reset
 
 test:
-	poetry -C django run pytest apps/
+	poetry -C django run pytest apps/ core/
 
 frontend-install:
 	cd frontend && npm install

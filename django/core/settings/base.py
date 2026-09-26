@@ -293,9 +293,67 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# --- Exportação Anki (Sprint 11, D5/D7/D9) ---------------------------------
+# Teto de cards ativos por exportação: cada card é uma chamada de rede
+# sequencial ao gTTS no `document-generator` (100 cards levam ~81-114 s).
+EXPORT_MAX_CARDS = int(os.environ.get("EXPORT_MAX_CARDS", "100"))
+# TTLs do registro Redis da exportação. Completed = 6 dias (1 dia abaixo da
+# lifecycle de 7 dias do S3, pra o ponteiro nunca sobreviver ao objeto).
+# Pending = 900 s (confirmado pelo usuário) — deve
+# ficar acima do `time_limit` da task (design.md, Open Question 2).
+EXPORT_PENDING_TTL_SECONDS = int(os.environ.get("EXPORT_PENDING_TTL_SECONDS", "900"))
+EXPORT_COMPLETED_TTL_SECONDS = int(
+    os.environ.get("EXPORT_COMPLETED_TTL_SECONDS", str(6 * 24 * 3600))
+)
+EXPORT_FAILED_TTL_SECONDS = int(os.environ.get("EXPORT_FAILED_TTL_SECONDS", "3600"))
+
+# Resiliência das chamadas Django -> microsserviço (Sprint 11, D3; critério de
+# aceite 9). Valores confirmados pelo usuário: 2 tentativas, backoff exponencial
+# com jitter (5 s inicial, 30 s máx), breaker abre com 3 operações falhas
+# consecutivas e testa recuperação após 120 s. Estado do breaker no Redis.
+SERVICE_RETRY_ATTEMPTS = int(os.environ.get("SERVICE_RETRY_ATTEMPTS", "2"))
+SERVICE_RETRY_WAIT_INITIAL = float(os.environ.get("SERVICE_RETRY_WAIT_INITIAL", "5"))
+SERVICE_RETRY_WAIT_MAX = float(os.environ.get("SERVICE_RETRY_WAIT_MAX", "30"))
+SERVICE_RETRY_JITTER = float(os.environ.get("SERVICE_RETRY_JITTER", "1"))
+SERVICE_BREAKER_FAIL_MAX = int(os.environ.get("SERVICE_BREAKER_FAIL_MAX", "3"))
+SERVICE_BREAKER_RESET_TIMEOUT = int(
+    os.environ.get("SERVICE_BREAKER_RESET_TIMEOUT", "120")
+)
+
+# Chamada Django -> document-generator na exportação (Sprint 11, D3): política
+# PRÓPRIA da exportação, bem maior que a das demais chamadas — 100 cards de gTTS
+# sequenciais levam 81-114 s e o serviço só responde quando termina. Leitura
+# 300 s e conexão 5 s: decididos pelo usuário.
+DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT = int(
+    os.environ.get("DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT", "5")
+)
+DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT = int(
+    os.environ.get("DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT", "300")
+)
+# Limites da task de exportação: acima do pior caso (2 x 300 s + backoff ≈ 606 s).
+# 660/720 s confirmados pelo usuário — design.md, Open Question 2.
+EXPORT_TASK_SOFT_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_SOFT_TIME_LIMIT", "660"))
+EXPORT_TASK_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_TIME_LIMIT", "720"))
+
+# --- S3 das exportações (Sprint 11, D2) --------------------------------------
+# Credenciais NUNCA aqui: o boto3 as lê de AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY
+# no ambiente. Em dev, AWS_S3_ENDPOINT_URL aponta pro MinIO do compose (interno,
+# usado no upload); AWS_S3_PUBLIC_ENDPOINT_URL é o host que o NAVEGADOR alcança,
+# usado só pra assinar a URL de download. Vazias em produção -> AWS real.
+AWS_S3_EXPORT_BUCKET = os.environ.get("AWS_S3_EXPORT_BUCKET", "")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-1")
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", "")
+AWS_S3_PUBLIC_ENDPOINT_URL = os.environ.get("AWS_S3_PUBLIC_ENDPOINT_URL", "")
+EXPORT_DOWNLOAD_URL_TTL_SECONDS = int(
+    os.environ.get("EXPORT_DOWNLOAD_URL_TTL_SECONDS", "900")
+)
+
+# Redis do cache do Django e do estado do circuit breaker (`core/resilience.py`).
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/1")
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": os.environ.get("REDIS_URL", "redis://localhost:6379/1"),
+        "LOCATION": REDIS_URL,
     }
 }

@@ -4,7 +4,9 @@ rodando (`docker compose up -d mongo`) — mesma convenção da Sprint 1
 (Postgres/Redis reais, nunca mockados).
 """
 
+import boto3
 import pytest
+from moto import mock_aws
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -95,3 +97,29 @@ def client_a(owner_a) -> APIClient:
 @pytest.fixture
 def client_b(owner_b) -> APIClient:
     return api_client_for(owner_b)
+
+
+EXPORT_TEST_BUCKET = "anki-exports-test"
+
+
+@pytest.fixture
+def s3_bucket(monkeypatch, settings):
+    """S3 falso em processo (`moto`, Sprint 11 tarefa 1.6): bucket privado
+    criado, credenciais falsas — nenhum teste toca a AWS de verdade nem
+    precisa de credencial no CI. Devolve um client boto3 apontando pro mock,
+    pra os testes inspecionarem o que foi gravado."""
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "testing")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "testing")
+    monkeypatch.setenv("AWS_SESSION_TOKEN", "testing")
+    settings.AWS_S3_EXPORT_BUCKET = EXPORT_TEST_BUCKET
+    settings.AWS_S3_REGION_NAME = "sa-east-1"
+    settings.AWS_S3_ENDPOINT_URL = ""
+    settings.AWS_S3_PUBLIC_ENDPOINT_URL = ""
+
+    with mock_aws():
+        client = boto3.client("s3", region_name="sa-east-1")
+        client.create_bucket(
+            Bucket=EXPORT_TEST_BUCKET,
+            CreateBucketConfiguration={"LocationConstraint": "sa-east-1"},
+        )
+        yield client

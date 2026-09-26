@@ -16,7 +16,7 @@ Estado atual, confirmado por leitura direta do repo:
 
 **Non-Goals:**
 - Ampliar a cobertura de testes existente (testes novos pra API client, hooks, telas específicas) — decisão explícita do usuário: esta sprint é sobre a *pipeline* rodar o que já existe, não sobre escrever mais testes. Cobertura cresce organicamente a cada sprint futura, como já é o processo (`[[feedback_testing_workflow]]`).
-- Deploy automatizado (CD de verdade) a partir do merge em `main` — fora de escopo; a Sprint 15 (Deploy Real) é quem decide como o deploy pra VPS acontece. O gatilho `push`/`main` desta sprint só roda testes, não publica nada.
+- Deploy automatizado (CD de verdade) a partir do merge em `main` — fora de escopo; a Sprint 16 (Deploy Real) é quem decide como o deploy pra VPS acontece. O gatilho `push`/`main` desta sprint só roda testes, não publica nada.
 - Relatório de cobertura de testes com limites mínimos (thresholds) — não pedido pelo usuário nesta rodada; pode entrar numa sprint futura se virar necessidade real.
 - Ruff/flake8 além do `black` — a regra mandatória em `PROMPT_REFINADO.md` cita explicitamente só `black` + `pre-commit`; não adicionar ferramenta não pedida.
 

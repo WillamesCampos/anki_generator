@@ -23,6 +23,16 @@ urlpatterns = [
         views.DeckStatisticsView.as_view(),
         name="deck-statistics",
     ),
+    path(
+        "decks/<str:deck_id>/export/",
+        views.DeckExportView.as_view(),
+        name="deck-export",
+    ),
+    path(
+        "decks/export/<str:export_id>/status/",
+        views.DeckExportStatusView.as_view(),
+        name="deck-export-status",
+    ),
     path("decks/<str:deck_id>/", views.DeckDetailView.as_view(), name="deck-detail"),
     path("cards/", views.CardListCreateView.as_view(), name="card-list"),
     path("cards/count/", views.CardCountView.as_view(), name="card-count"),

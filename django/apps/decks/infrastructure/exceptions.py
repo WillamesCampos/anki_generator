@@ -38,6 +38,13 @@ class SessionNotFoundError(RepositoryError):
     code = "session_not_found"
 
 
+class ExportRegistrationError(InfrastructureError):
+    """Não foi possível registrar a exportação no Redis (índice de conteúdo
+    mudando sob concorrência)."""
+
+    code = "export_registration_failed"
+
+
 class MongoNotConnectedError(InfrastructureError):
     """Uma operação foi tentada antes de `MongoDBConnectionManager.connect()`."""
 

@@ -2,6 +2,56 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 11] Exportação Anki & Microsserviço de Documentos — 2026-09-26
+
+Liga o `document-generator` ao Django de ponta a ponta. A change foi revisada contra o código antes de qualquer implementação (cache por conteúdo, IDs estáveis no `.apkg`, limite de 100 cards, endurecimento do gerador) e a Sprint 12 (UI de exportação, cadastro e conta) foi inserida logo depois — o roadmap foi renumerado (antigas Sprints 12–17 viraram 13–18). **Primeira sprint em TDD.** Ver `openspec/changes/sprint-11-exportacao-anki-documentos/`.
+
+### Adicionado
+- `POST /api/v1/decks/{deck_id}/export/`: valida posse e tamanho (1 a 100 cards ativos), calcula o hash de conteúdo e enfileira uma task Celery — nunca chama o `document-generator` na request. `202` em geração enfileirada ou em andamento, `200` em cache hit, `400` (deck vazio/acima do teto), `404` sem vazar existência, `503` se o broker estiver fora.
+- `GET /api/v1/decks/export/{export_id}/status/`: status lido de um registro Redis criado no disparo (posse checável já em `pending`; `404` idêntico para id desconhecido, expirado ou de outro tenant) e URL pré-assinada de 15 min assinada localmente a cada consulta.
+- **Cache de exportação por hash de conteúdo** (sha256 do payload exportável, sem estado FSRS): reexportar um deck inalterado não gera nada; estudar um card não invalida; editar invalida. Deduplica exportações em andamento e nunca compartilha entre tenants.
+- Task Celery com snapshot do payload (não relê o Mongo), upload no S3 (`exports/{owner}/{deck}/{hash}.apkg`), timeout próprio de leitura de 300 s e falha registrada sem propagar.
+- `core/resilience.py`: retry exponencial (`tenacity`, 2 tentativas, 5–30 s com jitter) por dentro e circuit breaker (`pybreaker`, `fail_max=3`, `reset_timeout=120 s`) por fora, com estado compartilhado no Redis e um breaker por serviço. Só timeout/conexão/5xx são retentados; 4xx volta na hora e não conta pro breaker; a operação inteira conta como **uma** falha. `call_document_generator` manteve a assinatura e assina um JWT de serviço novo a cada tentativa.
+- `document-generator`: `POST /documents/pdf` com contrato fechado de seções tipadas (`heading`, `paragraph`, `bullet_list`, `table`, `bar_chart` vetorial) via `reportlab`, atrás de `require_service_jwt`; sem consumidor Django (Sprint 15).
+- `manage.py check_export_storage`: valida bucket, região, credenciais e as três permissões IAM (grava, baixa por URL pré-assinada, apaga) com mensagens acionáveis.
+- `docker-compose.yml`: perfil `s3-local` (`moto` em modo servidor, não-root) para desenvolvimento e validação offline. Variáveis novas em `django/config.example.env`.
+- Job `document-generator-test` no CI; CI e `make test` passam a rodar `core/`.
+
+### Alterado
+- `/decks/export` do `document-generator`: `deck_id` e `id` por card obrigatórios; IDs do Anki estáveis (deck derivado do UUID do deck, modelo constante, guid da nota por card) — reexportar e reimportar atualiza o deck em vez de duplicá-lo; áudio com nome determinístico e uma única chamada ao gTTS por texto repetido.
+- Regra `s3-frontend-confirmado` revisada: além do bucket do frontend, um bucket S3 privado guarda as exportações (`PROMPT_REFINADO.md`, `PRD.md`, `README.md`).
+
+### Corrigido
+- **Colisão de arquivo entre tenants** no `document-generator`: o `.apkg` era gravado em `{título}_{data}.apkg` num diretório compartilhado, então dois decks de mesmo título exportados ao mesmo tempo podiam trocar de conteúdo. Cada requisição agora usa um diretório de trabalho próprio, apagado após a resposta (também elimina o acúmulo de áudios no volume).
+- Rota de exportação `async def` chamando código bloqueante (gTTS) travava o event loop e o health check; agora roda em threadpool.
+- Testes do `document-generator` chamavam o gTTS real e gravavam em `/data`: 2 falhavam fora do container. Agora usam um gTTS falso e diretório temporário.
+- `REDIS_URL` passa a ser uma setting (antes só existia dentro do `CACHES`).
+
+### Validado
+- Suítes: Django 180 testes, `document-generator` 45, `black` limpo.
+- Ponta a ponta com containers reais (Django, Celery, RabbitMQ, Redis, `document-generator`, S3 local, gTTS real): exportação → status → download pela URL pré-assinada; cache hit sem chamar o gerador; estudar não invalida, editar invalida; outro tenant recebe 404; IDs do Anki idênticos após editar.
+- Indisponibilidade simulada de verdade (`document-generator` parado): 3 exportações falharam em ~5,5 s (2 tentativas + backoff), o breaker abriu, a 4ª falhou em 0,1 s sem tocar na rede, continuou aberto com o serviço já no ar e, passados 120 s, a chamada de teste passou e o breaker fechou (critério de aceite 9).
+- Importador oficial do Anki (pacote `anki` 26.9.3, o mesmo backend do programa) numa coleção temporária: a v1 importou 5 notas novas; a v2 do mesmo deck importou 1 nova + 5 atualizadas, 0 duplicadas, com 1 só deck e 1 só note type próprio — reimportar atualiza em vez de duplicar. O `.apkg` do pipeline com o S3 real também importa sem erros.
+- Medição: 100 cards com gTTS real levam 81 s (texto médio) a 114 s (100 caracteres) — base do timeout de 300 s.
+
+### Pendente de validação manual (fora do código)
+- Abrir o `.apkg` no Anki real e reimportar uma versão editada (critério de aceite 7; tarefas 7.1 e 7.2). Arquivos prontos em `~/Downloads/anki-generator-teste/` (`v1`/`v2` do mesmo deck e um gerado pelo pipeline completo com o S3 real).
+
+### Planejado dentro da sprint, ainda não iniciado
+- **Cache de áudio por texto no `document-generator`** (D11, grupo 9 do `tasks.md`): o gTTS devolve bytes diferentes a cada chamada para o mesmo texto, então cada reimportação no Anki deixa cópias órfãs da mídia (as notas atualizam normalmente; medido com o importador oficial do Anki) e toda exportação de deck editado regenera o áudio de todos os cards (81–114 s por 100). Depende de decidir com o usuário a política de retenção do cache.
+
+### Infraestrutura criada na AWS (conta de estudo)
+- Bucket privado `anki-generator-exports-willames-4821` em `us-east-1` (a região mais barata; S3 Standard US$ 0,023/GB-mês): Block Public Access, ACLs desativadas, SSE-S3, política que nega tráfego sem TLS e lifecycle de 7 dias em `exports/`. Usuário IAM `anki-generator-exports`, sem acesso ao console, com política de menor privilégio (`s3:PutObject`/`GetObject`/`DeleteObject` só em `exports/*`). Validado com `check_export_storage` e com um export ponta a ponta passando pelo S3 real.
+
+### Achados fora do escopo (registrados em `PRD.md` §7.1)
+- A regra `Word` do domínio só aceita letras, espaços e hífens no `front` do card: frases naturais com apóstrofo, pontuação ou dígitos (`I'm`, `Let's`, `Could you...?`) são recusadas.
+- Essa recusa (`DomainValidationError`) chega ao cliente como erro 500, e não como 400.
+
+### Fora de escopo (decisão explícita)
+- UI de exportação no frontend — Sprint 12.
+- Decks com mais de 100 cards, `image`/`line_chart` no PDF, histórico de exportações — registrados em `PRD.md` §7.1 ou no design como gaps novos.
+- MinIO no compose (decidido antes) foi trocado pelo `moto` em modo servidor: as imagens oficiais do MinIO saíram do Docker Hub e do quay.io.
+
 ## [Sprint 10] Estatísticas por Deck — 2026-09-16
 
 Sprint planejada antes da Sprint 9 existir, cujo `tasks.md` nunca tinha sido fechado. Reconciliação via `backend-mentor` (branch `sprint_10`, main já com a Sprint 9 mergeada) encontrou a maior parte do trabalho já entregue em sessões anteriores, sem documentação nunca atualizada — e o dropdown de seleção de deck na Home, revisado e descartado por ser redundante com o que a Sprint 9 já entrega. Sem código novo nesta sprint. Ver `openspec/changes/sprint-10-estatisticas-por-deck/`.
@@ -52,7 +102,7 @@ Gap mais fundamental do produto, registrado em `PRD.md` §7.1 desde a auditoria 
 - Estudo global (todos os decks numa sessão só) — estudo é sempre por deck específico, entrado a partir da tela de detalhe do deck.
 - Sessão retomável (estado persistido de "onde o usuário parou") — mais simples, sem conceito novo de "sessão" no backend; revisitável se virar reclamação recorrente de uso real.
 - Requeue de cards avaliados como "again" dentro da mesma sessão — consequência direta do item anterior: sem estado de sessão, o card só reaparece numa sessão futura.
-- `django-anymail` — sem domínio próprio verificado, webhooks de entrega/abertura/clique não são testáveis de ponta a ponta ainda; relay SMTP nativo do Resend já resolve o caso de uso atual. Revisitar no deploy real (Sprint 15).
+- `django-anymail` — sem domínio próprio verificado, webhooks de entrega/abertura/clique não são testáveis de ponta a ponta ainda; relay SMTP nativo do Resend já resolve o caso de uso atual. Revisitar no deploy real (Sprint 16).
 - Paginação em `/decks` — `DeckListPage` busca todos os decks sem controles de página; acima de `PAGE_SIZE` (20), os excedentes ficam invisíveis. Achado ao revisar os caminhos de descoberta até a tela de estudo (essa mudança torna `/decks` o hub principal); baixo risco pra escala de portfólio, não corrigido nesta sprint.
 - Vínculo de conta Google+e-mail/senha e `ACCOUNT_EMAIL_VERIFICATION="mandatory"` — itens 2 e 3 de `PRD.md` §7.1, continuam em aberto.
 
@@ -116,7 +166,7 @@ Fora do ciclo de sprints: fecha a regra mandatória `cicd` (`PROMPT_REFINADO.md`
 
 ### Fora de escopo (decisão explícita)
 - Versionamento independente por serviço (django vs. document-generator) — optou-se por uma versão global única do projeto, coerente com este próprio `CHANGELOG.md` ser por projeto, não por serviço.
-- Consumir essas imagens versionadas no deploy real da VPS (troca de `docker compose build` local por `docker compose pull` de uma tag fixa do GHCR) — fica para o Sprint 15 (Deploy real).
+- Consumir essas imagens versionadas no deploy real da VPS (troca de `docker compose build` local por `docker compose pull` de uma tag fixa do GHCR) — fica para o Sprint 16 (Deploy real).
 - Corte do primeiro release (`v0.0.1`) — esta entrada só adiciona a ferramenta; a decisão de quando cortar a primeira tag fica para depois do merge.
 
 ## [Infraestrutura] Gate de CHANGELOG obrigatório em PRs — 2026-09-08
@@ -151,7 +201,7 @@ Nenhuma sprint até aqui (0-7) foi mesclada na `main` com gate automatizado — 
 
 ### Fora de escopo (decisão explícita)
 - Ampliar a cobertura de testes existente (a pipeline roda o que já existe; cobertura cresce organicamente a cada sprint futura).
-- CD de verdade (deploy automatizado a partir do merge em `main`) — decisão de como o deploy pra VPS acontece fica pra Sprint 15.
+- CD de verdade (deploy automatizado a partir do merge em `main`) — decisão de como o deploy pra VPS acontece fica pra Sprint 16.
 - `ruff`/`flake8` além do `black` — não pedido pela regra mandatória.
 
 ### Validado
