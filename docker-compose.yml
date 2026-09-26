@@ -144,7 +144,7 @@ services:
     environment:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
-      AWS_DEFAULT_REGION: ${AWS_S3_REGION_NAME:-sa-east-1}
+      AWS_DEFAULT_REGION: us-east-1
       BUCKET: ${AWS_S3_EXPORT_BUCKET:-anki-exports-dev}
     entrypoint:
       - sh
@@ -152,7 +152,6 @@ services:
       - >-
         aws --endpoint-url http://s3-local:5000 s3api create-bucket
         --bucket $$BUCKET
-        --create-bucket-configuration LocationConstraint=$$AWS_DEFAULT_REGION
 
   document-generator:
     build:

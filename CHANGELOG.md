@@ -34,8 +34,14 @@ Liga o `document-generator` ao Django de ponta a ponta. A change foi revisada co
 - Medição: 100 cards com gTTS real levam 81 s (texto médio) a 114 s (100 caracteres) — base do timeout de 300 s.
 
 ### Pendente de validação manual (fora do código)
-- Bucket real na AWS: bucket privado, lifecycle de 7 dias em `exports/` e usuário IAM restrito (tarefas 1.1 a 1.3), conferidos com `check_export_storage`.
-- Abrir o `.apkg` no Anki real e reimportar uma versão editada (critério de aceite 7; tarefas 7.1 e 7.2).
+- Abrir o `.apkg` no Anki real e reimportar uma versão editada (critério de aceite 7; tarefas 7.1 e 7.2). Arquivos prontos em `~/Downloads/anki-generator-teste/` (`v1`/`v2` do mesmo deck e um gerado pelo pipeline completo com o S3 real).
+
+### Infraestrutura criada na AWS (conta de estudo)
+- Bucket privado `anki-generator-exports-willames-4821` em `us-east-1` (a região mais barata; S3 Standard US$ 0,023/GB-mês): Block Public Access, ACLs desativadas, SSE-S3, política que nega tráfego sem TLS e lifecycle de 7 dias em `exports/`. Usuário IAM `anki-generator-exports`, sem acesso ao console, com política de menor privilégio (`s3:PutObject`/`GetObject`/`DeleteObject` só em `exports/*`). Validado com `check_export_storage` e com um export ponta a ponta passando pelo S3 real.
+
+### Achados fora do escopo (registrados em `PRD.md` §7.1)
+- A regra `Word` do domínio só aceita letras, espaços e hífens no `front` do card: frases naturais com apóstrofo, pontuação ou dígitos (`I'm`, `Let's`, `Could you...?`) são recusadas.
+- Essa recusa (`DomainValidationError`) chega ao cliente como erro 500, e não como 400.
 
 ### Fora de escopo (decisão explícita)
 - UI de exportação no frontend — Sprint 12.

@@ -341,7 +341,7 @@ EXPORT_TASK_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_TIME_LIMIT", "720"))
 # usado no upload); AWS_S3_PUBLIC_ENDPOINT_URL é o host que o NAVEGADOR alcança,
 # usado só pra assinar a URL de download. Vazias em produção -> AWS real.
 AWS_S3_EXPORT_BUCKET = os.environ.get("AWS_S3_EXPORT_BUCKET", "")
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "sa-east-1")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "us-east-1")
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", "")
 AWS_S3_PUBLIC_ENDPOINT_URL = os.environ.get("AWS_S3_PUBLIC_ENDPOINT_URL", "")
 EXPORT_DOWNLOAD_URL_TTL_SECONDS = int(

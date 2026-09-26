@@ -2,9 +2,9 @@
 
 ## 1. Infraestrutura — bucket S3 e revisão de regra
 
-- [ ] 1.1 Criar bucket S3 privado (`sa-east-1`), sem acesso público
-- [ ] 1.2 Criar usuário IAM dedicado com policy restrita ao bucket (`s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`)
-- [ ] 1.3 Configurar lifecycle rule expirando objetos sob `exports/` após 7 dias
+- [x] 1.1 Criar bucket S3 privado (`us-east-1`, a região mais barata), sem acesso público — `anki-generator-exports-willames-4821`, com Block Public Access, ACLs desativadas, SSE-S3 e política que nega tráfego sem TLS
+- [x] 1.2 Criar usuário IAM dedicado com policy restrita ao bucket (`s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`)
+- [x] 1.3 Configurar lifecycle rule expirando objetos sob `exports/` após 7 dias
 - [x] 1.4 Adicionar credenciais/nome do bucket/região/`EXPORT_MAX_CARDS` como variáveis de ambiente (`.env`, `config.example.env`, `docker-compose.yml` do `web`/`celery-worker`)
 - [x] 1.5 Adicionar `boto3` como dependência do Django (`pyproject.toml`)
 - [x] 1.6 S3 nos testes: `moto` como dependência de dev do Django, fixture pytest que sobe um S3 falso com o bucket criado — usada localmente e no CI (sem credencial AWS nem serviço extra no CI)

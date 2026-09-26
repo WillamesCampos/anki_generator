@@ -41,7 +41,7 @@ Motivo: blast radius. O `document-generator` é o serviço com a porta publicada
 - **Usuário IAM dedicado** (não a chave root da conta), policy restrita a esse bucket específico e só às ações `s3:PutObject`, `s3:GetObject`, `s3:DeleteObject`. Credencial de longa duração, então a validade da URL é exatamente o TTL pedido (com credencial temporária STS, ela morreria junto com a credencial — não se aplica aqui).
 - **Lifecycle rule** expirando objetos após 7 dias — mesmo número da retenção de soft-delete da Sprint 6; o artefato é regenerável.
 - **Chave do objeto: `exports/{owner_id}/{deck_id}/{content_hash}.apkg`** — escopada por dono e deck, e o hash (D7) faz do próprio nome do objeto o identificador do conteúdo.
-- Região `sa-east-1` (São Paulo), consistente com a VPS Hostinger.
+- Região `us-east-1` (N. Virginia) — **decisão do usuário: a mais barata** (S3 Standard US$ 0,023/GB-mês; São Paulo custa bem mais). O ganho é de centavos e a latência a partir do Brasil não pesa (exportação assíncrona, download direto do navegador para o S3). Nota: `us-east-1` é a única região cujo `create-bucket` NÃO aceita `LocationConstraint`. Substitui a escolha inicial `sa-east-1`.
 - **Alternativa descartada**: bucket público com URL direta — decks exportados são dado de usuário.
 
 ### D3 — Circuit breaker envolve a operação de retry inteira, como uma unidade
