@@ -285,8 +285,8 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 
 - [ ] 11.1 Endpoint Django que dispara (via Celery) a geração de `.apkg` no microsserviço de documentos, autenticando a chamada com o JWT de serviço da Sprint 5 — `POST /api/v1/decks/{id}/export/` (`200` cache hit / `202` miss ou em andamento) + `GET /api/v1/decks/export/{export_id}/status/`, com upload em S3 privado e presigned URL de 15 min
 - [x] 11.2 Circuit breaker + retry exponencial na chamada Django → microsserviço de documentos (erros 4xx não retentados nem contados)
-- [ ] 11.3 Contrato de payload/resposta documentado entre Django e o microsserviço, incluindo o header de autenticação (`deck_id`/`id` de card agora obrigatórios)
-- [ ] 11.4 Geração de PDF genérica no mesmo microsserviço (reaproveitada na Sprint 15)
+- [x] 11.3 Contrato de payload/resposta documentado entre Django e o microsserviço, incluindo o header de autenticação (`deck_id`/`id` de card agora obrigatórios)
+- [x] 11.4 Geração de PDF genérica no mesmo microsserviço (reaproveitada na Sprint 15)
 - [ ] 11.5 Validar `.apkg` gerado abrindo no Anki real — inclui reexportar após editar e reimportar sem duplicar o deck
 - [x] 11.6 Cache de exportação por hash do conteúdo (sha256 do payload exportável, sem estado FSRS), com deduplicação de exportações em andamento e isolamento por tenant
 - [x] 11.7 `document-generator`: IDs estáveis (deck/modelo/notas), teto de 100 cards, diretório de trabalho único por requisição (corrige colisão de arquivo entre tenants) e geração fora do event loop

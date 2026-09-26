@@ -38,9 +38,9 @@
 
 ## 5. PDF genérico (document-generator)
 
-- [ ] 5.1 Adicionar `reportlab` (decidido pelo usuário) ao `requirements.txt` do `document-generator` e **confirmar com o usuário o formato do payload de seções** (a proposta a validar: texto, tabela e imagem, pensando no relatório da Sprint 15) — ver Open Question 1 em `design.md`
-- [ ] 5.2 `POST /document-generator/v1/documents/pdf`: gera PDF a partir de título + seções de conteúdo, atrás de `require_service_jwt` (mesmo padrão de `/decks/export`)
-- [ ] 5.3 Sem consumidor Django nesta sprint — capability isolada, testada só no microsserviço
+- [x] 5.1 Adicionar `reportlab` ao `requirements.txt` do `document-generator`; formato do payload confirmado pelo usuário: `heading`/`paragraph`/`bullet_list`/`table`/`bar_chart` (sem `image`/`line_chart` por ora) — ver Open Question 1 em `design.md`
+- [x] 5.2 `POST /document-generator/v1/documents/pdf`: gera PDF a partir de título + seções de conteúdo, atrás de `require_service_jwt` (mesmo padrão de `/decks/export`)
+- [x] 5.3 Sem consumidor Django nesta sprint — capability isolada, testada só no microsserviço
 
 ## 6. Testes automatizados
 
@@ -51,7 +51,7 @@
 - [x] 6.5 Wrapper de resiliência: breaker abre após falhas consecutivas simulando indisponibilidade do `document-generator`, permanece fechado em operação normal, meio-aberto testa uma chamada após o cooldown; **estado compartilhado entre processos** (falhas contadas num processo abrem o breaker pros outros; comportamento com Redis indisponível); retry só em timeout/conexão/5xx — `4xx` falha na hora e não conta pro breaker; falha após esgotar retries conta como **uma** falha pro breaker
 - [x] 6.6 Task Celery: sucesso (`completed` + `s3_key`, upload na chave com hash) e falha após esgotar retry/breaker (`failed`, sem upload, ponteiro de conteúdo apagado permitindo nova tentativa) — com S3 falso via `moto` (1.6)
 - [x] 6.7 `document-generator` (pytest): dois exports do mesmo `deck_id` produzem o mesmo deck id/model id/guids; duas requisições simultâneas com o mesmo título não compartilham arquivo; >100 cards recusado; sem JWT válido → `401`
-- [ ] 6.8 `document-generator` (pytest): rota de PDF aceita requisição autenticada e rejeita sem JWT válido, igual ao padrão de `/decks/export`
+- [x] 6.8 `document-generator` (pytest): rota de PDF aceita requisição autenticada e rejeita sem JWT válido, igual ao padrão de `/decks/export`
 
 ## 7. Validação manual
 

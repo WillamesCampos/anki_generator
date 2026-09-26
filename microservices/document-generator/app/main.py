@@ -10,6 +10,7 @@ from app.errors import (
     ValidationError,
 )
 from app.routes.decks import router as decks_router
+from app.routes.documents import router as documents_router
 from app.routes.health import router as health_router
 
 # `<regra_obrigatoria id="versionamento-url">`: toda URL DEVE ser versionada,
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router, prefix=API_PREFIX)
     app.include_router(decks_router, prefix=API_PREFIX)
+    app.include_router(documents_router, prefix=API_PREFIX)
 
     return app
 
