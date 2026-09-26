@@ -108,6 +108,29 @@ jobs:
         working-directory: django
         run: poetry run pytest apps/
 
+  # Testes do microsserviço de documentos (Sprint 11): cobrem o isolamento de
+  # arquivos entre tenants, IDs estáveis do Anki e o teto de cards. Sem serviços
+  # externos (o gTTS é substituído por um falso nos testes).
+  document-generator-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: microservices/document-generator/requirements.txt
+
+      - name: Install dependencies
+        working-directory: microservices/document-generator
+        run: pip install -r requirements.txt
+
+      - name: pytest
+        working-directory: microservices/document-generator
+        run: python -m pytest -q
+
   frontend-test:
     runs-on: ubuntu-latest
     steps:

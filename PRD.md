@@ -288,8 +288,8 @@ Todas em `<decisoes_resolvidas>` de `PROMPT_REFINADO.md`. Resumo rápido:
 - [ ] 11.3 Contrato de payload/resposta documentado entre Django e o microsserviço, incluindo o header de autenticação (`deck_id`/`id` de card agora obrigatórios)
 - [ ] 11.4 Geração de PDF genérica no mesmo microsserviço (reaproveitada na Sprint 15)
 - [ ] 11.5 Validar `.apkg` gerado abrindo no Anki real — inclui reexportar após editar e reimportar sem duplicar o deck
-- [ ] 11.6 Cache de exportação por hash do conteúdo (sha256 do payload exportável, sem estado FSRS), com deduplicação de exportações em andamento e isolamento por tenant
-- [ ] 11.7 `document-generator`: IDs estáveis (deck/modelo/notas), teto de 100 cards, diretório de trabalho único por requisição (corrige colisão de arquivo entre tenants) e geração fora do event loop
+- [x] 11.6 Cache de exportação por hash do conteúdo (sha256 do payload exportável, sem estado FSRS), com deduplicação de exportações em andamento e isolamento por tenant
+- [x] 11.7 `document-generator`: IDs estáveis (deck/modelo/notas), teto de 100 cards, diretório de trabalho único por requisição (corrige colisão de arquivo entre tenants) e geração fora do event loop
 - [ ] 11.8 Infraestrutura S3 (bucket privado, IAM dedicado, lifecycle de 7 dias; `moto` nos testes e o próprio `moto` em modo servidor no compose, só em dev — MinIO ficou indisponível) e revisão da regra `s3-frontend-confirmado` nos docs (`PROMPT_REFINADO.md`, `PRD.md`, `README.md` — revisão de docs já feita)
 - [ ] 11.9 Testes automatizados (hash, endpoint, cache, status, resiliência, task, `document-generator`, PDF) e validação manual
 

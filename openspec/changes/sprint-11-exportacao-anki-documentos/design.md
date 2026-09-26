@@ -152,7 +152,7 @@ Duas correções necessárias ao fluxo, encontradas lendo `generator.py`/`routes
 - **Worker morrer no meio da task**: o registro `pending` fica órfão até o TTL de segurança (D5), então o cliente vê `pending` por um tempo e depois `404`; o frontend futuro precisa de timeout no polling → aceito, registrado como requisito da sprint de UI.
 - **Perda do Redis**: ver trade-off em D5 — aceito, `.apkg` é regenerável.
 - **Estado do breaker compartilhado no Redis**: decidido usar `CircuitRedisStorage` (o worker Celery é prefork e o tráfego esporádico — contadores por processo dificilmente chegariam a `fail_max` em algum deles, então o breaker praticamente nunca abriria). Consequência: o breaker passa a depender do Redis; se o Redis cair, o `pybreaker` precisa de um estado de fallback definido (`fallback_circuit_state`) — a confirmar no teste 6.5, junto do requisito do cliente Redis (`decode_responses`) da versão instalada.
-- **AWS antecipada**: a sprint passa a depender de uma conta AWS e um bucket reais (inclusive pra validar o critério de aceite 7) → aceito pelo usuário (D2); estratégia de dev/CI sem AWS decidida (`moto` + MinIO, ver D2).
+- **AWS antecipada**: a sprint passa a depender de uma conta AWS e um bucket reais (inclusive pra validar o critério de aceite 7) → aceito pelo usuário (D2); estratégia de dev/CI sem AWS decidida (`moto` nos testes + S3 local no compose, ver D2).
 - **Regressão de cache silenciosa**: se alguém adicionar um campo exportável ao payload e esquecer de incluí-lo no hash, exportações antigas ficam desatualizadas sem erro → mitigação: o hash é calculado sobre o **mesmo objeto de payload** enviado ao `document-generator` (um único builder), coberto por teste que compara os campos do payload com os do hash.
 
 ## Open Questions
