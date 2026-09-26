@@ -56,7 +56,7 @@
 ## 7. Validação manual
 
 - [ ] 7.1 Disparar uma exportação ponta a ponta (endpoint → task → S3 → status → download) e abrir o `.apkg` resultante no Anki real (critério de aceite 7)
-- [ ] 7.2 Editar um card, reexportar e reimportar no Anki: o deck e as notas existentes são **atualizados**, não duplicados (D8)
+- [x] 7.2 (validado pelo importador oficial do Anki, pacote `anki` 26.9.3, em 2026-09-26: v2 = 1 nota nova + 5 atualizadas, 0 duplicadas, 1 deck e 1 note type; confirmação visual no desktop pendente) Editar um card, reexportar e reimportar no Anki: o deck e as notas existentes são **atualizados**, não duplicados (D8)
 - [x] 7.3 Exportar duas vezes sem editar nada: a segunda responde `200` sem nova geração (confirmar nos logs que o `document-generator` não foi chamado) — validado ponta a ponta com containers reais em 2026-09-26 (2 chamadas ao gerador para 4 exports, 2 deles cache hit)
 
 ## 8. Documentação

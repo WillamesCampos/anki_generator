@@ -31,6 +31,7 @@ Liga o `document-generator` ao Django de ponta a ponta. A change foi revisada co
 - Suítes: Django 180 testes, `document-generator` 45, `black` limpo.
 - Ponta a ponta com containers reais (Django, Celery, RabbitMQ, Redis, `document-generator`, S3 local, gTTS real): exportação → status → download pela URL pré-assinada; cache hit sem chamar o gerador; estudar não invalida, editar invalida; outro tenant recebe 404; IDs do Anki idênticos após editar.
 - Indisponibilidade simulada de verdade (`document-generator` parado): 3 exportações falharam em ~5,5 s (2 tentativas + backoff), o breaker abriu, a 4ª falhou em 0,1 s sem tocar na rede, continuou aberto com o serviço já no ar e, passados 120 s, a chamada de teste passou e o breaker fechou (critério de aceite 9).
+- Importador oficial do Anki (pacote `anki` 26.9.3, o mesmo backend do programa) numa coleção temporária: a v1 importou 5 notas novas; a v2 do mesmo deck importou 1 nova + 5 atualizadas, 0 duplicadas, com 1 só deck e 1 só note type próprio — reimportar atualiza em vez de duplicar. O `.apkg` do pipeline com o S3 real também importa sem erros.
 - Medição: 100 cards com gTTS real levam 81 s (texto médio) a 114 s (100 caracteres) — base do timeout de 300 s.
 
 ### Pendente de validação manual (fora do código)
@@ -40,6 +41,7 @@ Liga o `document-generator` ao Django de ponta a ponta. A change foi revisada co
 - Bucket privado `anki-generator-exports-willames-4821` em `us-east-1` (a região mais barata; S3 Standard US$ 0,023/GB-mês): Block Public Access, ACLs desativadas, SSE-S3, política que nega tráfego sem TLS e lifecycle de 7 dias em `exports/`. Usuário IAM `anki-generator-exports`, sem acesso ao console, com política de menor privilégio (`s3:PutObject`/`GetObject`/`DeleteObject` só em `exports/*`). Validado com `check_export_storage` e com um export ponta a ponta passando pelo S3 real.
 
 ### Achados fora do escopo (registrados em `PRD.md` §7.1)
+- Áudio do gTTS não é estável entre exportações (bytes diferentes para o mesmo texto): cada reimportação no Anki deixa cópias órfãs da mídia (as notas atualizam normalmente). Solução natural: cache de áudio por texto no `document-generator`.
 - A regra `Word` do domínio só aceita letras, espaços e hífens no `front` do card: frases naturais com apóstrofo, pontuação ou dígitos (`I'm`, `Let's`, `Could you...?`) são recusadas.
 - Essa recusa (`DomainValidationError`) chega ao cliente como erro 500, e não como 400.
 
