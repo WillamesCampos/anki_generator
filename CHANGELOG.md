@@ -2,6 +2,46 @@
 
 Todas as alterações relevantes do projeto são registradas aqui, conforme `<regra_obrigatoria id="changelog">` em [PROMPT_REFINADO.md](./PROMPT_REFINADO.md).
 
+## [Sprint 11] Exportação Anki & Microsserviço de Documentos — 2026-09-26
+
+Liga o `document-generator` ao Django de ponta a ponta. A change foi revisada contra o código antes de qualquer implementação (cache por conteúdo, IDs estáveis no `.apkg`, limite de 100 cards, endurecimento do gerador) e a Sprint 12 (UI de exportação, cadastro e conta) foi inserida logo depois — o roadmap foi renumerado (antigas Sprints 12–17 viraram 13–18). **Primeira sprint em TDD.** Ver `openspec/changes/sprint-11-exportacao-anki-documentos/`.
+
+### Adicionado
+- `POST /api/v1/decks/{deck_id}/export/`: valida posse e tamanho (1 a 100 cards ativos), calcula o hash de conteúdo e enfileira uma task Celery — nunca chama o `document-generator` na request. `202` em geração enfileirada ou em andamento, `200` em cache hit, `400` (deck vazio/acima do teto), `404` sem vazar existência, `503` se o broker estiver fora.
+- `GET /api/v1/decks/export/{export_id}/status/`: status lido de um registro Redis criado no disparo (posse checável já em `pending`; `404` idêntico para id desconhecido, expirado ou de outro tenant) e URL pré-assinada de 15 min assinada localmente a cada consulta.
+- **Cache de exportação por hash de conteúdo** (sha256 do payload exportável, sem estado FSRS): reexportar um deck inalterado não gera nada; estudar um card não invalida; editar invalida. Deduplica exportações em andamento e nunca compartilha entre tenants.
+- Task Celery com snapshot do payload (não relê o Mongo), upload no S3 (`exports/{owner}/{deck}/{hash}.apkg`), timeout próprio de leitura de 300 s e falha registrada sem propagar.
+- `core/resilience.py`: retry exponencial (`tenacity`, 2 tentativas, 5–30 s com jitter) por dentro e circuit breaker (`pybreaker`, `fail_max=3`, `reset_timeout=120 s`) por fora, com estado compartilhado no Redis e um breaker por serviço. Só timeout/conexão/5xx são retentados; 4xx volta na hora e não conta pro breaker; a operação inteira conta como **uma** falha. `call_document_generator` manteve a assinatura e assina um JWT de serviço novo a cada tentativa.
+- `document-generator`: `POST /documents/pdf` com contrato fechado de seções tipadas (`heading`, `paragraph`, `bullet_list`, `table`, `bar_chart` vetorial) via `reportlab`, atrás de `require_service_jwt`; sem consumidor Django (Sprint 15).
+- `manage.py check_export_storage`: valida bucket, região, credenciais e as três permissões IAM (grava, baixa por URL pré-assinada, apaga) com mensagens acionáveis.
+- `docker-compose.yml`: perfil `s3-local` (`moto` em modo servidor, não-root) para desenvolvimento e validação offline. Variáveis novas em `django/config.example.env`.
+- Job `document-generator-test` no CI; CI e `make test` passam a rodar `core/`.
+
+### Alterado
+- `/decks/export` do `document-generator`: `deck_id` e `id` por card obrigatórios; IDs do Anki estáveis (deck derivado do UUID do deck, modelo constante, guid da nota por card) — reexportar e reimportar atualiza o deck em vez de duplicá-lo; áudio com nome determinístico e uma única chamada ao gTTS por texto repetido.
+- Regra `s3-frontend-confirmado` revisada: além do bucket do frontend, um bucket S3 privado guarda as exportações (`PROMPT_REFINADO.md`, `PRD.md`, `README.md`).
+
+### Corrigido
+- **Colisão de arquivo entre tenants** no `document-generator`: o `.apkg` era gravado em `{título}_{data}.apkg` num diretório compartilhado, então dois decks de mesmo título exportados ao mesmo tempo podiam trocar de conteúdo. Cada requisição agora usa um diretório de trabalho próprio, apagado após a resposta (também elimina o acúmulo de áudios no volume).
+- Rota de exportação `async def` chamando código bloqueante (gTTS) travava o event loop e o health check; agora roda em threadpool.
+- Testes do `document-generator` chamavam o gTTS real e gravavam em `/data`: 2 falhavam fora do container. Agora usam um gTTS falso e diretório temporário.
+- `REDIS_URL` passa a ser uma setting (antes só existia dentro do `CACHES`).
+
+### Validado
+- Suítes: Django 180 testes, `document-generator` 45, `black` limpo.
+- Ponta a ponta com containers reais (Django, Celery, RabbitMQ, Redis, `document-generator`, S3 local, gTTS real): exportação → status → download pela URL pré-assinada; cache hit sem chamar o gerador; estudar não invalida, editar invalida; outro tenant recebe 404; IDs do Anki idênticos após editar.
+- Indisponibilidade simulada de verdade (`document-generator` parado): 3 exportações falharam em ~5,5 s (2 tentativas + backoff), o breaker abriu, a 4ª falhou em 0,1 s sem tocar na rede, continuou aberto com o serviço já no ar e, passados 120 s, a chamada de teste passou e o breaker fechou (critério de aceite 9).
+- Medição: 100 cards com gTTS real levam 81 s (texto médio) a 114 s (100 caracteres) — base do timeout de 300 s.
+
+### Pendente de validação manual (fora do código)
+- Bucket real na AWS: bucket privado, lifecycle de 7 dias em `exports/` e usuário IAM restrito (tarefas 1.1 a 1.3), conferidos com `check_export_storage`.
+- Abrir o `.apkg` no Anki real e reimportar uma versão editada (critério de aceite 7; tarefas 7.1 e 7.2).
+
+### Fora de escopo (decisão explícita)
+- UI de exportação no frontend — Sprint 12.
+- Decks com mais de 100 cards, `image`/`line_chart` no PDF, histórico de exportações — registrados em `PRD.md` §7.1 ou no design como gaps novos.
+- MinIO no compose (decidido antes) foi trocado pelo `moto` em modo servidor: as imagens oficiais do MinIO saíram do Docker Hub e do quay.io.
+
 ## [Sprint 10] Estatísticas por Deck — 2026-09-16
 
 Sprint planejada antes da Sprint 9 existir, cujo `tasks.md` nunca tinha sido fechado. Reconciliação via `backend-mentor` (branch `sprint_10`, main já com a Sprint 9 mergeada) encontrou a maior parte do trabalho já entregue em sessões anteriores, sem documentação nunca atualizada — e o dropdown de seleção de deck na Home, revisado e descartado por ser redundante com o que a Sprint 9 já entrega. Sem código novo nesta sprint. Ver `openspec/changes/sprint-10-estatisticas-por-deck/`.

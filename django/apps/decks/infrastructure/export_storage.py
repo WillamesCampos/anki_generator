@@ -44,6 +44,12 @@ def upload_apkg(key: str, data: bytes) -> None:
     )
 
 
+def delete_object(key: str) -> None:
+    _client(settings.AWS_S3_ENDPOINT_URL).delete_object(
+        Bucket=settings.AWS_S3_EXPORT_BUCKET, Key=key
+    )
+
+
 def _content_disposition(download_name: str) -> str:
     ascii_name = (
         unicodedata.normalize("NFKD", download_name).encode("ascii", "ignore").decode()

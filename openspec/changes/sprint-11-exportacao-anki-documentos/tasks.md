@@ -61,7 +61,7 @@
 
 ## 8. Documentação
 
-- [ ] 8.1 Atualizar `PRD.md` (Sprint 11) marcando as tarefas concluídas
-- [ ] 8.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 11]`
-- [ ] 8.3 Documentar o contrato de payload/resposta Django ↔ `document-generator` (header de autenticação incluso) — coberto pelos specs desta change, revisar se precisa de nota adicional fora do openspec
+- [x] 8.1 Atualizar `PRD.md` (Sprint 11) marcando as tarefas concluídas
+- [x] 8.2 Atualizar `CHANGELOG.md` com a entrada `[Sprint 11]`
+- [x] 8.3 Documentar o contrato de payload/resposta Django ↔ `document-generator` (header de autenticação incluso) — coberto pelos specs desta change, revisar se precisa de nota adicional fora do openspec
 - [x] 8.4 Remover comentários desatualizados em `core/service_clients.py` ("Sprint 9") e `document-generator/app/generator.py` ("Sprint 4") que apontam pra sprint errada
