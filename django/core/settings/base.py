@@ -293,6 +293,48 @@ CELERY_BEAT_SCHEDULE = {
     },
 }
 
+# --- Exportação Anki (Sprint 11, D5/D7/D9) ---------------------------------
+# Teto de cards ativos por exportação: cada card é uma chamada de rede
+# sequencial ao gTTS no `document-generator` (100 cards levam ~81-114 s).
+EXPORT_MAX_CARDS = int(os.environ.get("EXPORT_MAX_CARDS", "100"))
+# TTLs do registro Redis da exportação. Completed = 6 dias (1 dia abaixo da
+# lifecycle de 7 dias do S3, pra o ponteiro nunca sobreviver ao objeto).
+# Pending = 900 s: VALOR PROPOSTO, ainda a confirmar com o usuário — deve
+# ficar acima do `time_limit` da task (design.md, Open Question 2).
+EXPORT_PENDING_TTL_SECONDS = int(os.environ.get("EXPORT_PENDING_TTL_SECONDS", "900"))
+EXPORT_COMPLETED_TTL_SECONDS = int(
+    os.environ.get("EXPORT_COMPLETED_TTL_SECONDS", str(6 * 24 * 3600))
+)
+EXPORT_FAILED_TTL_SECONDS = int(os.environ.get("EXPORT_FAILED_TTL_SECONDS", "3600"))
+
+# Chamada Django -> document-generator na exportação (Sprint 11, D3): política
+# PRÓPRIA da exportação, bem maior que a das demais chamadas — 100 cards de gTTS
+# sequenciais levam 81-114 s e o serviço só responde quando termina. Leitura
+# 300 s: decidido pelo usuário. Conexão 5 s: valor proposto, a confirmar.
+DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT = int(
+    os.environ.get("DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT", "5")
+)
+DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT = int(
+    os.environ.get("DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT", "300")
+)
+# Limites da task de exportação: acima do pior caso (2 x 300 s + backoff ≈ 606 s).
+# VALORES PROPOSTOS (660/720 s), a confirmar — design.md, Open Question 2.
+EXPORT_TASK_SOFT_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_SOFT_TIME_LIMIT", "660"))
+EXPORT_TASK_TIME_LIMIT = int(os.environ.get("EXPORT_TASK_TIME_LIMIT", "720"))
+
+# --- S3 das exportações (Sprint 11, D2) --------------------------------------
+# Credenciais NUNCA aqui: o boto3 as lê de AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY
+# no ambiente. Em dev, AWS_S3_ENDPOINT_URL aponta pro MinIO do compose (interno,
+# usado no upload); AWS_S3_PUBLIC_ENDPOINT_URL é o host que o NAVEGADOR alcança,
+# usado só pra assinar a URL de download. Vazias em produção -> AWS real.
+AWS_S3_EXPORT_BUCKET = os.environ.get("AWS_S3_EXPORT_BUCKET", "")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "sa-east-1")
+AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL", "")
+AWS_S3_PUBLIC_ENDPOINT_URL = os.environ.get("AWS_S3_PUBLIC_ENDPOINT_URL", "")
+EXPORT_DOWNLOAD_URL_TTL_SECONDS = int(
+    os.environ.get("EXPORT_DOWNLOAD_URL_TTL_SECONDS", "900")
+)
+
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",

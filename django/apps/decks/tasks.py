@@ -16,7 +16,11 @@ import logging
 from datetime import datetime, timedelta, timezone
 
 from celery import shared_task
+from django.conf import settings
 
+from core.service_clients import call_document_generator
+
+from .infrastructure import export_records, export_storage
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
 from .infrastructure.repositories.deck_repository import DeckRepository
@@ -49,3 +53,51 @@ def purge_soft_deleted() -> dict:
     logger.info("purge_soft_deleted concluído: %s", result)
 
     return result
+
+
+@shared_task(
+    name="apps.decks.tasks.export_deck",
+    soft_time_limit=settings.EXPORT_TASK_SOFT_TIME_LIMIT,
+    time_limit=settings.EXPORT_TASK_TIME_LIMIT,
+)
+def export_deck_task(
+    export_id: str, owner_id: str, deck_id: str, content_hash: str, payload: dict
+) -> dict:
+    """
+    Gera o `.apkg` de um deck no `document-generator` e o guarda no S3
+    (Sprint 11, D1/D7).
+
+    Recebe o **snapshot** do payload (montado no `POST`) e nunca relê o
+    Mongo: se o deck for editado enquanto a task espera na fila, o arquivo
+    guardado sob `content_hash` continua sendo exatamente o que o hash
+    descreve. Qualquer falha (rede, HTTP, S3, limite de tempo) vira
+    `failed` no registro Redis e libera o conteúdo pra nova tentativa — a
+    task nunca propaga a exceção pro Celery, o status é o canal de erro.
+    """
+    if not export_records.touch_pending(export_id):
+        # o registro expirou enquanto a task esperava na fila: nada a fazer
+        logger.warning("export %s expirou antes de iniciar; ignorando", export_id)
+        return {"export_id": export_id, "status": "expired"}
+
+    try:
+        response = call_document_generator(
+            "POST",
+            "/decks/export",
+            json=payload,
+            timeout=(
+                settings.DOCUMENT_GENERATOR_EXPORT_CONNECT_TIMEOUT,
+                settings.DOCUMENT_GENERATOR_EXPORT_READ_TIMEOUT,
+            ),
+        )
+        response.raise_for_status()
+
+        key = export_storage.export_key(owner_id, deck_id, content_hash)
+        export_storage.upload_apkg(key, response.content)
+    except Exception:
+        logger.exception("export %s falhou", export_id)
+        export_records.mark_failed(export_id)
+        return {"export_id": export_id, "status": export_records.FAILED}
+
+    export_records.mark_completed(export_id, key)
+    logger.info("export %s concluído (%s)", export_id, key)
+    return {"export_id": export_id, "status": export_records.COMPLETED}

@@ -6,16 +6,20 @@ openspec/changes/sprint-2-decks-cards/design.md). `APIView` pontual para a
 ação de registrar revisão, que não é uma substituição de estado CRUD.
 """
 
+import logging
 import uuid
 
+from django.conf import settings
 from rest_framework import generics, status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import APIException, NotFound, ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .domain.entities.card_review import CardReview
 from .domain.services import scheduling_service
+from .domain.services.export_payload import build_export_payload, compute_content_hash
+from .infrastructure import export_records, export_storage
 from .infrastructure.repositories.card_repository import CardRepository
 from .infrastructure.repositories.card_review_repository import CardReviewRepository
 from .infrastructure.repositories.category_repository import CategoryRepository
@@ -28,6 +32,9 @@ from .serializers import (
     CategorySerializer,
     DeckSerializer,
 )
+from .tasks import export_deck_task
+
+logger = logging.getLogger(__name__)
 
 
 def _owner_id(request) -> str:
@@ -112,6 +119,98 @@ class DeckStatisticsView(APIView):
                 "goal_progress_percentage": progress,
             }
         )
+
+
+class ExportUnavailable(APIException):
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = "Export is temporarily unavailable. Try again shortly."
+    default_code = "export_unavailable"
+
+
+class DeckExportView(APIView):
+    """
+    `POST /api/v1/decks/{deck_id}/export/` — dispara a exportação `.apkg` de
+    forma assíncrona (Sprint 11). Nunca chama o `document-generator` na
+    request: só valida, consulta o cache por conteúdo e enfileira a task.
+
+    `202` = geração enfileirada ou já em andamento; `200` = já existe uma
+    exportação concluída deste exato conteúdo (cache hit, sem task).
+    """
+
+    permission_classes = [HasAuthorizedGroup]
+
+    def post(self, request, deck_id):
+        try:
+            parsed_deck_id = uuid.UUID(deck_id)
+        except (TypeError, ValueError, AttributeError):
+            raise NotFound() from None
+
+        owner_id = _owner_id(request)
+        deck = DeckRepository().find_by_id(parsed_deck_id, owner_id)
+        if deck is None:
+            raise NotFound()
+
+        # `find_by_deck_id` só devolve cards ativos (sem `deleted_at`)
+        cards = CardRepository().find_by_deck_id(deck.id, owner_id)
+        if not cards:
+            raise ValidationError({"detail": "This deck has no cards to export."})
+        if len(cards) > settings.EXPORT_MAX_CARDS:
+            raise ValidationError(
+                {
+                    "detail": f"A deck export is limited to {settings.EXPORT_MAX_CARDS} cards."
+                }
+            )
+
+        payload = build_export_payload(deck, cards)
+        content_hash = compute_content_hash(payload)
+        started = export_records.start_export(owner_id, str(deck.id), content_hash)
+
+        if started.outcome == export_records.ExportOutcome.HIT:
+            return Response(
+                {"export_id": started.export_id, "status": export_records.COMPLETED},
+                status=status.HTTP_200_OK,
+            )
+
+        if started.outcome == export_records.ExportOutcome.MISS:
+            try:
+                export_deck_task.delay(
+                    started.export_id, owner_id, str(deck.id), content_hash, payload
+                )
+            except Exception:
+                # sem task, o registro ficaria "pending" travando esse
+                # conteúdo até o TTL: libera pra dar pra tentar de novo
+                logger.exception("could not enqueue export %s", started.export_id)
+                export_records.mark_failed(started.export_id)
+                raise ExportUnavailable() from None
+
+        return Response(
+            {"export_id": started.export_id, "status": export_records.PENDING},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class DeckExportStatusView(APIView):
+    """
+    `GET /api/v1/decks/export/{export_id}/status/` — status da exportação
+    (Sprint 11, D5/D6). Lê o registro Redis criado no disparo; `404`
+    idêntico para id inexistente, expirado ou de outro tenant. Com a
+    exportação concluída, devolve uma URL pré-assinada nova a cada chamada
+    (assinatura local, nunca guardada).
+    """
+
+    permission_classes = [HasAuthorizedGroup]
+
+    def get(self, request, export_id):
+        record = export_records.get_record(export_id)
+        if record is None or record["owner_id"] != _owner_id(request):
+            raise NotFound()
+
+        body = {"export_id": export_id, "status": record["status"]}
+        if record["status"] == export_records.COMPLETED:
+            body["download_url"] = export_storage.presigned_download_url(
+                record["s3_key"]
+            )
+        return Response(body)
 
 
 class CardPageNumberPagination(PageNumberPagination):

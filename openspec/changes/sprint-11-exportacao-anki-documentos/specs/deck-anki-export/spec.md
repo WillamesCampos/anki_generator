@@ -24,7 +24,7 @@ The system SHALL expose `POST /api/v1/decks/{deck_id}/export/`, scoped to a deck
 - **THEN** those cards are neither counted toward the 100-card cap nor included in the exported payload
 
 ### Requirement: Export results are cached by content hash
-The system SHALL compute a `content_hash` (sha256 of a canonical serialization) over exactly the payload that would be sent to the `document-generator`: an export-format version constant, the deck title, and the active cards in a deterministic order with their `id`, `front`, `back`, `front_description`, `back_description` and `notes`. Spaced-repetition (FSRS) state SHALL NOT be part of the hash. The system SHALL keep, per `(owner_id, deck_id, content_hash)`, an index in Redis pointing to the export, and the exported object SHALL be stored in S3 under `exports/{owner_id}/{deck_id}/{content_hash}.apkg`. The cache SHALL never be shared across tenants.
+The system SHALL compute a `content_hash` (sha256 of a canonical serialization) over exactly the payload that would be sent to the `document-generator`: an export-format version constant, the deck title, and the active cards in a deterministic order with their `id`, `front`, `back`, `front_description` and `back_description` (the domain has no `notes` field, so none is sent). Spaced-repetition (FSRS) state SHALL NOT be part of the hash. The system SHALL keep, per `(owner_id, deck_id, content_hash)`, an index in Redis pointing to the export, and the exported object SHALL be stored in S3 under `exports/{owner_id}/{deck_id}/{content_hash}.apkg`. The cache SHALL never be shared across tenants.
 
 #### Scenario: Unchanged deck is served from cache
 - **WHEN** the user triggers an export for a deck whose content hash already has a completed export
