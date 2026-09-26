@@ -20,12 +20,12 @@
 
 ## 3. `document-generator` — exportação Anki endurecida
 
-- [ ] 3.1 Contrato de `POST /decks/export`: `deck_id` (UUID do deck) e `id` (UUID) por card obrigatórios; atualizar `test_card_model_contract.py` (D8)
-- [ ] 3.2 IDs estáveis em `generator.py`: `deck_id` do genanki derivado deterministicamente do UUID do deck, `model_id` constante fixa junto de `EXPORT_FORMAT_VERSION`, `guid` da nota via `genanki.guid_for(card_id)` (D8)
-- [ ] 3.3 Nome de arquivo de áudio determinístico (hash do `front`), sem duplicar mídia na lista do pacote (D8)
-- [ ] 3.4 Diretório de trabalho único por requisição para áudio e `.apkg`, removido após a resposta ser enviada (`BackgroundTask`) — corrige colisão entre tenants e acúmulo no volume (D10)
-- [ ] 3.5 Rota `/decks/export` fora do event loop (rota `def` ou `run_in_threadpool`) (D10)
-- [ ] 3.6 Teto de 100 cards no serviço (defesa em profundidade) e remoção/alinhamento do `max_cards_per_generation = 10` morto em `app/config.py` (D9)
+- [x] 3.1 Contrato de `POST /decks/export`: `deck_id` (UUID do deck) e `id` (UUID) por card obrigatórios; atualizar `test_card_model_contract.py` (D8)
+- [x] 3.2 IDs estáveis em `generator.py`: `deck_id` do genanki derivado deterministicamente do UUID do deck, `model_id` constante fixa junto de `EXPORT_FORMAT_VERSION`, `guid` da nota via `genanki.guid_for(card_id)` (D8)
+- [x] 3.3 Nome de arquivo de áudio determinístico (hash do `front`), sem duplicar mídia na lista do pacote (D8)
+- [x] 3.4 Diretório de trabalho único por requisição para áudio e `.apkg`, removido após a resposta ser enviada (`BackgroundTask`) — corrige colisão entre tenants e acúmulo no volume (D10)
+- [x] 3.5 Rota `/decks/export` fora do event loop (rota `def` ou `run_in_threadpool`) (D10)
+- [x] 3.6 Teto de 100 cards no serviço (defesa em profundidade) e remoção/alinhamento do `max_cards_per_generation = 10` morto em `app/config.py` (D9)
 
 ## 4. Endpoint de exportação, cache e status (Django)
 

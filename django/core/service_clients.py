@@ -4,7 +4,7 @@ Cliente HTTP autenticado pra chamar microsserviços (Sprint 5,
 
 Só a infraestrutura de chamada autenticada: o endpoint Django que dispara a
 geração de `.apkg` de fato (Celery task, contrato de payload) é escopo da
-Sprint 9 (`PRD.md`), que só precisa importar `call_document_generator` em
+Sprint 11 (`PRD.md`), que só precisa importar `call_document_generator` em
 vez de reimplementar a assinatura do token em cada call-site.
 """
 

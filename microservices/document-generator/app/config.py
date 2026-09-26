@@ -11,7 +11,9 @@ class Settings(BaseSettings):
     app_host: str = "0.0.0.0"
     app_port: int = 8001
 
-    max_cards_per_generation: int = 10
+    # Teto de cards por exportação (Sprint 11, D9): cada card é uma chamada de
+    # rede sequencial ao gTTS. Reforça a validação do Django (defesa em profundidade).
+    max_cards_per_export: int = 100
     audio_output_dir: str = "/data/anki_audio"
 
     # JWT de serviço (Sprint 5, `autenticacao-service-to-service-jwt`) —

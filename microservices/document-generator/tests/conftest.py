@@ -40,6 +40,39 @@ def client(configured_keys) -> TestClient:
     return TestClient(app)
 
 
+class FakeTTS:
+    """Substitui o gTTS (chamada de rede ao Google) nos testes — grava um
+    arquivo pequeno e registra cada texto pedido em `FakeTTS.calls`."""
+
+    calls: list[str] = []
+
+    def __init__(self, text, lang="en", tld="com", **kwargs):
+        self.text = text
+        FakeTTS.calls.append(text)
+
+    def save(self, path):
+        with open(path, "wb") as f:
+            f.write(b"ID3-fake-audio:" + self.text.encode())
+
+
+@pytest.fixture(autouse=True)
+def tts_calls(monkeypatch):
+    """Nenhum teste chama o gTTS de verdade; devolve a lista de textos pedidos."""
+    FakeTTS.calls = []
+    monkeypatch.setattr("app.generator.gTTS", FakeTTS)
+    return FakeTTS.calls
+
+
+@pytest.fixture(autouse=True)
+def audio_dir(monkeypatch, tmp_path):
+    """Diretório de saída isolado por teste (o padrão `/data/anki_audio` só
+    existe dentro do container)."""
+    path = tmp_path / "anki_audio"
+    monkeypatch.setenv("AUDIO_OUTPUT_DIR", str(path))
+    get_settings.cache_clear()
+    return path
+
+
 def make_service_token(
     *,
     secret: str = SIGNING_SECRET,
@@ -60,9 +93,11 @@ def make_service_token(
 
 
 EXPORT_PAYLOAD = {
+    "deck_id": "0b0f0b1e-6f6d-4d8e-9c47-2f1f5f0a1111",
     "deck_title": "Deck de teste",
     "cards": [
         {
+            "id": "c1a1c1a1-0000-4000-8000-000000000001",
             "front": "hello",
             "back": "olá",
             "front_description": "Hello, how are you?",

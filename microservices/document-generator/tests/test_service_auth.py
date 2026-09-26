@@ -114,3 +114,24 @@ def test_health_check_does_not_require_service_jwt(client):
     response = client.get("/document-generator/v1/health/")
 
     assert response.status_code == 200
+
+
+def test_export_requires_deck_id_and_card_ids(client):
+    token = make_service_token()
+    payload = {
+        "deck_title": "Sem ids",
+        "cards": [
+            {
+                "front": "hello",
+                "back": "olá",
+                "front_description": "Hello, how are you?",
+                "back_description": "Olá, como vai você?",
+            }
+        ],
+    }
+
+    response = client.post(
+        EXPORT_PATH, json=payload, headers={"Authorization": f"Bearer {token}"}
+    )
+
+    assert response.status_code == 422
